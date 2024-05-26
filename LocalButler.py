@@ -7,10 +7,23 @@ def display_grocery_services():
     grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary"))
     if grocery_store == "Weis Markets":
         st.write(f"You selected: [Weis Markets](https://www.weismarkets.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.")
+        st.write("- Select store pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
     elif grocery_store == "SafeWay":
         st.write(f"You selected: [SafeWay](https://www.safeway.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.")
+        st.write("- Select store pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
     elif grocery_store == "Commissary":
-        st.write(f"You selected: [Commissary](https://www.commissaries.com/)")
+        st.write(f"You selected: [Commissary](https://shop.commissaries.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with the Commissary using your own account.")
+        st.write("- Select store pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
+
 
 # Function to display laundry services
 def display_laundry_services():
