@@ -33,7 +33,7 @@ def display_laundry_services():
 def display_meal_delivery_services():
     st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
     st.write("Select a restaurant:")
-    restaurant = st.selectbox("Choose a restaurant:", ("The Hideaway", "Ruth's Chris Steak House", "Baltimore Coffee & Tea Company"))
+    restaurant = st.selectbox("Choose a restaurant:", ("The Hideaway", "Ruth's Chris Steak House", "Baltimore Coffee & Tea Company", "The All American Steakhouse", "Jersey Mike's Subs", "Bruster's Real Ice Cream", "Luigino's", "PHO 5UP ODENTON", "Dunkin", "Baskin-Robbins"))
     if restaurant == "The Hideaway":
         st.write(f"You selected: [The Hideaway](https://order.toasttab.com/online/hideawayodenton)")
         st.write("Instructions for placing your order:")
@@ -54,6 +54,42 @@ def display_meal_delivery_services():
         st.write("- Specify that you'll be using Local Butler for pick-up and delivery.")
         st.write("- Let your assigned butler know the order you've placed, and we'll take care of the rest!")
         st.write("We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering.")
+    elif restaurant == "The All American Steakhouse":
+        st.write(f"You selected: [The All American Steakhouse](https://allamericansteakhouse.com/locations/odenton/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with The All American Steakhouse using their website or app.")
+        st.write("- Select pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Jersey Mike's Subs":
+        st.write(f"You selected: [Jersey Mike's Subs](https://www.jerseymikes.com/locations/odenton-md)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Jersey Mike's Subs using their website or app.")
+        st.write("- Select pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Bruster's Real Ice Cream":
+        st.write(f"You selected: [Bruster's Real Ice Cream](https://www.brusters.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Bruster's Real Ice Cream using their website or app.")
+        st.write("- Select pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Luigino's":
+        st.write(f"You selected: [Luigino's](http://www.luiginosrestaurant.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Luigino's using their website or app.")
+        st.write("- Select pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "PHO 5UP ODENTON":
+        st.write(f"You selected: [PHO 5UP ODENTON](https://www.pho5up.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with PHO 5UP ODENTON using their website or app.")
+        st.write("- Select pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Dunkin":
+        st.write(f"You selected: [Dunkin](https://www.dunkindonuts.com/en)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Dunkin using their website or app.")
+        st.write("- Select pick-up and specify the date and time
+
  
 # Function to display errand services
 def display_errand_services():
