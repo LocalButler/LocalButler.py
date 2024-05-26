@@ -41,17 +41,24 @@ def display_meal_delivery_services():
         st.write("- Select pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
     elif restaurant == "Ruth's Chris Steak House":
-        st.write(f"You selected: [Ruth's Chris Steak House](https://ruthschris.net/)")
+        st.write(f"You selected: [Ruth's Chris Steak House](https://order.ruthschris.com/)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with Ruth's Chris Steak House using their website or app.")
         st.write("- Select pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
     elif restaurant == "Baltimore Coffee & Tea Company":
+        st.write(f"You selected: [Baltimore Coffee & Tea Company](https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf)")
+        st.write("Instructions for placing your order:")
+        elif restaurant == "Baltimore Coffee & Tea Company":
         st.write(f"You selected: [Baltimore Coffee & Tea Company](https://www.baltcoffee.com/)")
         st.write("Instructions for placing your order:")
-        st.write("- Place your order directly with Baltimore Coffee & Tea Company using their website or app.")
-        st.write("- Select pick-up and specify the date and time.")
-        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+        st.write("- Download the menu from the Baltimore Coffee & Tea Company website or app.")
+        st.write("- Review the menu and decide on your order.")
+        st.write("- Call Baltimore Coffee & Tea Company to place your order.")
+        st.write("- Specify that you'll be using Local Butler for pick-up and delivery.")
+        st.write("- Let your assigned butler know the order you've placed, and we'll take care of the rest!")
+        st.write("We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering.")
+
 
 
 # Function to display errand services
