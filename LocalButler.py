@@ -34,11 +34,11 @@ def main():
     st.title("**LOCAL BUTLER**")
 
     # Display menu button
-    if st.button("Menu"):
-        # Display menu
-        category = st.sidebar.selectbox("Select a service category:",
-                                     ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
-                                      "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
+    menu_expander = st.beta_expander("Menu")
+    with menu_expander:
+        category = st.selectbox("Select a service category:",
+                                ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
+                                 "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
 
         if category == "Grocery Services":
             display_grocery_services()
