@@ -1,4 +1,4 @@
-import streamlit as st
+ import streamlit as st
 
 # Function to display grocery services
 def display_grocery_services():
@@ -23,6 +23,7 @@ def display_grocery_services():
         st.write("- Place your order directly with the Commissary using your own account.")
         st.write("- Select store pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
+
 
 # Function to display laundry services
 def display_laundry_services():
@@ -53,7 +54,7 @@ def display_meal_delivery_services():
         st.write("- Specify that you'll be using Local Butler for pick-up and delivery.")
         st.write("- Let your assigned butler know the order you've placed, and we'll take care of the rest!")
         st.write("We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering.")
-
+ 
 # Function to display errand services
 def display_errand_services():
     st.write("Get help with various errands such as shopping, mailing packages, or picking up prescriptions.")
@@ -72,4 +73,48 @@ def display_car_wash_services():
 
 # Function to display about us section
 def display_about_us():
-    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort
+    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
+
+# Function to display how it works section
+def display_how_it_works():
+    st.write("1. Choose a service category from the menu.")
+    st.write("2. Select your desired service.")
+    st.write("3. Follow the prompts to complete your order.")
+    st.write("4. Sit back and relax while we take care of the rest!")
+
+# Main function to run the Local Butler app
+def main():
+    # Display "LOCAL BUTLER" at the top in bold
+    st.title("**LOCAL BUTLER**")
+
+    # Display menu button for services
+    with st.expander("Menu", expanded=False):
+        category = st.selectbox("Select a service category:",
+                                ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
+                                 "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
+
+        if category == "Grocery Services":
+            display_grocery_services()
+        elif category == "Laundry Services":
+            display_laundry_services()
+        elif category == "Meal Delivery Services":
+            display_meal_delivery_services()
+        elif category == "Errand Services":
+            display_errand_services()
+        elif category == "Pharmacy Services":
+            display_pharmacy_services()
+        elif category == "Pet Care Services":
+            display_pet_care_services()
+        elif category == "Car Wash Services":
+            display_car_wash_services()
+
+    # Display expander button for About Us section
+    with st.expander("About Us", expanded=False):
+        display_about_us()
+
+    # Display expander button for How it Works section
+    with st.expander("How it Works", expanded=False):
+        display_how_it_works()
+
+if __name__ == "__main__":
+    main()
