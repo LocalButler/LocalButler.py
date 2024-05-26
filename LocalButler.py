@@ -61,7 +61,7 @@ def display_meal_delivery_services():
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
     elif restaurant == "Jersey Mike's Subs":
-        st.write(f"You selected: [Jersey Mike's Subs](https://www.jerseymikes.com/)")
+        st.write(f"You selected: [Jersey Mike's Subs](https://www.jerseymikes.com/menu)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with Jersey Mike's Subs using their website or app.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
