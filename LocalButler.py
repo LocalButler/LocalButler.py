@@ -33,8 +33,8 @@ def main():
     st.title("Welcome to Local Butler")
 
     # Check if sidebar is collapsed
-    if not st.sidebar.expander_collapsed:
-        st.sidebar.button("Start Here")
+    if st.sidebar.button("Menu 🡆"):
+        st.sidebar.expander_collapsed
 
     st.sidebar.title("Local Butler Menu")
     category = st.sidebar.radio("Select a service category:",
