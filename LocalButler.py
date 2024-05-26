@@ -42,5 +42,13 @@ def main():
     st.header("How It Works")
     display_how_it_works()
 
+    # Display About Us section in the sidebar
+    with st.sidebar.expander("About Us", expanded=False):
+        st.write("Learn about Local Butler and our mission to provide convenient concierge services.")
+
+    # Display How It Works section in the sidebar
+    with st.sidebar.expander("How It Works", expanded=False):
+        st.write("Discover how Local Butler works and how you can benefit from our services.")
+
 if __name__ == "__main__":
     main()
