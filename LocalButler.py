@@ -5,7 +5,12 @@ def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
     st.write("Select a grocery store:")
     grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary"))
-    st.write(f"You selected: {grocery_store}")
+    if grocery_store == "Weis Markets":
+        st.write(f"You selected: [Weis Markets](https://www.weismarkets.com/)")
+    elif grocery_store == "SafeWay":
+        st.write(f"You selected: [SafeWay](https://www.safeway.com/)")
+    elif grocery_store == "Commissary":
+        st.write(f"You selected: [Commissary](https://www.commissaries.com/)")
 
 # Function to display laundry services
 def display_laundry_services():
