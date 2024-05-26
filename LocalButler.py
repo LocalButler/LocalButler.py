@@ -32,8 +32,11 @@ def display_car_wash_services():
 def main():
     st.title("Welcome to Local Butler")
 
+    # Arrow indicator to show where to click for the menu
+    st.markdown('<p style="color:#6a737d;font-size:12px;position:absolute;left:10px;">Click the arrow next to "Menu" to view available services ➡️</p>', unsafe_allow_html=True)
+
     # Display menu
-    st.sidebar.title("☰ Menu")
+    st.sidebar.title("Menu")
     category = st.sidebar.radio("Select a service category:",
                                 ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
                                  "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
@@ -52,12 +55,6 @@ def main():
         display_pet_care_services()
     elif category == "Car Wash Services":
         display_car_wash_services()
-
-# Add hamburger menu icon to the sidebar
-st.sidebar.title("☰ Menu")
-category = st.sidebar.radio("Select a service category:",
-                            ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
-                             "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
 
 if __name__ == "__main__":
     main()
