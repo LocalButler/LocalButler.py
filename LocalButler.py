@@ -33,7 +33,7 @@ def main():
     st.title("Welcome to Local Butler")
 
     # Arrow indicator to show where to click for the menu
-    st.markdown('<p style="color:#6a737d;font-size:12px;">Click the arrow next to "Menu" to view available services ➡️</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#6a737d;font-size:12px;position:absolute;left:10px;">Click the arrow next to "Menu" to view available services ➡️</p>', unsafe_allow_html=True)
 
     # Display menu
     st.sidebar.title("Menu")
