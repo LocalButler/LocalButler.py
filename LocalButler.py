@@ -32,6 +32,27 @@ def display_laundry_services():
 # Function to display meal delivery services
 def display_meal_delivery_services():
     st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
+    st.write("Select a restaurant:")
+    restaurant = st.selectbox("Choose a restaurant:", ("The Hideaway", "Ruth's Chris Steak House", "Baltimore Coffee & Tea Company"))
+    if restaurant == "The Hideaway":
+        st.write(f"You selected: [The Hideaway](https://www.hideawayannapolis.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with The Hideaway using their website or app.")
+        st.write("- Select pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Ruth's Chris Steak House":
+        st.write(f"You selected: [Ruth's Chris Steak House](https://ruthschris.net/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Ruth's Chris Steak House using their website or app.")
+        st.write("- Select pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Baltimore Coffee & Tea Company":
+        st.write(f"You selected: [Baltimore Coffee & Tea Company](https://www.baltcoffee.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Baltimore Coffee & Tea Company using their website or app.")
+        st.write("- Select pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+
 
 # Function to display errand services
 def display_errand_services():
