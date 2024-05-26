@@ -35,7 +35,7 @@ def display_meal_delivery_services():
     st.write("Select a restaurant:")
     restaurant = st.selectbox("Choose a restaurant:", ("The Hideaway", "Ruth's Chris Steak House", "Baltimore Coffee & Tea Company"))
     if restaurant == "The Hideaway":
-        st.write(f"You selected: [The Hideaway](https://www.hideawayannapolis.com/)")
+        st.write(f"You selected: [The Hideaway](https://order.toasttab.com/online/hideawayodenton)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with The Hideaway using their website or app.")
         st.write("- Select pick-up and specify the date and time.")
