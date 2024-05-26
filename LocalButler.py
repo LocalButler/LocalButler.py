@@ -1,6 +1,3 @@
-Sure, here's the modified code with "LOCAL BUTLER" displayed at the top in bold letters:
-
-```python
 import streamlit as st
 
 # Function to display grocery services
@@ -59,6 +56,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
-
-Now "LOCAL BUTLER" will always be displayed at the top in bold letters. Let me know if you need further adjustments!
