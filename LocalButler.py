@@ -1,3 +1,6 @@
+Sure, here's the modified code with "LOCAL BUTLER" displayed at the top in bold letters:
+
+```python
 import streamlit as st
 
 # Function to display grocery services
@@ -30,6 +33,9 @@ def display_car_wash_services():
 
 # Main function to run the Local Butler app
 def main():
+    # Display "LOCAL BUTLER" at the top in bold
+    st.title("**LOCAL BUTLER**")
+
     # Display menu
     st.sidebar.title("Menu")
     category = st.sidebar.selectbox("Select a service category:",
@@ -53,3 +59,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+
+Now "LOCAL BUTLER" will always be displayed at the top in bold letters. Let me know if you need further adjustments!
