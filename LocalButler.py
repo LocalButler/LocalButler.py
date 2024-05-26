@@ -81,19 +81,19 @@ def display_meal_delivery_services():
     elif restaurant == "PHO 5UP ODENTON":
         st.write(f"You selected: [PHO 5UP ODENTON](https://www.clover.com/online-ordering/pho-5up-odenton)")
         st.write("Instructions for placing your order:")
-        st.write("- Place your order directly with PHO 5UP ODENTON using their website or app.")
+        st.write("- Place your order directly with PHO 5UP ODENTON by using their website or app.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
     elif restaurant == "Dunkin":
         st.write(f"You selected: [Dunkin](https://www.dunkindonuts.com/)")
         st.write("Instructions for placing your order:")
-        st.write("- Place your order directly with Dunkin' using their website or app.")
+        st.write("- Place your order directly with Dunkin' by using their website or app.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
     elif restaurant == "Baskin-Robbins":
         st.write(f"You selected: [Baskin-Robbins](https://www.baskinrobbins.com/)")
         st.write("Instructions for placing your order:")
-        st.write("- Place your order directly with Baskin-Robbins using their website or app.")
+        st.write("- Place your order directly with Baskin-Robbins by using their website or app.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
 
