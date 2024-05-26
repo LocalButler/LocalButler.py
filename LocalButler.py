@@ -34,9 +34,9 @@ def main():
 
     # Display menu
     st.sidebar.title("Menu")
-    category = st.sidebar.radio("Select a service category:",
-                                ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
-                                 "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
+    category = st.sidebar.selectbox("Select a service category:",
+                                     ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
+                                      "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
 
     if category == "Grocery Services":
         display_grocery_services()
