@@ -5,6 +5,10 @@ def display_start_here():
     st.title("Start Here")
     st.header("Welcome to Local Butler!")
     st.write("Explore our services by selecting a category from the menu on the left.")
+    st.write("")
+    st.write("Click below to start browsing:")
+    if st.button("Start Browsing"):
+        st.experimental_rerun()
 
 # Function to display grocery services
 def display_grocery_services():
