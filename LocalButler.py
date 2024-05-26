@@ -1,13 +1,5 @@
 import streamlit as st
 
-
-    st.header("Welcome to Local Butler!")
-    st.write("Explore our services by selecting a category from the menu on the left.")
-    st.write("")
-    st.write("Click below to start browsing:")
-    if st.button("Start Browsing"):
-        st.experimental_rerun()
-
 # Function to display grocery services
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
@@ -38,8 +30,6 @@ def display_car_wash_services():
 
 # Main function to run the Local Butler app
 def main():
-    display_start_here()
-
     # Display menu
     st.sidebar.title("Menu")
     category = st.sidebar.selectbox("Select a service category:",
