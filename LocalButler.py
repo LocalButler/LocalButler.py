@@ -1,5 +1,11 @@
 import streamlit as st
 
+# Function to display the "Start Here" section
+def display_start_here():
+    st.header("Welcome to Local Butler!")
+    st.subheader("Start Here")
+    st.write("Explore our services by selecting a category from the menu on the left.")
+
 # Function to display grocery services
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
@@ -30,7 +36,7 @@ def display_car_wash_services():
 
 # Main function to run the Local Butler app
 def main():
-    st.title("Welcome to Local Butler")
+    display_start_here()
 
     # Display menu
     st.sidebar.title("Menu")
