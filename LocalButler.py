@@ -37,8 +37,7 @@ def main():
     st.write("Start Here")
 
     # Display menu button
-    menu_expander = st.beta_expander("Menu", expanded=False)
-    with menu_expander:
+    with st.expander("Menu", expanded=False):
         category = st.selectbox("Select a service category:",
                                 ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
                                  "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
