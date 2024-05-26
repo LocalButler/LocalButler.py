@@ -49,7 +49,6 @@ def display_meal_delivery_services():
     elif restaurant == "Baltimore Coffee & Tea Company":
         st.write(f"You selected: [Baltimore Coffee & Tea Company](https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf)")
         st.write("Instructions for placing your order:")
-        elif restaurant == "Baltimore Coffee & Tea Company":
         st.write(f"You selected: [Baltimore Coffee & Tea Company](https://www.baltcoffee.com/)")
         st.write("Instructions for placing your order:")
         st.write("- Download the menu from the Baltimore Coffee & Tea Company website or app.")
@@ -58,7 +57,6 @@ def display_meal_delivery_services():
         st.write("- Specify that you'll be using Local Butler for pick-up and delivery.")
         st.write("- Let your assigned butler know the order you've placed, and we'll take care of the rest!")
         st.write("We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering.")
-
 
 
 # Function to display errand services
