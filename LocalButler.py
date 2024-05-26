@@ -28,12 +28,16 @@ def display_pet_care_services():
 def display_car_wash_services():
     st.write("Schedule car wash and detailing services to keep your vehicle clean and looking its best.")
 
+# Function to display about us section
+def display_about_us():
+    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
+
 # Main function to run the Local Butler app
 def main():
     # Display "LOCAL BUTLER" at the top in bold
     st.title("**LOCAL BUTLER**")
 
-    # Display menu button
+    # Display menu button for services
     with st.expander("Menu", expanded=False):
         category = st.selectbox("Select a service category:",
                                 ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
@@ -53,6 +57,10 @@ def main():
             display_pet_care_services()
         elif category == "Car Wash Services":
             display_car_wash_services()
+
+    # Display menu button for About Us section
+    with st.expander("About Us", expanded=False):
+        display_about_us()
 
 if __name__ == "__main__":
     main()
