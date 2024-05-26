@@ -1,4 +1,4 @@
- import streamlit as st
+import streamlit as st
 
 # Function to display grocery services
 def display_grocery_services():
