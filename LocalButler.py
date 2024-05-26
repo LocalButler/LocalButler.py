@@ -32,10 +32,10 @@ def display_car_wash_services():
 def main():
     st.title("Welcome to Local Butler")
 
-    # Check if sidebar is collapsed
-    if st.sidebar.button("Menu 🡆"):
-        st.sidebar.expander_collapsed
+    # Arrow indicator to show where to click for the menu
+    st.write("Click the arrow next to 'Menu' to view available services ➡️")
 
+    # Display menu
     st.sidebar.title("Local Butler Menu")
     category = st.sidebar.radio("Select a service category:",
                                 ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
@@ -57,4 +57,6 @@ def main():
         display_car_wash_services()
 
 if __name__ == "__main__":
+    main()
+
     main()
