@@ -54,8 +54,7 @@ def display_meal_delivery_services():
         st.write("- Specify that you'll be using Local Butler for pick-up and delivery.")
         st.write("- Let your assigned butler know the order you've placed, and we'll take care of the rest!")
         st.write("We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering.")
-
-    elif restaurant == "The All American Steakhouse":
+elif restaurant == "The All American Steakhouse":
     st.write(f"You selected: [The All American Steakhouse](https://www.theallamericansteakhouse.com/)")
     st.write("Instructions for placing your order:")
     st.write("- Place your order directly with The All American Steakhouse by calling their restaurant.")
