@@ -33,8 +33,11 @@ def main():
     # Display "LOCAL BUTLER" at the top in bold
     st.title("**LOCAL BUTLER**")
 
+    # Display start here
+    st.write("Start Here")
+
     # Display menu button
-    menu_expander = st.beta_expander("Menu")
+    menu_expander = st.beta_expander("Menu", expanded=False)
     with menu_expander:
         category = st.selectbox("Select a service category:",
                                 ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
