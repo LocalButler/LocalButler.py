@@ -36,7 +36,7 @@ def main():
     st.write("Click the arrow next to 'Menu' to view available services ➡️")
 
     # Display menu
-    st.sidebar.title("Local Butler Menu")
+    st.sidebar.title("Menu")
     category = st.sidebar.radio("Select a service category:",
                                 ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
                                  "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
@@ -57,6 +57,4 @@ def main():
         display_car_wash_services()
 
 if __name__ == "__main__":
-    main()
-
     main()
