@@ -3,6 +3,9 @@ import streamlit as st
 # Function to display grocery services
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
+    st.write("Select a grocery store:")
+    grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary"))
+    st.write(f"You selected: {grocery_store}")
 
 # Function to display laundry services
 def display_laundry_services():
