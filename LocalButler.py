@@ -2,23 +2,42 @@ import streamlit as st
 
 # Function to display grocery services
 def display_grocery_services():
-    selected_store = st.selectbox("Select a grocery store:",
-                                ("Weis Markets", "SafeWay", "Commissary"))
-    
-    if selected_store == "Weis Markets":
-        st.write("Order fresh groceries from Weis Markets and have them delivered straight to your doorstep.")
-    elif selected_store == "SafeWay":
-        st.write("Order fresh groceries from SafeWay and have them delivered straight to your doorstep.")
-    elif selected_store == "Commissary":
-        st.write("Order fresh groceries from the Commissary and have them ready for pickup.")
+    st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
+
+# Function to display laundry services
+def display_laundry_services():
+    st.write("Schedule laundry pickup and delivery services, ensuring your clothes are clean and fresh with minimal effort.")
+
+# Function to display meal delivery services
+def display_meal_delivery_services():
+    st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
+
+# Function to display errand services
+def display_errand_services():
+    st.write("Get help with various errands such as shopping, mailing packages, or picking up prescriptions.")
+
+# Function to display pharmacy services
+def display_pharmacy_services():
+    st.write("Order prescription medications and over-the-counter products from local pharmacies with convenient delivery options.")
+
+# Function to display pet care services
+def display_pet_care_services():
+    st.write("Ensure your furry friends receive the care they deserve with pet sitting, grooming, and walking services.")
+
+# Function to display car wash services
+def display_car_wash_services():
+    st.write("Schedule car wash and detailing services to keep your vehicle clean and looking its best.")
 
 # Function to display about us section
 def display_about_us():
-    st.write("Learn about Local Butler and our mission to provide convenient concierge services.")
+    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
 
 # Function to display how it works section
 def display_how_it_works():
-    st.write("Discover how Local Butler works and how you can benefit from our services.")
+    st.write("1. Choose a service category from the menu.")
+    st.write("2. Select your desired service.")
+    st.write("3. Follow the prompts to complete your order.")
+    st.write("4. Sit back and relax while we take care of the rest!")
 
 # Main function to run the Local Butler app
 def main():
@@ -33,22 +52,26 @@ def main():
 
         if category == "Grocery Services":
             display_grocery_services()
+        elif category == "Laundry Services":
+            display_laundry_services()
+        elif category == "Meal Delivery Services":
+            display_meal_delivery_services()
+        elif category == "Errand Services":
+            display_errand_services()
+        elif category == "Pharmacy Services":
+            display_pharmacy_services()
+        elif category == "Pet Care Services":
+            display_pet_care_services()
+        elif category == "Car Wash Services":
+            display_car_wash_services()
 
-    # Display About Us section
-    st.header("About Us")
-    display_about_us()
+    # Display expander button for About Us section
+    with st.expander("About Us", expanded=False):
+        display_about_us()
 
-    # Display How It Works section
-    st.header("How It Works")
-    display_how_it_works()
-
-    # Display About Us section in the sidebar
-    with st.sidebar.expander("About Us", expanded=False):
-        st.write("Learn about Local Butler and our mission to provide convenient concierge services.")
-
-    # Display How It Works section in the sidebar
-    with st.sidebar.expander("How It Works", expanded=False):
-        st.write("Discover how Local Butler works and how you can benefit from our services.")
+    # Display expander button for How it Works section
+    with st.expander("How it Works", expanded=False):
+        display_how_it_works()
 
 if __name__ == "__main__":
     main()
