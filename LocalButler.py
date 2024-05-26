@@ -29,21 +29,18 @@ def main():
     with st.expander("Menu", expanded=False):
         category = st.selectbox("Select a service category:",
                                 ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
-                                 "Pharmacy Services", "Pet Care Services", "Car Wash Services", "About Us", "How It Works"))
+                                 "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
 
         if category == "Grocery Services":
             display_grocery_services()
-        elif category == "About Us":
-            display_about_us()
-        elif category == "How It Works":
-            display_how_it_works()
-        # Add other categories here...
 
-    # Add About Us and How It Works sections outside the expander
-    if category == "About Us":
-        display_about_us()
-    elif category == "How It Works":
-        display_how_it_works()
+    # Display About Us section
+    st.header("About Us")
+    display_about_us()
+
+    # Display How It Works section
+    st.header("How It Works")
+    display_how_it_works()
 
 if __name__ == "__main__":
     main()
