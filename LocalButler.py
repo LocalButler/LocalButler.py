@@ -88,8 +88,8 @@ def display_meal_delivery_services():
         st.write(f"You selected: [Dunkin'](https://www.dunkindonuts.com/)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with Dunkin' by calling their store.")
-        st.write("- Specify the items you want to order and the pick-up date and
-
+        st.write("- Specify the items you want to order and the pick-up date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
  
 # Function to display errand services
 def display_errand_services():
