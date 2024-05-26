@@ -2,31 +2,31 @@ import streamlit as st
 
 # Function to display grocery services
 def display_grocery_services():
-    st.write("This section displays grocery services.")
+    st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
 
 # Function to display laundry services
 def display_laundry_services():
-    st.write("This section displays laundry services.")
+    st.write("Schedule laundry pickup and delivery services, ensuring your clothes are clean and fresh with minimal effort.")
 
 # Function to display meal delivery services
 def display_meal_delivery_services():
-    st.write("This section displays meal delivery services.")
+    st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
 
 # Function to display errand services
 def display_errand_services():
-    st.write("This section displays errand services.")
+    st.write("Get help with various errands such as shopping, mailing packages, or picking up prescriptions.")
 
 # Function to display pharmacy services
 def display_pharmacy_services():
-    st.write("This section displays pharmacy services.")
+    st.write("Order prescription medications and over-the-counter products from local pharmacies with convenient delivery options.")
 
 # Function to display pet care services
 def display_pet_care_services():
-    st.write("This section displays pet care services.")
+    st.write("Ensure your furry friends receive the care they deserve with pet sitting, grooming, and walking services.")
 
 # Function to display car wash services
 def display_car_wash_services():
-    st.write("This section displays car wash services.")
+    st.write("Schedule car wash and detailing services to keep your vehicle clean and looking its best.")
 
 # Main function to run the Local Butler app
 def main():
