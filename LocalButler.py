@@ -32,6 +32,13 @@ def display_car_wash_services():
 def display_about_us():
     st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
 
+# Function to display how it works section
+def display_how_it_works():
+    st.write("1. Choose a service category from the menu.")
+    st.write("2. Select your desired service.")
+    st.write("3. Follow the prompts to complete your order.")
+    st.write("4. Sit back and relax while we take care of the rest!")
+
 # Main function to run the Local Butler app
 def main():
     # Display "LOCAL BUTLER" at the top in bold
@@ -61,6 +68,10 @@ def main():
     # Display menu button for About Us section
     with st.expander("About Us", expanded=False):
         display_about_us()
+
+    # Display menu button for How it Works section
+    with st.expander("How it Works", expanded=False):
+        display_how_it_works()
 
 if __name__ == "__main__":
     main()
