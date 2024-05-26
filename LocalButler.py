@@ -30,11 +30,11 @@ def display_car_wash_services():
 
 # Main function to run the Local Butler app
 def main():
-    # Display "LOCAL BUTLER" at the top in bold
-    st.title("**LOCAL BUTLER**")
-
     # Display start here
     st.write("Start Here")
+
+    # Display "LOCAL BUTLER" at the top in bold
+    st.title("**LOCAL BUTLER**")
 
     # Display menu button
     with st.expander("Menu", expanded=False):
