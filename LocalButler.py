@@ -54,43 +54,10 @@ def main():
         display_car_wash_services()
 
 # Add hamburger menu icon to the sidebar
-st.markdown("""
-    <style>
-        .sidebar .sidebar-content {
-            background-image: linear-gradient(#E6E6E6, #E6E6E6);
-        }
-        .sidebar .sidebar-content .block-container {
-            margin-top: 25px;
-        }
-        .sidebar .sidebar-content .stRadio > div > div > label {
-            color: #000000;
-        }
-        .sidebar .sidebar-content .stRadio > div > div > input:checked ~ label::before {
-            border-color: #000000;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-if st.sidebar.button("☰"):
-    st.sidebar.title("☰ Menu")
-    category = st.sidebar.radio("Select a service category:",
-                                ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
-                                 "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
-
-    if category == "Grocery Services":
-        display_grocery_services()
-    elif category == "Laundry Services":
-        display_laundry_services()
-    elif category == "Meal Delivery Services":
-        display_meal_delivery_services()
-    elif category == "Errand Services":
-        display_errand_services()
-    elif category == "Pharmacy Services":
-        display_pharmacy_services()
-    elif category == "Pet Care Services":
-        display_pet_care_services()
-    elif category == "Car Wash Services":
-        display_car_wash_services()
+st.sidebar.title("☰ Menu")
+category = st.sidebar.radio("Select a service category:",
+                            ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
+                             "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
 
 if __name__ == "__main__":
     main()
