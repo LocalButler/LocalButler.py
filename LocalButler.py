@@ -2,8 +2,8 @@ import streamlit as st
 
 # Function to display the "Start Here" section
 def display_start_here():
+    st.title("Start Here")
     st.header("Welcome to Local Butler!")
-    st.subheader("Start Here")
     st.write("Explore our services by selecting a category from the menu on the left.")
 
 # Function to display grocery services
