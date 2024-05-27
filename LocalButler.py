@@ -114,7 +114,7 @@ def display_meal_delivery_services():
         st.write("- Place your order directly with Ruth's Chris Steak House using their website or app.")
         st.write("- Select pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
-        elif restaurant == "Baltimore Coffee & Tea Company":
+    elif restaurant == "Baltimore Coffee & Tea Company":
         st.write(f"You selected: [Baltimore Coffee & Tea Company](https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf)")
         st.write("Instructions for placing your order:")
         st.write("- Review the menu and decide on your order.")
