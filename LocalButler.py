@@ -73,7 +73,7 @@ def display_meal_delivery_services():
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
     elif restaurant == "Luigino's":
-        st.write(f"You selected: [Luigino's](https://www.luiginosrestaurant.com/)")
+        st.write(f"You selected: [Luigino's](https://order.yourmenu.com/luiginos)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with Luigino's by using their website or app.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
