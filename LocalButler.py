@@ -122,7 +122,7 @@ def display_car_wash_services():
 
 # Function to display about us section
 def display_about_us():
-    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
+    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade,Maryland 20755. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
 
 # Function to display how it works section
 def display_how_it_works():
