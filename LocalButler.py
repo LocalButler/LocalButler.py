@@ -221,7 +221,7 @@ def main():
             elif category == "Car Wash Services":
                 display_car_wash_services()
     
-     elif choice == "Order":
+    elif choice == "Order":
         if st.session_state['logged_in']:
             st.subheader("Order")
             menu_items = get_menu_items()
@@ -230,8 +230,8 @@ def main():
             if st.button("Place Order"):
                 add_order(st.session_state['username'], item_name, quantity)
                 st.success("Order placed successfully!")
-    else:
-        st.warning("Please log in to place an order.")
+        else:
+            st.warning("Please log in to place an order.")
     
     elif choice == "About Us":
         st.subheader("About Us")
