@@ -1,6 +1,36 @@
 import streamlit as st
 
-# Function to display grocery services
+# Authentication functions
+def authenticate_user(username, password):
+    # For simplicity, we use a hardcoded username and password
+    if username == "admin" and password == "password":
+        return True
+    return False
+
+def login(username, password):
+    if authenticate_user(username, password):
+        st.session_state['logged_in'] = True
+        st.session_state['username'] = username
+        return True
+    return False
+
+def logout():
+    st.session_state['logged_in'] = False
+    st.session_state['username'] = ''
+
+# Database functions
+def get_menu_items():
+    return [
+        {"name": "Pizza", "price": 10.99},
+        {"name": "Burger", "price": 8.99},
+        {"name": "Pasta", "price": 12.99},
+    ]
+
+def add_order(username, item_name, quantity):
+    # For simplicity, we'll just print the order details
+    print(f"Order placed by {username}: {quantity} x {item_name}")
+
+# Service functions
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
     st.write("Select a grocery store:")
@@ -30,12 +60,9 @@ def display_grocery_services():
         st.write("- Select store pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
 
-
-# Function to display laundry services
 def display_laundry_services():
     st.write("Schedule laundry pickup and delivery services, ensuring your clothes are clean and fresh with minimal effort.")
 
-# Function to display meal delivery services
 def display_meal_delivery_services():
     st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
     st.write("Select a restaurant:")
@@ -103,67 +130,101 @@ def display_meal_delivery_services():
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
 
- 
-# Function to display errand services
 def display_errand_services():
     st.write("Get help with various errands such as shopping, mailing packages, or picking up prescriptions.")
 
-# Function to display pharmacy services
 def display_pharmacy_services():
     st.write("Order prescription medications and over-the-counter products from local pharmacies with convenient delivery options.")
 
-# Function to display pet care services
 def display_pet_care_services():
     st.write("Ensure your furry friends receive the care they deserve with pet sitting, grooming, and walking services.")
 
-# Function to display car wash services
 def display_car_wash_services():
     st.write("Schedule car wash and detailing services to keep your vehicle clean and looking its best.")
 
-# Function to display about us section
 def display_about_us():
-    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade,Maryland 20755. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
+    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade, Maryland 20755. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
 
-# Function to display how it works section
 def display_how_it_works():
     st.write("1. Choose a service category from the menu.")
     st.write("2. Select your desired service.")
     st.write("3. Follow the prompts to complete your order.")
     st.write("4. Sit back and relax while we take care of the rest!")
 
-# Main function to run the Local Butler app
+# Initialize session state
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
+if 'username' not in st.session_state:
+    st.session_state['username'] = ''
+
 def main():
-    # Display "LOCAL BUTLER" at the top in bold
-    st.title("**LOCAL BUTLER**")
-
-    # Display menu button for services
-    with st.expander("Menu", expanded=False):
-        category = st.selectbox("Select a service category:",
-                                ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services",
-                                 "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
-
-        if category == "Grocery Services":
-            display_grocery_services()
-        elif category == "Laundry Services":
-            display_laundry_services()
-        elif category == "Meal Delivery Services":
-            display_meal_delivery_services()
-        elif category == "Errand Services":
-            display_errand_services()
-        elif category == "Pharmacy Services":
-            display_pharmacy_services()
-        elif category == "Pet Care Services":
-            display_pet_care_services()
-        elif category == "Car Wash Services":
-            display_car_wash_services()
-
-    # Display expander button for About Us section
-    with st.expander("About Us", expanded=False):
+    st.title("Local Butler")
+    
+    menu = ["Home", "Menu", "Order", "About Us", "Login", "Logout"]
+    choice = st.sidebar.selectbox("Menu", menu)
+    
+    if choice == "Home":
+        st.subheader("Welcome to Local Butler!")
+        st.write("Please navigate through the sidebar to explore our app.")
+    
+    elif choice == "Menu":
+        st.subheader("Menu")
+        with st.expander("Service Categories", expanded=False):
+            category = st.selectbox("Select a service category:", ("Grocery Services", "Laundry Services", "Meal Delivery Services", "Errand Services", "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
+            if category == "Grocery Services":
+                display_grocery_services()
+            elif category == "Laundry Services":
+                display_laundry_services()
+            elif category == "Meal Delivery Services":
+                display_meal_delivery_services()
+            elif category == "Errand Services":
+                display_errand_services()
+            elif category == "Pharmacy Services":
+                display_pharmacy_services()
+            elif category == "Pet Care Services":
+                display_pet_care_services()
+            elif category == "Car Wash Services":
+                display_car_wash_services()
+    
+    elif choice == "Order":
+        if st.session_state['logged_in']:
+            st.subheader("Order")
+            menu_items = get_menu_items()
+            item_name = st.selectbox("Select an item", [item['name'] for item in menu_items])
+            quantity = st.number_input("Quantity", min_value=1, max_value=10, step=1)
+            if st.button("Place Order"):
+                add_order(st.session_state['username'], item_name, quantity)
+                st.success("Order placed successfully!")
+        else:
+            st.warning("Please log in to place an order.")
+    
+    elif choice == "About Us":
+        st.subheader("About Us")
         display_about_us()
-
-    # Display expander button for How it Works section
-    with st.expander("How it Works", expanded=False):
-        display_how_it_works()
+    
+    elif choice == "Login":
+        if not st.session_state['logged_in']:
+            username = st.text_input("Username")
+            password = st.text_input("Password", type='password')
+            if st.button("Login"):
+                if authenticate_user(username, password):
+                    st.session_state['logged_in'] = True
+                    st.session_state['username'] = username
+                    st.success("Logged in successfully!")
+                else:
+                    st.error("Invalid username or password.")
+        else:
+            st.warning("You are already logged in.")
+    
+    elif choice == "Logout":
+        if st.session_state['logged_in']:
+            if st.button("Logout"):
+                logout()
+                st.session_state['logged_in'] = False
+                st.session_state['username'] = ''
+                st.success("Logged out successfully!")
+        else:
+            st.warning("You are not logged in.")
 
 if __name__ == "__main__":
     main()
