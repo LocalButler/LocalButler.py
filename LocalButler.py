@@ -221,7 +221,7 @@ def main():
             elif category == "Car Wash Services":
                 display_car_wash_services()
     
-         elif choice == "Order":
+    elif choice == "Order":
     if st.session_state['logged_in']:
         st.subheader("Order")
         menu_items = get_menu_items()
