@@ -30,6 +30,7 @@ def display_grocery_services():
         st.write("- Select store pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
 
+
 # Function to display laundry services
 def display_laundry_services():
     st.write("Schedule laundry pickup and delivery services, ensuring your clothes are clean and fresh with minimal effort.")
