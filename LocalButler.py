@@ -1,4 +1,5 @@
 import streamlit as st
+import sqlite3
 
 # Authentication functions
 def authenticate_user(username, password):
@@ -19,16 +20,50 @@ def logout():
     st.session_state['username'] = ''
 
 # Database functions
-def get_menu_items():
-    return [
-        {"name": "Pizza", "price": 10.99},
-        {"name": "Burger", "price": 8.99},
-        {"name": "Pasta", "price": 12.99},
-    ]
+def create_connection():
+    conn = None
+    try:
+        conn = sqlite3.connect('users.db')
+    except sqlite3.Error as e:
+        print(e)
+    return conn
 
-def add_order(username, item_name, quantity):
-    # For simplicity, we'll just print the order details
-    print(f"Order placed by {username}: {quantity} x {item_name}")
+def create_table(conn):
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY,
+                username TEXT UNIQUE,
+                password TEXT
+            )
+        ''')
+        conn.commit()
+    except sqlite3.Error as e:
+        print(e)
+
+def insert_user(conn, username, password):
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO users (username, password) VALUES (?, ?)
+        ''', (username, password))
+        conn.commit()
+        return cursor.lastrowid
+    except sqlite3.Error as e:
+        print(e)
+        return None
+
+def get_user_by_username(conn, username):
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT * FROM users WHERE username = ?
+        ''', (username,))
+        return cursor.fetchone()
+    except sqlite3.Error as e:
+        print(e)
+        return None
 
 # Service functions
 def display_grocery_services():
@@ -82,7 +117,7 @@ def display_meal_delivery_services():
     elif restaurant == "Baltimore Coffee & Tea Company":
         st.write(f"You selected: [Baltimore Coffee & Tea Company](https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf)")
         st.write("Instructions for placing your order:")
-        st.write("- Review the menu and decide on your order.")
+                st.write("- Review the menu and decide on your order.")
         st.write("- Call Baltimore Coffee & Tea Company to place your order.")
         st.write("- Specify that you'll be using Local Butler for pick-up and delivery.")
         st.write("- Let your assigned butler know the order you've placed, and we'll take care of the rest!")
@@ -191,7 +226,7 @@ def main():
             st.subheader("Order")
             menu_items = get_menu_items()
             item_name = st.selectbox("Select an item", [item['name'] for item in menu_items])
-            quantity = st.number_input("Quantity", min_value=1, max_value=10, step=1)
+                       quantity = st.number_input("Quantity", min_value=1, max_value=10, step=1)
             if st.button("Place Order"):
                 add_order(st.session_state['username'], item_name, quantity)
                 st.success("Order placed successfully!")
@@ -227,4 +262,7 @@ def main():
             st.warning("You are not logged in.")
 
 if __name__ == "__main__":
+    conn = create_connection()
+    if conn is not None:
+        create_table(conn)
     main()
