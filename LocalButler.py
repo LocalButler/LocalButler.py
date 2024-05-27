@@ -67,7 +67,7 @@ def display_meal_delivery_services():
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
     elif restaurant == "Bruster's Real Ice Cream":
-        st.write(f"You selected: [Bruster's Real Ice Cream](https://brusters.com/)")
+        st.write(f"You selected: [Bruster's Real Ice Cream](https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with Bruster's Real Ice Cream using their website or app.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
