@@ -117,7 +117,7 @@ def display_meal_delivery_services():
     elif restaurant == "Baltimore Coffee & Tea Company":
         st.write(f"You selected: [Baltimore Coffee & Tea Company](https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf)")
         st.write("Instructions for placing your order:")
-                st.write("- Review the menu and decide on your order.")
+        st.write("- Review the menu and decide on your order.")
         st.write("- Call Baltimore Coffee & Tea Company to place your order.")
         st.write("- Specify that you'll be using Local Butler for pick-up and delivery.")
         st.write("- Let your assigned butler know the order you've placed, and we'll take care of the rest!")
