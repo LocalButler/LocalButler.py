@@ -23,7 +23,7 @@ def display_grocery_services():
         st.write("- Place your order directly with the Commissary using your own account.")
         st.write("- Select store pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
-   elif grocery_store == "Food Lion":
+    elif grocery_store == "Food Lion":
         st.write(f"You selected: [Food Lion](https://shop.foodlion.com/?shopping_context=pickup&store=2517)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with Food Lion using your own account.")
