@@ -226,7 +226,7 @@ def main():
             st.subheader("Order")
             menu_items = get_menu_items()
             item_name = st.selectbox("Select an item", [item['name'] for item in menu_items])
-                       quantity = st.number_input("Quantity", min_value=1, max_value=10, step=1)
+            quantity = st.number_input("Quantity", min_value=1, max_value=10, step=1)
             if st.button("Place Order"):
                 add_order(st.session_state['username'], item_name, quantity)
                 st.success("Order placed successfully!")
