@@ -91,7 +91,7 @@ def display_meal_delivery_services():
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
     elif restaurant == "Baskin-Robbins":
-        st.write(f"You selected: [Baskin-Robbins](https://www.baskinrobbins.com/)")
+        st.write(f"You selected: [Baskin-Robbins](https://order.baskinrobbins.com/categories?storeId=BR-339568)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with Baskin-Robbins by using their website or app.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
