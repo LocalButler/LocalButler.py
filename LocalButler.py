@@ -55,7 +55,7 @@ def display_meal_delivery_services():
         st.write("- Let your assigned butler know the order you've placed, and we'll take care of the rest!")
         st.write("We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering.")
     elif restaurant == "The All American Steakhouse":
-        st.write(f"You selected: [The All American Steakhouse](https://www.theallamericansteakhouse.com/)")
+        st.write(f"You selected: [The All American Steakhouse](https://order.theallamericansteakhouse.com/menu/odenton)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with The All American Steakhouse by using their website or app.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
@@ -85,9 +85,9 @@ def display_meal_delivery_services():
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
     elif restaurant == "Dunkin":
-        st.write(f"You selected: [Dunkin](https://www.dunkindonuts.com/)")
+        st.write(f"You selected: [Dunkin](https://www.dunkindonuts.com/en/mobile-app)")
         st.write("Instructions for placing your order:")
-        st.write("- Place your order directly with Dunkin' by using their website or app.")
+        st.write("- Place your order directly with Dunkin' by using their APP.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
     elif restaurant == "Baskin-Robbins":
