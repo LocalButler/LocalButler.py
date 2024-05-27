@@ -221,8 +221,8 @@ def main():
             elif category == "Car Wash Services":
                 display_car_wash_services()
     
-        elif choice == "Order":
-        if st.session_state['logged_in']:
+           elif choice == "Order":
+           if st.session_state['logged_in']:
             st.subheader("Order")
             menu_items = get_menu_items()
             item_name = st.selectbox("Select an item", [item['name'] for item in menu_items])
@@ -233,11 +233,11 @@ def main():
         else:
             st.warning("Please log in to place an order.")
     
-    elif choice == "About Us":
+       elif choice == "About Us":
         st.subheader("About Us")
         display_about_us()
     
-    elif choice == "Login":
+     elif choice == "Login":
         if not st.session_state['logged_in']:
             username = st.text_input("Username")
             password = st.text_input("Password", type='password')
@@ -248,17 +248,17 @@ def main():
                     st.success("Logged in successfully!")
                 else:
                     st.error("Invalid username or password.")
-        else:
+   else:
             st.warning("You are already logged in.")
     
-    elif choice == "Logout":
+  elif choice == "Logout":
         if st.session_state['logged_in']:
             if st.button("Logout"):
                 logout()
                 st.session_state['logged_in'] = False
                 st.session_state['username'] = ''
                 st.success("Logged out successfully!")
-        else:
+ else:
             st.warning("You are not logged in.")
 
 if __name__ == "__main__":
