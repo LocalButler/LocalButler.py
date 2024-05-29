@@ -75,7 +75,7 @@ def display_grocery_services():
                 style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
                 frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
             </iframe>
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: black; opacity: 0.5;"></div>
+            
         </div>
     """
     components.html(video_html, height=315)
