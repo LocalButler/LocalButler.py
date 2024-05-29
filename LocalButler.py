@@ -72,7 +72,7 @@ def display_grocery_services():
     video_html = """
         <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
             <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
                 frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
             </iframe>
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: black; opacity: 0.5;"></div>
@@ -88,6 +88,7 @@ def display_grocery_services():
         st.write("- Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.")
         st.write("- Select store pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
+)
 
     elif grocery_store == "SafeWay":
         st.write(f"You selected: [SafeWay](https://www.safeway.com/)")
