@@ -70,15 +70,56 @@ def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
     # Embed the YouTube video with CSS overlay to hide title and channel
     video_html = """
-        <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-            <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
-                style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
-                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-            </iframe>
-            <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 105%; background-color: black; opacity: 0.3;"></div>
-        </div>
-    """
-    components.html(video_html, height=315)
+<div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
+    <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
+            style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
+            frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+    </iframe>
+    <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 105%; background-color: black; opacity: 0.3;"></div>
+</div>
+"""
+
+st.markdown(
+    f"""
+    <style>
+        .video-container {{
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            overflow: hidden;
+        }}
+
+        .video-container iframe {{
+            position: absolute;
+            top: -25%;
+            left: 0;
+            width: 100%;
+            height: 125%;
+        }}
+
+        .video-overlay {{
+            position: absolute;
+            top: -5%;
+            left: 0;
+            width: 100%;
+            height: 105%;
+            background-color: black;
+            opacity: 0.3;
+        }}
+
+        /* Media query for mobile devices */
+        @media only screen and (max-width: 600px) {{
+            .video-container {{
+                padding-bottom: 100%; /* Change aspect ratio for mobile */
+            }}
+        }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.components.v1.html(video_html, height=315)
     
     st.write("Select a grocery store:")
     grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary", "Food Lion"))
