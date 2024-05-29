@@ -81,7 +81,8 @@ video_html = """
 """
 components.html(video_html, height=315)
     
-    st.write("Select a grocery store:")
+    
+        st.write("Select a grocery store:")
     grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary", "Food Lion"))
     if grocery_store == "Weis Markets":
         st.write(f"You selected: [Weis Markets](https://www.weismarkets.com/)")
