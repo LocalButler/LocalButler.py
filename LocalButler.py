@@ -207,6 +207,8 @@ if 'logged_in' not in st.session_state:
 if 'username' not in st.session_state:
     st.session_state['username'] = ''
 
+import streamlit as st
+
 def main():
     st.markdown(
         """
@@ -214,11 +216,9 @@ def main():
             .title-container {
                 display: flex;
                 align-items: center;
-                justify-content: flex-end;
             }
-            .title-container img {
-                margin-left: 20px;
-                width: 100px;
+            .title-container h1 {
+                margin-right: 20px;
             }
         </style>
         """,
@@ -229,7 +229,8 @@ def main():
         """
         <div class="title-container">
             <h1 style="margin: 0;">Local Butler</h1>
-            <img src="http://res.cloudinary.com/dwmwpmrpo/image/upload/v1717008483/by8oaqcazjlqverba9r3.png">
+            <div style="flex-grow: 1;"></div>
+            <img src="http://res.cloudinary.com/dwmwpmrpo/image/upload/v1717008483/by8oaqcazjlqverba9r3.png" style="width: 100px;">
         </div>
         """,
         unsafe_allow_html=True
@@ -237,6 +238,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
     
     menu = ["Home", "Menu", "Order", "About Us", "Login", "Logout"]
     choice = st.sidebar.selectbox("Menu", menu)
