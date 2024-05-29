@@ -123,7 +123,7 @@ st.components.v1.html(video_html, height=315)
 
 st.write("Select a grocery store:")
 grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary", "Food Lion"))
-if grocery_store == "Weis Markets":
+    if grocery_store == "Weis Markets":
     st.write(f"You selected: [Weis Markets](https://www.weismarkets.com/)")
     st.write("Instructions for placing your order:")
     st.write("- Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.")
