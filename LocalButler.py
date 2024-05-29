@@ -69,19 +69,16 @@ def get_user_by_username(conn, username):
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
     # Embed the YouTube video with CSS overlay to hide title and channel
-video_html = f"""
-    <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-        <img src="{video_thumbnail}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" onclick="window.open('{video_link}', '_blank');" />
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70px; height: 70px; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; cursor: pointer;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="48px" height="48px" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                <path d="M8 5v14l11-7z"/>
-                <path d="M0 0h24v24H0z" fill="none"/>
-            </svg>
+    video_html = """
+        <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
+            <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
+                style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
+                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+            </iframe>
+            <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 105%; background-color: black; opacity: 0.3;"></div>
         </div>
-    </div>
-"""
-
-components.html(video_html, height=315)
+    """
+    components.html(video_html, height=315)
     
     st.write("Select a grocery store:")
     grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary", "Food Lion"))
