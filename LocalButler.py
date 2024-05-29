@@ -96,12 +96,17 @@ def display_grocery_services():
         st.write("- Select store pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
     
-    # Embed the YouTube video
-    video_html = """
-        <iframe width="560" height="315" src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic" 
-        frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-    """
-    components.html(video_html, height=315)
+    # Embed the YouTube video with zoom
+video_html = """
+    <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%; overflow: hidden;">
+        <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
+                style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;"
+                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+        </iframe>
+    </div>
+"""
+components.html(video_html, height=315)
+
 
 def display_laundry_services():
     st.write("Schedule laundry pickup and delivery services, ensuring your clothes are clean and fresh with minimal effort.")
