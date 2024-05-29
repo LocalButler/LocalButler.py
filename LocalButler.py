@@ -208,8 +208,31 @@ if 'username' not in st.session_state:
     st.session_state['username'] = ''
 
 def main():
-    st.title("Local Butler")
-    st.image("http://res.cloudinary.com/dwmwpmrpo/image/upload/v1717008483/by8oaqcazjlqverba9r3.png", width=100)
+    st.markdown(
+        """
+        <style>
+            .title-container {
+                display: flex;
+                align-items: center;
+            }
+            .title-container img {
+                margin-right: 20px;
+                width: 100px;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        """
+        <div class="title-container">
+            <img src="http://res.cloudinary.com/dwmwpmrpo/image/upload/v1717008483/by8oaqcazjlqverba9r3.png">
+            <h1 style="margin: 0;">Local Butler</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 if __name__ == "__main__":
     main()
