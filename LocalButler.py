@@ -214,9 +214,10 @@ def main():
             .title-container {
                 display: flex;
                 align-items: center;
+                justify-content: flex-end;
             }
             .title-container img {
-                margin-right: 20px;
+                margin-left: 20px;
                 width: 100px;
             }
         </style>
@@ -227,8 +228,8 @@ def main():
     st.markdown(
         """
         <div class="title-container">
-            <img src="http://res.cloudinary.com/dwmwpmrpo/image/upload/v1717008483/by8oaqcazjlqverba9r3.png">
             <h1 style="margin: 0;">Local Butler</h1>
+            <img src="http://res.cloudinary.com/dwmwpmrpo/image/upload/v1717008483/by8oaqcazjlqverba9r3.png">
         </div>
         """,
         unsafe_allow_html=True
