@@ -209,6 +209,10 @@ if 'username' not in st.session_state:
 
 def main():
     st.title("Local Butler")
+    st.image("http://res.cloudinary.com/dwmwpmrpo/image/upload/v1717008483/by8oaqcazjlqverba9r3.png", width=100)
+
+if __name__ == "__main__":
+    main()
     
     menu = ["Home", "Menu", "Order", "About Us", "Login", "Logout"]
     choice = st.sidebar.selectbox("Menu", menu)
