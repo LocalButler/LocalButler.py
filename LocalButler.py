@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import sqlite3
 
 # Authentication functions
@@ -94,6 +95,13 @@ def display_grocery_services():
         st.write("- Place your order directly with Food Lion using your own account.")
         st.write("- Select store pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
+    
+    # Embed the YouTube video
+    video_html = """
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic" 
+        frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    """
+    components.html(video_html, height=315)
 
 def display_laundry_services():
     st.write("Schedule laundry pickup and delivery services, ensuring your clothes are clean and fresh with minimal effort.")
@@ -266,5 +274,3 @@ if __name__ == "__main__":
     if conn is not None:
         create_table(conn)
     main()
-
-
