@@ -69,88 +69,116 @@ def get_user_by_username(conn, username):
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
     # Embed the YouTube video with CSS overlay to hide title and channel
-    import streamlit as st
+    video_html = """
+        <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
+            <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
+                style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
+                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+            </iframe>
+            <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 105%; background-color: black; opacity: 0.3;"></div>
+        </div>
+    """
+    components.html(video_html, height=315)
+    
+    st.write("Select a grocery store:")
+    grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary", "Food Lion"))
+    if grocery_store == "Weis Markets":
+        st.write(f"You selected: [Weis Markets](https://www.weismarkets.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.")
+        st.write("- Select store pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
 
-video_html = """
-<div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-    <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
-            style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
-            frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-    </iframe>
-    <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 105%; background-color: black; opacity: 0.3;"></div>
-</div>
-"""
+    elif grocery_store == "SafeWay":
+        st.write(f"You selected: [SafeWay](https://www.safeway.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.")
+        st.write("- Select store pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
+    elif grocery_store == "Commissary":
+        st.write(f"You selected: [Commissary](https://shop.commissaries.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with the Commissary using your own account.")
+        st.write("- Select store pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
+    elif grocery_store == "Food Lion":
+        st.write(f"You selected: [Food Lion](https://shop.foodlion.com/?shopping_context=pickup&store=2517)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Food Lion using your own account.")
+        st.write("- Select store pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
+    
+    
 
-st.markdown(
-    f"""
-    <style>
-        .video-container {{
-            position: relative;
-            width: 100%;
-            height: 0;
-            padding-bottom: 56.25%;
-            overflow: hidden;
-        }}
+def display_laundry_services():
+    st.write("Schedule laundry pickup and delivery services, ensuring your clothes are clean and fresh with minimal effort.")
 
-        .video-container iframe {{
-            position: absolute;
-            top: -25%;
-            left: 0;
-            width: 100%;
-            height: 125%;
-        }}
-
-        .video-overlay {{
-            position: absolute;
-            top: -5%;
-            left: 0;
-            width: 100%;
-            height: 105%;
-            background-color: black;
-            opacity: 0.3;
-        }}
-
-        /* Media query for mobile devices */
-        @media only screen and (max-width: 600px) {{
-            .video-container {{
-                padding-bottom: 100%; /* Change aspect ratio for mobile */
-            }}
-        }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.components.v1.html(video_html, height=315)
-
-st.write("Select a grocery store:")
-grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary", "Food Lion"))
-if grocery_store == "Weis Markets":
-    st.write(f"You selected: [Weis Markets](https://www.weismarkets.com/)")
-    st.write("Instructions for placing your order:")
-    st.write("- Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.")
-    st.write("- Select store pick-up and specify the date and time.")
-    st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
-
-elif grocery_store == "SafeWay":
-    st.write(f"You selected: [SafeWay](https://www.safeway.com/)")
-    st.write("Instructions for placing your order:")
-    st.write("- Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.")
-    st.write("- Select store pick-up and specify the date and time.")
-    st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
-elif grocery_store == "Commissary":
-    st.write(f"You selected: [Commissary](https://shop.commissaries.com/)")
-    st.write("Instructions for placing your order:")
-    st.write("- Place your order directly with the Commissary using your own account.")
-    st.write("- Select store pick-up and specify the date and time.")
-    st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
-elif grocery_store == "Food Lion":
-    st.write(f"You selected: [Food Lion](https://shop.foodlion.com/?shopping_context=pickup&store=2517)")
-    st.write("Instructions for placing your order:")
-    st.write("- Place your order directly with Food Lion using your own account.")
-    st.write("- Select store pick-up and specify the date and time.")
-    st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
-
+def display_meal_delivery_services():
+    st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
+    st.write("Select a restaurant:")
+    restaurant = st.selectbox("Choose a restaurant:", ("The Hideaway", "Ruth's Chris Steak House", "Baltimore Coffee & Tea Company", "The All American Steakhouse", "Jersey Mike's Subs", "Bruster's Real Ice Cream", "Luigino's", "PHO 5UP ODENTON", "Dunkin", "Baskin-Robbins"))
+    if restaurant == "The Hideaway":
+        st.write(f"You selected: [The Hideaway](https://order.toasttab.com/online/hideawayodenton)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with The Hideaway using their website or app.")
+        st.write("- Select pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Ruth's Chris Steak House":
+        st.write(f"You selected: [Ruth's Chris Steak House](https://order.ruthschris.com/)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Ruth's Chris Steak House using their website or app.")
+        st.write("- Select pick-up and specify the date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Baltimore Coffee & Tea Company":
+        st.write(f"You selected: [Baltimore Coffee & Tea Company](https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf)")
+        st.write("Instructions for placing your order:")
+        st.write("- Review the menu and decide on your order.")
+        st.write("- Call Baltimore Coffee & Tea Company to place your order.")
+        st.write("- Specify that you'll be using Local Butler for pick-up and delivery.")
+        st.write("- Let your assigned butler know the order you've placed, and we'll take care of the rest!")
+        st.write("We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering.")
+    elif restaurant == "The All American Steakhouse":
+        st.write(f"You selected: [The All American Steakhouse](https://order.theallamericansteakhouse.com/menu/odenton)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with The All American Steakhouse by using their website or app.")
+        st.write("- Specify the items you want to order and the pick-up date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Jersey Mike's Subs":
+        st.write(f"You selected: [Jersey Mike's Subs](https://www.jerseymikes.com/menu)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Jersey Mike's Subs using their website or app.")
+        st.write("- Specify the items you want to order and the pick-up date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Bruster's Real Ice Cream":
+        st.write(f"You selected: [Bruster's Real Ice Cream](https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Bruster's Real Ice Cream using their website or app.")
+        st.write("- Specify the items you want to order and the pick-up date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Luigino's":
+        st.write(f"You selected: [Luigino's](https://order.yourmenu.com/luiginos)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Luigino's by using their website or app.")
+        st.write("- Specify the items you want to order and the pick-up date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "PHO 5UP ODENTON":
+        st.write(f"You selected: [PHO 5UP ODENTON](https://www.clover.com/online-ordering/pho-5up-odenton)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with PHO 5UP ODENTON by using their website or app.")
+        st.write("- Specify the items you want to order and the pick-up date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Dunkin":
+        st.write(f"You selected: [Dunkin](https://www.dunkindonuts.com/en/mobile-app)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Dunkin' by using their APP.")
+        st.write("- Specify the items you want to order and the pick-up date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
+    elif restaurant == "Baskin-Robbins":
+        st.write(f"You selected: [Baskin-Robbins](https://order.baskinrobbins.com/categories?storeId=BR-339568)")
+        st.write("Instructions for placing your order:")
+        st.write("- Place your order directly with Baskin-Robbins by using their website or app.")
+        st.write("- Specify the items you want to order and the pick-up date and time.")
+        st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
 
 def display_errand_services():
     st.write("Get help with various errands such as shopping, mailing packages, or picking up prescriptions.")
