@@ -96,16 +96,16 @@ def display_grocery_services():
         st.write("- Select store pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
     
-    # Embed the YouTube video with zoom
+    # Embed the YouTube video with adjusted zoom and play only within the grocery description section
 video_html = """
-    <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%; overflow: hidden;">
+    <div style="position: relative; width: 80%; height: 0; padding-bottom: 56.25%; overflow: hidden;">
         <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
-                style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
                 frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
         </iframe>
     </div>
 """
-components.html(video_html, height=315)
+
 
 
 def display_laundry_services():
