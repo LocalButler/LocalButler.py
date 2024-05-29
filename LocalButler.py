@@ -208,7 +208,18 @@ if 'username' not in st.session_state:
     st.session_state['username'] = ''
 
 def main():
-    st.title("Local Butler")
+    st.markdown(
+        """
+        <div style="display: flex; align-items: center;">
+            <img src="http://res.cloudinary.com/dwmwpmrpo/image/upload/v1717007964/aufmqweyed7ipox56sjq.png" alt="My Pythan App" width="100" height="100">
+            <h1 style="margin-left: 20px;">My Pythan App</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+if __name__ == "__main__":
+    main()
     
     menu = ["Home", "Menu", "Order", "About Us", "Login", "Logout"]
     choice = st.sidebar.selectbox("Menu", menu)
