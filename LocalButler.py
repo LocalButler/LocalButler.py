@@ -87,8 +87,7 @@ def display_grocery_services():
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.")
         st.write("- Select store pick-up and specify the date and time.")
-        st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
-)
+        st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!"))
 
     elif grocery_store == "SafeWay":
         st.write(f"You selected: [SafeWay](https://www.safeway.com/)")
