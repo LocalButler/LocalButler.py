@@ -69,16 +69,14 @@ def get_user_by_username(conn, username):
 # Service functions
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
-    
     # Embed the YouTube video
     video_html = """
-       # Embed the YouTube video with modified parameters to hide controls, title, and top info bar
-video_html = """
-    <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic&controls=0&showinfo=0"
+       <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic&controls=0&showinfo=0"
             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
             frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
     </iframe>
-
+    """
+    components.html(video_html, height=315)
     
     st.write("Select a grocery store:")
     grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary", "Food Lion"))
