@@ -66,22 +66,19 @@ def get_user_by_username(conn, username):
         print(e)
         return None
 
-# Service functions
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
     # Embed the YouTube video with CSS overlay to hide title and channel
-video_html = """
-    <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-        <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
-            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-            frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-        </iframe>
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: black; opacity: 0.5;"></div>
-    </div>
-"""
-components.html(video_html, height=315)
-    
-    
+    video_html = """
+        <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
+            <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+            </iframe>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: black; opacity: 0.5;"></div>
+        </div>
+    """
+    components.html(video_html, height=315)
     
     st.write("Select a grocery store:")
     grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary", "Food Lion"))
@@ -91,6 +88,7 @@ components.html(video_html, height=315)
         st.write("- Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.")
         st.write("- Select store pick-up and specify the date and time.")
         st.write("- Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!")
+
     elif grocery_store == "SafeWay":
         st.write(f"You selected: [SafeWay](https://www.safeway.com/)")
         st.write("Instructions for placing your order:")
