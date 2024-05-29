@@ -78,7 +78,7 @@ video_html = """
             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
             frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
     </iframe>
-"""
+
     
     st.write("Select a grocery store:")
     grocery_store = st.selectbox("Choose a store:", ("Weis Markets", "SafeWay", "Commissary", "Food Lion"))
