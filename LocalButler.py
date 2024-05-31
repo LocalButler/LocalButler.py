@@ -29,7 +29,7 @@ def create_connection():
         print(e)
     return conn
 
-def create_table(conn)
+def create_table(conn):
     try:
         cursor = conn.cursor()
         cursor.execute('''
