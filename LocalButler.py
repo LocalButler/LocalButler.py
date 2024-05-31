@@ -167,7 +167,7 @@ def display_meal_delivery_services():
         st.write("- Place your order directly with PHO 5UP ODENTON by using their website or app.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
-    elif restaurant == "Dunkin":
+    elif restaurant == "Laila":
         st.write(f"You selected: [Dunkin](https://www.dunkindonuts.com/en/mobile-app)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with Dunkin' by using their APP.")
