@@ -116,7 +116,7 @@ def display_laundry_services():
 def display_meal_delivery_services():
     st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
     st.write("Select a restaurant:")
-    restaurant = st.selectbox("Choose a restaurant:", ("The Hideaway", "Ruth's Chris Steak House", "Baltimore Coffee & Tea Company", "The All American Steakhouse", "Jersey Mike's Subs", "Bruster's Real Ice Cream", "Luigino's", "PHO 5UP ODENTON", "Dunkin", "Baskin-Robbins"))
+    restaurant = st.selectbox("Choose a restaurant:", ("The Hideaway", "Ruth's Chris Steak House", "Baltimore Coffee & Tea Company", "The All American Steakhouse", "Jersey Mike's Subs", "Bruster's Real Ice Cream", "Luigino's", "PHO 5UP ODENTON", "Laila", "Baskin-Robbins"))
     if restaurant == "The Hideaway":
         st.write(f"You selected: [The Hideaway](https://order.toasttab.com/online/hideawayodenton)")
         st.write("Instructions for placing your order:")
