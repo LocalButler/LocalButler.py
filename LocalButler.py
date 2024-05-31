@@ -116,7 +116,7 @@ def display_laundry_services():
 def display_meal_delivery_services():
     st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
     st.write("Select a restaurant:")
-    restaurant = st.selectbox("Choose a restaurant:", ("The Hideaway", "Ruth's Chris Steak House", "Baltimore Coffee & Tea Company", "The All American Steakhouse", "Jersey Mike's Subs", "Bruster's Real Ice Cream", "Luigino's", "PHO 5UP ODENTON", "Laila", "Baskin-Robbins"))
+    restaurant = st.selectbox("Choose a restaurant:", ("The Hideaway", "Ruth's Chris Steak House", "Baltimore Coffee & Tea Company", "The All American Steakhouse", "Jersey Mike's Subs", "Bruster's Real Ice Cream", "Luigino's", "PHO 5UP ODENTON", "Dunkin", "Baskin-Robbins"))
     if restaurant == "The Hideaway":
         st.write(f"You selected: [The Hideaway](https://order.toasttab.com/online/hideawayodenton)")
         st.write("Instructions for placing your order:")
@@ -167,7 +167,7 @@ def display_meal_delivery_services():
         st.write("- Place your order directly with PHO 5UP ODENTON by using their website or app.")
         st.write("- Specify the items you want to order and the pick-up date and time.")
         st.write("- Let your assigned butler know you've placed an order, and we'll take care of the rest!")
-    elif restaurant == "Laila":
+    elif restaurant == "Dunkin":
         st.write(f"You selected: [Dunkin](https://www.dunkindonuts.com/en/mobile-app)")
         st.write("Instructions for placing your order:")
         st.write("- Place your order directly with Dunkin' by using their APP.")
