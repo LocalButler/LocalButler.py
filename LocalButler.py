@@ -210,22 +210,12 @@ def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
     video_html = """
         <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-    <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
-        style="position: absolute; top: -30%; left: 0; width: 100%; height: 160%;"
-        frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-    </iframe>
-    <div style="position: absolute; top: -10%; left: 0; width: 100%; height: 120%; background-color: black; opacity: 0.3;"></div>
-</div>
-
-<style>
-    @media (max-width: 767px) {
-        iframe {
-            right: -25%;
-            left: 25%;
-            width: 150%;
-        }
-    }
-</style>
+            <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
+                style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
+                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+            </iframe>
+            <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 105%; background-color: black; opacity: 0.3;"></div>
+        </div>
     """
     components.html(video_html, height=315)
 
