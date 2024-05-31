@@ -211,11 +211,20 @@ def display_grocery_services():
     video_html = """
         <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
     <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
-        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+        style="position: absolute; top: -40%; left: 0; width: 100%; height: 180%;"
         frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
     </iframe>
-    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: black; opacity: 0.3;"></div>
+    <div style="position: absolute; top: -15%; left: 0; width: 100%; height: 130%; background-color: black; opacity: 0.3;"></div>
 </div>
+
+<style>
+    @media (max-width: 767px) {
+        iframe {
+            right: -25%;
+            width: 125%;
+        }
+    }
+</style>
     """
     components.html(video_html, height=315)
 
