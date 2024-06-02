@@ -96,14 +96,6 @@ GROCERY_STORES = {
             "Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
-    "SafeWay": {
-        "url": "https://www.safeway.com/",
-        "instructions": [
-            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
-            "Select store pick-up and specify the date and time.",
-            "Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!"
-        ]
-    },
     "Commissary": {
         "url": "https://shop.commissaries.com/",
         "instructions": [
