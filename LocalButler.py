@@ -208,12 +208,18 @@ RESTAURANTS = {
 # Service display functions
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
-    video_html = """
+    
+    # Use the GitHub raw video link
+    video_url = "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/119398d25abc62218ccaec71f44b30478d96485f/Local%20Butler%20Groceries.mp4"
+    
+    video_html = f"""
         <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-            <iframe src="https://www.youtube.com/embed/aKx6rxVenic?autoplay=1&loop=1&playlist=aKx6rxVenic"
+            <video autoplay loop muted playsinline
                 style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
-                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-            </iframe>
+                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                <source src="{video_url}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
             <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 105%; background-color: black; opacity: 0.3;"></div>
         </div>
     """
