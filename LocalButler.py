@@ -88,6 +88,8 @@ def authenticate_user(username, password):
 GROCERY_STORES = {
     "Weis Markets": {
         "url": "https://www.weismarkets.com/",
+        "video_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/1ff75ee91b2717fabadb44ee645612d6e48e8ee3/Weis%20Promo%20Online%20ordering%20%E2%80%90.mp4",
+        "video_title": "Watch this video to learn how to order from Weis Markets:",
         "instructions": [
             "Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.",
             "Select store pick-up and specify the date and time.",
