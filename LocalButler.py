@@ -96,6 +96,14 @@ GROCERY_STORES = {
             "Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
+    "SafeWay": {
+        "url": "https://www.safeway.com/",
+        "instructions": [
+            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
+            "Select store pick-up and specify the date and time.",
+            "Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
     "Commissary": {
         "url": "https://shop.commissaries.com/",
         "instructions": [
@@ -113,6 +121,49 @@ GROCERY_STORES = {
         ]
     }
 }
+
+def display_grocery_services():
+    st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
+    
+    # Main grocery service video with overlay (unchanged)
+    video_url = "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/119398d25abc62218ccaec71f44b30478d96485f/Local%20Butler%20Groceries.mp4"
+    
+    video_html = f"""
+        <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
+            <video autoplay loop muted playsinline
+                style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
+                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                <source src="{video_url}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 90%; background-color: black; opacity: 0.3;"></div>
+        </div>
+    """
+    components.html(video_html, height=315)
+
+    st.write("Select a grocery store:")
+    grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
+    store_info = GROCERY_STORES[grocery_store]
+    st.write(f"You selected: [{grocery_store}]({store_info['url']})")
+    
+    # Display store-specific video if available (using the same HTML5 video structure)
+    if "video_url" in store_info:
+        st.markdown(f"### {store_info['video_title']}")
+        store_video_html = f"""
+            <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
+                <video autoplay playsinline controls
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                    <source src="{store_info['video_url']}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        """
+        components.html(store_video_html, height=315)
+    
+    st.write("Instructions for placing your order:")
+    for instruction in store_info["instructions"]:
+        st.write(f"- {instruction}")
 
 RESTAURANTS = {
     "The Hideaway": {
