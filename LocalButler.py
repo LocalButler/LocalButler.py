@@ -220,7 +220,7 @@ def display_grocery_services():
                 <source src="{video_url}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: black; opacity: 0.3;"></div>
+            <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 95%; background-color: black; opacity: 0.3;"></div>
         </div>
     """
     components.html(video_html, height=315)
