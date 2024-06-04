@@ -5,9 +5,8 @@ from pathlib import Path
 import hashlib
 import os
 import requests
-import openai
 
-# Database setup
+# Database setup (unchanged)
 DB_FILE = "users.db"
 db_path = Path(DB_FILE)
 if not db_path.exists():
@@ -22,7 +21,7 @@ if not db_path.exists():
     conn.commit()
     conn.close()
 
-# Database functions
+# Database functions (unchanged)
 def get_db_connection():
     try:
         conn = sqlite3.connect(DB_FILE)
@@ -65,7 +64,7 @@ def authenticate_user(username, password):
     finally:
         conn.close()
 
-# Service data
+# Service data (unchanged)
 GROCERY_STORES = {
     "Weis Markets": {
         "url": "https://www.weismarkets.com/",
@@ -101,7 +100,7 @@ FIREBASE_FUNCTIONS = {
 
 # Replace 'MY_PROJECT' with your actual Firebase project ID
 
-# Service display functions
+# Service display functions (unchanged)
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
     
@@ -138,7 +137,7 @@ def display_meal_delivery_services():
     for instruction in restaurant_info["instructions"]:
         st.write(f"- {instruction}")
 
-# Functions to interact with Firebase
+# New functions to interact with Firebase
 def place_order(service, provider, items, pickup_time):
     url = FIREBASE_FUNCTIONS["placeOrder"]
     data = {
@@ -168,63 +167,6 @@ def update_butler_status(butler_id, available):
     }
     response = requests.post(url, json=data)
     return response.json()
-
-# Chatbot functions and data
-SERVICE_INFO = """
-Local Butler is your reliable delivery partner offering a range of services to make your life easier. Here's a quick overview of what we do:
-
-1. **Grocery Services**:
-    - Order fresh groceries from your favorite local stores like Weis Markets, SafeWay, Commissary, and Food Lion.
-    - Place your order directly with the store and select store pick-up. We'll handle the rest!
-
-2. **Meal Delivery Services**:
-    - Enjoy delicious meals from top restaurants such as The Hideaway, Ruth's Chris Steak House, Baltimore Coffee & Tea Company, and more.
-    - Place your order directly with the restaurant and select pick-up. We'll handle the delivery!
-
-3. **Laundry Services**:
-    - Schedule laundry pick-up and delivery, ensuring your clothes are clean and fresh with minimal effort.
-
-4. **Errand Services**:
-    - Get help with various errands such as shopping, mailing packages, or picking up prescriptions.
-
-5. **Pharmacy Services**:
-    - Order prescription medications and over-the-counter products from local pharmacies with convenient delivery options.
-
-6. **Pet Care Services**:
-    - Ensure your furry friends receive the care they deserve with pet sitting, grooming, and walking services.
-
-7. **Car Wash Services**:
-    - Schedule car wash and detailing services to keep your vehicle clean and looking its best.
-
-Let me know how I can assist you with any of these services!
-"""
-
-# Initialize session state for messages if not already present
-if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "Hello! How can I assist you today with Local Butler services?"}]
-
-# Prepend the service information to the conversation
-if "service_info" not in st.session_state:
-    st.session_state["service_info"] = SERVICE_INFO
-    st.session_state["messages"].insert(0, {"role": "system", "content": st.session_state["service_info"]})
-
-def display_chat_history():
-    for msg in st.session_state.messages:
-        if msg["role"] == "assistant":
-            st.chat_message("assistant").write(msg["content"])
-        elif msg["role"] == "user":
-            st.chat_message("user").write(msg["content"])
-
-def get_assistant_response(messages):
-    openai.api_key = openai_api_key
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=messages
-        )
-        return response.choices[0].message["content"]
-    except Exception as e:
-        return f"Error: {e}"
 
 # Main function
 def main():
@@ -256,13 +198,8 @@ def main():
         unsafe_allow_html=True
     )
 
-    menu = ["Home", "Menu", "Order", "My Orders", "About Us", "Chat with Butler", "Login", "Logout", "Register"]
+    menu = ["Home", "Menu", "Order", "My Orders", "About Us", "Login", "Logout", "Register"]
     choice = st.sidebar.selectbox("Menu", menu)
-
-    # Add this inside the sidebar for the chatbot's API key
-    with st.sidebar:
-        openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
-        st.markdown("[Get an OpenAI API key](https://platform.openai.com/account/api-keys)")
 
     if choice == "Home":
         st.subheader("Welcome to Local Butler!")
@@ -278,7 +215,7 @@ def main():
                 display_meal_delivery_services()
 
     elif choice == "Order":
-        if st.session_state.get('logged_in', False):
+        if st.session_state['logged_in']:
             st.subheader("Order")
             service = st.selectbox("Select a service:", ("Grocery", "Meal Delivery"))
             
@@ -295,7 +232,7 @@ def main():
             st.warning("Please log in to place an order.")
 
     elif choice == "My Orders":
-        if st.session_state.get('logged_in', False):
+        if st.session_state['logged_in']:
             st.subheader("My Orders")
             # TODO: Fetch user's orders from Firestore
             st.info("Feature coming soon: View and manage your orders here.")
@@ -310,32 +247,8 @@ def main():
         st.write("3. Follow the prompts to complete your order.")
         st.write("4. Sit back and relax while we take care of the rest!")
 
-    elif choice == "Chat with Butler":
-        st.title("💬 Chat with Your Local Butler")
-        
-        if not openai_api_key:
-            st.info("Please add your OpenAI API key in the sidebar to continue.")
-        else:
-            display_chat_history()
-
-            # Handle user input
-            if prompt := st.chat_input("Type your message here..."):
-                # Append user message to session state
-                st.session_state.messages.append({"role": "user", "content": prompt})
-                st.chat_message("user").write(prompt)
-
-                # Get assistant's response
-                msg = get_assistant_response(st.session_state["messages"])
-                st.session_state.messages.append({"role": "assistant", "content": msg})
-                st.chat_message("assistant").write(msg)
-
-            if st.button("Clear Chat History"):
-                st.session_state.pop("messages", None)
-                st.session_state.pop("service_info", None)
-                st.experimental_rerun()
-
     elif choice == "Login":
-        if not st.session_state.get('logged_in', False):
+        if not st.session_state['logged_in']:
             username = st.text_input("Username")
             password = st.text_input("Password", type='password')
             if st.button("Login"):
@@ -349,13 +262,10 @@ def main():
             st.warning("You are already logged in.")
 
     elif choice == "Logout":
-        if st.session_state.get('logged_in', False):
+        if st.session_state['logged_in']:
             if st.button("Logout"):
                 st.session_state['logged_in'] = False
                 st.session_state['username'] = ''
-                st.session_state.pop("chatbot_api_key", None)
-                st.session_state.pop("messages", None)
-                st.session_state.pop("service_info", None)
                 st.success("Logged out successfully!")
         else:
             st.warning("You are not logged in.")
@@ -374,11 +284,6 @@ def main():
                     st.error("Registration failed. Please try again.")
             else:
                 st.error("Passwords do not match. Please try again.")
-
-# Initialize session state for login
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-    st.session_state['username'] = ''
 
 if __name__ == "__main__":
     main()
