@@ -379,11 +379,13 @@ def main():
                 display_car_wash_services()
 
     elif choice == "Order":
-        if st.session_state['logged_in']:
-            st.subheader("Order")
-            # <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="500px" style="background:white"></iframe>
-        else:
-            st.warning("Please log in to place an order.")
+    if st.session_state['logged_in']:
+        st.subheader("Order")
+        # Add your order functionality here
+    else:
+        st.warning("Please log in to place an order.")
+        if st.button("New Order"):
+            # Add functionality for creating a new order here
 
     elif choice == "About Us":
         st.subheader("About Us")
