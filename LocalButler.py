@@ -323,6 +323,9 @@ if 'logged_in' not in st.session_state:
 if 'username' not in st.session_state:
     st.session_state['username'] = ''
 
+# Define menu globally
+menu = ["Home", "Menu", "Order", "About Us", "Login", "Logout", "Register"]
+
 def main():
     st.set_page_config(page_title="Local Butler")
 
@@ -352,40 +355,35 @@ def main():
         unsafe_allow_html=True
     )
 
-    menu = ["Home", "Menu", "Order", "About Us", "Login", "Logout", "Register"]
-choice = st.sidebar.selectbox("Menu", menu)
+    # Moved selectbox inside main function
+    choice = st.sidebar.selectbox("Menu", menu)
 
-if choice == "Home":
-    st.subheader("Welcome to Local Butler!")
-    st.write("Please navigate through the sidebar to explore our app.")
+    if choice == "Home":
+        st.subheader("Welcome to Local Butler!")
+        st.write("Please navigate through the sidebar to explore our app.")
 
-elif choice == "Menu":
-    st.subheader("Menu")
-    with st.expander("Service Categories", expanded=False):
-        category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services", "Laundry Services", "Errand Services", "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
-        if category == "Grocery Services":
-            display_grocery_services()
-        elif category == "Meal Delivery Services":
-            display_meal_delivery_services()
-        elif category == "Laundry Services":
-            display_laundry_services()
-        elif category == "Errand Services":
-            display_errand_services()
-        elif category == "Pharmacy Services":
-            display_pharmacy_services()
-        elif category == "Pet Care Services":
-            display_pet_care_services()
-        elif category == "Car Wash Services":
-            display_car_wash_services()
+    elif choice == "Menu":
+        st.subheader("Menu")
+        with st.expander("Service Categories", expanded=False):
+            category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services", "Laundry Services", "Errand Services", "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
+            if category == "Grocery Services":
+                display_grocery_services()
+            elif category == "Meal Delivery Services":
+                display_meal_delivery_services()
+            elif category == "Laundry Services":
+                display_laundry_services()
+            elif category == "Errand Services":
+                display_errand_services()
+            elif category == "Pharmacy Services":
+                display_pharmacy_services()
+            elif category == "Pet Care Services":
+                display_pet_care_services()
+            elif category == "Car Wash Services":
+                display_car_wash_services()
 
-# Add a new state to track the page
-if 'current_page' not in st.session_state:
-    st.session_state['current_page'] = 'Home'
-
-def main():
-    st.set_page_config(page_title="Local Butler")
-
-    # ... (rest of the code remains the same) ...
+    # Add a new state to track the page
+    if 'current_page' not in st.session_state:
+        st.session_state['current_page'] = 'Home'
 
     if choice == "Order":
         if st.session_state['logged_in']:
