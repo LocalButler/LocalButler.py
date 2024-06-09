@@ -378,13 +378,46 @@ def main():
             elif category == "Car Wash Services":
                 display_car_wash_services()
 
-    elif choice == "Order":
-        if st.session_state['logged_in']:
-            st.subheader("Order")
-            # Add order placement functionality here
-        else:
-            st.warning("Please log in to place an order.")
+def display_iframe(url, allowed_origins=None):
+    """Displays an iframe with a provided URL within a Streamlit container,
+       considering security best practices.
 
+    Args:
+        url (str): The URL of the content to be embedded.
+        allowed_origins (list, optional): A list of allowed origins (domain names)
+            for the iframe. If None, no restrictions are applied (use with caution).
+
+    Raises:
+        ValueError: If the URL is not a string or if an invalid origin is provided.
+    """
+
+    if not isinstance(url, str):
+        raise ValueError("URL must be a string.")
+
+    if allowed_origins:
+        for origin in allowed_origins:
+            if not isinstance(origin, str):
+                raise ValueError("Allowed origins must be strings.")
+
+    origin_str = ", ".join(allowed_origins) if allowed_origins else ""
+    st.write(f'<iframe src="{url}" frameborder="0" style="width: 100%; height: 500px;" referrerpolicy="no-referrer" {origin_str}></iframe>', unsafe_allow_html=True)
+
+if choice == "Order":
+    if st.session_state['logged_in']:
+        st.subheader("Order")
+
+        # Order placement functionality (if applicable)
+
+        # Embed iframe only if security considerations are met
+        trusted_iframe_origin = "https://a.picoapps.xyz"  # Replace with the trusted origin if known
+        allowed_origins = [trusted_iframe_origin] if trusted_iframe_origin else None
+
+        if allowed_origins:
+            display_iframe("https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed", allowed_origins)
+        else:
+            st.warning("Iframe embedding requires security review. Consider a custom order placement solution.")
+    else:
+        st.warning("Please log in to place an order.")
     elif choice == "About Us":
         st.subheader("About Us")
         display_about_us()
