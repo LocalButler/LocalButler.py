@@ -387,10 +387,10 @@ def main():
             if st.button("New Order"):
                 # Add functionality for creating a new order here
 
-    elif choice == "About Us":
-        st.subheader("About Us")
-        display_about_us()
-        display_how_it_works()
+elif choice == "About Us":
+    st.subheader("About Us")
+    display_about_us()
+    display_how_it_works()
 
     elif choice == "Login":
         if not st.session_state['logged_in']:
