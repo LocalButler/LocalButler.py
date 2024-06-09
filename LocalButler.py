@@ -379,21 +379,19 @@ def main():
                 display_car_wash_services()
 
      elif choice == "Order":
-    if st.session_state['logged_in']:
-        st.subheader("Order")
-        # Add order placement functionality here
-        order_options = ["New Order", "View Previous Orders"]
-        order_choice = st.selectbox("Select an option:", order_options)
-        if order_choice == "New Order":
-            st.markdown("""
-            <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="500px" style="background:white"></iframe>
-            """, unsafe_allow_html=True)
-        elif order_choice == "View Previous Orders":
-            # Add code to display previous orders
-            pass
-    else:
-        st.warning("Please log in to place an order.")
-
+        if st.session_state['logged_in']:
+            st.subheader("Order")
+            order_options = ["New Order", "View Previous Orders"]
+            order_choice = st.selectbox("Select an option:", order_options)
+            if order_choice == "New Order":
+                st.markdown("""
+                <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="500px" style="background:white"></iframe>
+                """, unsafe_allow_html=True)
+            elif order_choice == "View Previous Orders":
+                # Add code to display previous orders
+                pass
+        else:
+            st.warning("Please log in to place an order.")
     elif choice == "About Us":
         st.subheader("About Us")
         display_about_us()
