@@ -323,9 +323,6 @@ if 'logged_in' not in st.session_state:
 if 'username' not in st.session_state:
     st.session_state['username'] = ''
 
-# Define menu globally
-menu = ["Home", "Menu", "Order", "About Us", "Login", "Logout", "Register"]
-
 def main():
     st.set_page_config(page_title="Local Butler")
 
@@ -355,7 +352,8 @@ def main():
         unsafe_allow_html=True
     )
 
-    choice = st.sidebar.selectbox("Menu", ["Home", "Menu", "Order", "About Us", "Login", "Logout", "Register"])
+    menu = ["Home", "Menu", "Order", "About Us", "Login", "Logout", "Register"]
+    choice = st.sidebar.selectbox("Menu", menu)
 
     if choice == "Home":
         st.subheader("Welcome to Local Butler!")
@@ -380,23 +378,12 @@ def main():
             elif category == "Car Wash Services":
                 display_car_wash_services()
 
-    if choice == "Order":
+    elif choice == "Order":
         if st.session_state['logged_in']:
             st.subheader("Order")
-            order_options = ["New Order", "Remove Previous Orders"]
-            order_choice = st.selectbox("Select an option:", order_options)
-            if order_choice == "New Order":
-                st.session_state['current_page'] = 'NewOrder'  # Set the current page to 'NewOrder'
-            elif order_choice == "Remove Previous Orders":
-                # Add code to remove previous orders
-                pass
+            # Add order placement functionality here
         else:
             st.warning("Please log in to place an order.")
-
-    if st.session_state.get('current_page') == 'NewOrder':
-        st.markdown("""
-        <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="100%" style="position: absolute; top: 0; left: 0; border: none;"></iframe>
-        """, unsafe_allow_html=True)
 
     elif choice == "About Us":
         st.subheader("About Us")
