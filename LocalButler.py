@@ -355,8 +355,7 @@ def main():
         unsafe_allow_html=True
     )
 
-    # Moved selectbox inside main function
-    choice = st.sidebar.selectbox("Menu", menu)
+    choice = st.sidebar.selectbox("Menu", ["Home", "Menu", "Order", "About Us", "Login", "Logout", "Register"])
 
     if choice == "Home":
         st.subheader("Welcome to Local Butler!")
@@ -381,25 +380,20 @@ def main():
             elif category == "Car Wash Services":
                 display_car_wash_services()
 
-    # Add a new state to track the page
-    if 'current_page' not in st.session_state:
-        st.session_state['current_page'] = 'Home'
-
     if choice == "Order":
         if st.session_state['logged_in']:
             st.subheader("Order")
-            order_options = ["New Order", "View Previous Orders"]
+            order_options = ["New Order", "Remove Previous Orders"]
             order_choice = st.selectbox("Select an option:", order_options)
             if order_choice == "New Order":
                 st.session_state['current_page'] = 'NewOrder'  # Set the current page to 'NewOrder'
-            elif order_choice == "View Previous Orders":
-                # Add code to display previous orders
+            elif order_choice == "Remove Previous Orders":
+                # Add code to remove previous orders
                 pass
         else:
             st.warning("Please log in to place an order.")
 
-    # Add a new condition to display the iframe on the 'NewOrder' page
-    if st.session_state['current_page'] == 'NewOrder':
+    if st.session_state.get('current_page') == 'NewOrder':
         st.markdown("""
         <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="100%" style="position: absolute; top: 0; left: 0; border: none;"></iframe>
         """, unsafe_allow_html=True)
