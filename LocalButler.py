@@ -385,7 +385,7 @@ def main():
             order_choice = st.selectbox("Select an option:", order_options)
             if order_choice == "New Order":
                 st.markdown("""
-                <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="500px" style="background:white"></iframe>
+                <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="300px" style="background:white"></iframe>
                 """, unsafe_allow_html=True)
             elif order_choice == "View Previous Orders":
                 # Add code to display previous orders
