@@ -378,7 +378,7 @@ def main():
             elif category == "Car Wash Services":
                 display_car_wash_services()
 
-     elif choice == "Order":
+    elif choice == "Order":
         if st.session_state['logged_in']:
             st.subheader("Order")
             order_options = ["New Order", "View Previous Orders"]
@@ -392,6 +392,7 @@ def main():
                 pass
         else:
             st.warning("Please log in to place an order.")
+
     elif choice == "About Us":
         st.subheader("About Us")
         display_about_us()
