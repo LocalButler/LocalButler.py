@@ -378,20 +378,33 @@ def main():
             elif category == "Car Wash Services":
                 display_car_wash_services()
 
-    elif choice == "Order":
+    # Add a new state to track the page
+if 'current_page' not in st.session_state:
+    st.session_state['current_page'] = 'Home'
+
+def main():
+    st.set_page_config(page_title="Local Butler")
+
+    # ... (rest of the code remains the same) ...
+
+    if choice == "Order":
         if st.session_state['logged_in']:
             st.subheader("Order")
             order_options = ["New Order", "View Previous Orders"]
             order_choice = st.selectbox("Select an option:", order_options)
             if order_choice == "New Order":
-                st.markdown("""
-                <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="300px" style="background:white"></iframe>
-                """, unsafe_allow_html=True)
+                st.session_state['current_page'] = 'NewOrder'  # Set the current page to 'NewOrder'
             elif order_choice == "View Previous Orders":
                 # Add code to display previous orders
                 pass
         else:
             st.warning("Please log in to place an order.")
+
+    # Add a new condition to display the iframe on the 'NewOrder' page
+    if st.session_state['current_page'] == 'NewOrder':
+        st.markdown("""
+        <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="100%" style="position: absolute; top: 0; left: 0; border: none;"></iframe>
+        """, unsafe_allow_html=True)
 
     elif choice == "About Us":
         st.subheader("About Us")
