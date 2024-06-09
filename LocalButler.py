@@ -381,7 +381,7 @@ def main():
     elif choice == "Order":
         if st.session_state['logged_in']:
             st.subheader("Order")
-            # Add order placement functionality here
+            # <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="500px" style="background:white"></iframe>
         else:
             st.warning("Please log in to place an order.")
 
