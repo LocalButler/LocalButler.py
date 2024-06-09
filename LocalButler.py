@@ -378,7 +378,7 @@ def main():
             elif category == "Car Wash Services":
                 display_car_wash_services()
 
-    elif choice == "Order":
+     elif choice == "Order":
     if st.session_state['logged_in']:
         st.subheader("Order")
         # Add order placement functionality here
