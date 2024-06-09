@@ -379,13 +379,13 @@ def main():
                 display_car_wash_services()
 
     elif choice == "Order":
-    if st.session_state['logged_in']:
-        st.subheader("Order")
-        # Add your order functionality here
-    else:
-        st.warning("Please log in to place an order.")
-        if st.button("New Order"):
-            # Add functionality for creating a new order here
+        if st.session_state['logged_in']:
+            st.subheader("Order")
+            # Add your order functionality here
+        else:
+            st.warning("Please log in to place an order.")
+            if st.button("New Order"):
+                # Add functionality for creating a new order here
 
     elif choice == "About Us":
         st.subheader("About Us")
