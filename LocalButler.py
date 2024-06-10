@@ -318,7 +318,7 @@ def display_how_it_works():
 
 def display_new_order():
     iframe_html = """
-    <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="75%" height="630px" style="background:white"></iframe>
+    <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="90%" height="630px" style="background:white"></iframe>
     """
     components.html(iframe_html, height=630)
 
