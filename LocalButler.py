@@ -320,7 +320,7 @@ def display_new_order():
     iframe_html = """
     <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="500px" style="background:white"></iframe>
     """
-    components.html(iframe_html, height=520)
+    components.html(iframe_html, height=500)
 
 # Initialize session state
 if 'logged_in' not in st.session_state:
