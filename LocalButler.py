@@ -178,8 +178,7 @@ RESTAURANTS = {
         "url": "https://order.ruthschris.com/",
         "instructions": [
             "Place your order directly with Ruth's Chris Steak House using their website or app.",
-            "Select pick-up and specify the date and time.",
-            "Let your assigned butler know you've placed an order, and we'll take care of the rest!"
+            "Select pick-up and specify the date and time.","Let your assigned butler know you've placed an order, and we'll take care of the rest!"
         ]
     },
     "Baltimore Coffee & Tea Company": {
@@ -317,6 +316,12 @@ def display_how_it_works():
     st.write("3. Follow the prompts to complete your order.")
     st.write("4. Sit back and relax while we take care of the rest!")
 
+def display_new_order():
+    iframe_html = """
+    <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="100%" height="500px" style="background:white"></iframe>
+    """
+    components.html(iframe_html, height=520)
+
 # Initialize session state
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
@@ -352,7 +357,7 @@ def main():
         unsafe_allow_html=True
     )
 
-    menu = ["Home", "Menu", "Order", "About Us", "Login", "Logout", "Register"]
+    menu = ["Home", "Menu", "Order", "New Order", "About Us", "Login", "Logout", "Register"]
     choice = st.sidebar.selectbox("Menu", menu)
 
     if choice == "Home":
@@ -384,6 +389,10 @@ def main():
             # Add order placement functionality here
         else:
             st.warning("Please log in to place an order.")
+
+    elif choice == "New Order":
+        st.subheader("New Order")
+        display_new_order()
 
     elif choice == "About Us":
         st.subheader("About Us")
