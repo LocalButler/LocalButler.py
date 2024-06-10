@@ -318,9 +318,9 @@ def display_how_it_works():
 
 def display_new_order():
     iframe_html = """
-    <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="630px" style="background:white"></iframe>
+    <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
     """
-    components.html(iframe_html, height=630)
+    components.html(iframe_html, height=680)
 
 # Initialize session state
 if 'logged_in' not in st.session_state:
