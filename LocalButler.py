@@ -122,49 +122,6 @@ GROCERY_STORES = {
     }
 }
 
-def display_grocery_services():
-    st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
-    
-    # Main grocery service video with overlay (unchanged)
-    video_url = "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/119398d25abc62218ccaec71f44b30478d96485f/Local%20Butler%20Groceries.mp4"
-    
-    video_html = f"""
-        <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-            <video autoplay loop muted playsinline
-                style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
-                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                <source src="{video_url}" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 90%; background-color: black; opacity: 0.3;"></div>
-        </div>
-    """
-    components.html(video_html, height=315)
-
-    st.write("Select a grocery store:")
-    grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
-    store_info = GROCERY_STORES[grocery_store]
-    st.write(f"You selected: [{grocery_store}]({store_info['url']})")
-    
-    # Display store-specific video if available (using the same HTML5 video structure)
-    if "video_url" in store_info:
-        st.markdown(f"### {store_info['video_title']}")
-        store_video_html = f"""
-            <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-                <video autoplay playsinline controls
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                    <source src="{store_info['video_url']}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
-        """
-        components.html(store_video_html, height=315)
-    
-    st.write("Instructions for placing your order:")
-    for instruction in store_info["instructions"]:
-        st.write(f"- {instruction}")
-
 RESTAURANTS = {
     "The Hideaway": {
         "url": "https://order.toasttab.com/online/hideawayodenton",
@@ -249,6 +206,18 @@ RESTAURANTS = {
     }
 }
 
+HOUSE_CLEANING_SERVICES = {
+    "Professional House Cleaning": {
+        "url": "https://www.example.com/house-cleaning",
+        "instructions": [
+            "Visit our website and fill out the online form to schedule a professional house cleaning service.",
+            "Provide details about your home, including the number of rooms, bathrooms, and any specific cleaning requirements.",
+            "Select a convenient date and time for the cleaning service.",
+            "Our team of professional cleaners will arrive at your home at the scheduled time and ensure a thorough cleaning."
+        ]
+    }
+}
+
 # Service display functions
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
@@ -273,6 +242,22 @@ def display_grocery_services():
     grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
     store_info = GROCERY_STORES[grocery_store]
     st.write(f"You selected: [{grocery_store}]({store_info['url']})")
+    
+    # Display store-specific video if available (using the same HTML5 video structure)
+    if "video_url" in store_info:
+        st.markdown(f"### {store_info['video_title']}")
+        store_video_html = f"""
+            <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
+                <video autoplay playsinline controls
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                    <source src="{store_info['video_url']}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        """
+        components.html(store_video_html, height=315)
+    
     st.write("Instructions for placing your order:")
     for instruction in store_info["instructions"]:
         st.write(f"- {instruction}")
@@ -307,6 +292,15 @@ def display_car_wash_services():
     st.write("Schedule car wash and detailing services to keep your vehicle clean and looking its best.")
     # Add any additional instructions or options for car wash services
 
+def display_house_cleaning_services():
+    st.write("Keep your home clean and tidy with our professional house cleaning services.")
+    service = st.selectbox("Choose a house cleaning service:", list(HOUSE_CLEANING_SERVICES.keys()))
+    service_info = HOUSE_CLEANING_SERVICES[service]
+    st.write(f"You selected: [{service}]({service_info['url']})")
+    st.write("Instructions for scheduling your service:")
+    for instruction in service_info["instructions"]:
+        st.write(f"- {instruction}")
+
 def display_about_us():
     st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade, Maryland 20755. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
 
@@ -322,6 +316,12 @@ def display_new_order():
     """
     components.html(iframe_html, height=680)
 
+def display_calendar():
+    iframe_html = """
+    <iframe title="Calendar" src="https://localbutler.durablesites.com/book-now?pt=NjY2ODQ3Mjk2OTI2NTgzMjJmNGMwNDA5OjE3MTgxMTU0MDYuMjk3OnByZXZpZXc=" width="100%" height="680px" style="background:white"></iframe>
+    """
+    components.html(iframe_html, height=680)
+
 # Initialize session state
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
@@ -331,33 +331,14 @@ if 'username' not in st.session_state:
 def main():
     st.set_page_config(page_title="Local Butler")
 
-    st.markdown(
-        """
-        <style>
-            .title-container {
-                display: flex;
-                align-items: center;
-            }
-            .title-container h1 {
-                margin-right: 20px;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    # ... (existing title and logo code)
 
-    st.markdown(
-        """
-        <div class="title-container">
-            <h1 style="margin: 0;">Local Butler</h1>
-            <div style="flex-grow: 1;"></div>
-            <img src="http://res.cloudinary.com/dwmwpmrpo/image/upload/v1717008483/by8oaqcazjlqverba9r3.png" style="width: 100px;">
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    menu = ["Home", "Menu", "Order", "New Order", "Calendar", "About Us", "Login"]
+    if st.session_state['logged_in']:
+        menu.append("Logout")
+    else:
+        menu.append("Register")
 
-    menu = ["Home", "Menu", "Order", "New Order", "About Us", "Login", "Logout", "Register"]
     choice = st.sidebar.selectbox("Menu", menu)
 
     if choice == "Home":
@@ -367,7 +348,7 @@ def main():
     elif choice == "Menu":
         st.subheader("Menu")
         with st.expander("Service Categories", expanded=False):
-            category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services", "Laundry Services", "Errand Services", "Pharmacy Services", "Pet Care Services", "Car Wash Services"))
+            category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services", "Laundry Services", "Errand Services", "Pharmacy Services", "Pet Care Services", "Car Wash Services", "House Cleaning Services"))
             if category == "Grocery Services":
                 display_grocery_services()
             elif category == "Meal Delivery Services":
@@ -382,6 +363,8 @@ def main():
                 display_pet_care_services()
             elif category == "Car Wash Services":
                 display_car_wash_services()
+            elif category == "House Cleaning Services":
+                display_house_cleaning_services()
 
     elif choice == "Order":
         if st.session_state['logged_in']:
@@ -393,6 +376,10 @@ def main():
     elif choice == "New Order":
         st.subheader("New Order")
         display_new_order()
+
+    elif choice == "Calendar":
+        st.subheader("Calendar")
+        display_calendar()
 
     elif choice == "About Us":
         st.subheader("About Us")
@@ -446,4 +433,4 @@ def logout():
     st.session_state['username'] = ''
 
 if __name__ == "__main__":
-    main()  
+    main()
