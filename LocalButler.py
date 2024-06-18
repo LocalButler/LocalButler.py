@@ -317,16 +317,9 @@ def display_new_order():
     components.html(iframe_html, height=680)
 
 def display_calendar():
-    iframe_html = <iframe id="calendarFrame" title="Calendar" src="https://localbutler.durablesites.com/book-now?pt=NjY2ODQ3Mjk2OTI2NTgzMjJmNGMwNDA5OjE3MTgxMTU0MDYuMjk3OnByZXZpZXc=" width="100%" height="680px" style="background:white"></iframe>
-<script>
-    document.getElementById('calendarFrame').onload = function() {
-        var iframeDocument = this.contentDocument || this.contentWindow.document;
-        var header = iframeDocument.querySelector('header'); // Adjust the selector based on the actual header element
-        var footer = iframeDocument.querySelector('footer'); // Adjust the selector based on the actual footer element
-        if (header) header.style.display = 'none';
-        if (footer) footer.style.display = 'none';
-    };
-</script>
+    iframe_html = """
+    <iframe title="Calendar" src="https://localbutler.durablesites.com/book-now?pt=NjY2ODQ3Mjk2OTI2NTgzMjJmNGMwNDA5OjE3MTgxMTU0MDYuMjk3OnByZXZpZXc=" width="100%" height="680px" style="background:white"></iframe>
+    """
     components.html(iframe_html, height=680)
 
 # Initialize session state
