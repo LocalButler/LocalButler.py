@@ -93,7 +93,7 @@ GROCERY_STORES = {
         "instructions": [
             "Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.",
             "Select store pick-up and specify the date and time.",
-            "Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "SafeWay": {
@@ -101,7 +101,7 @@ GROCERY_STORES = {
         "instructions": [
             "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
             "Select store pick-up and specify the date and time.",
-            "Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "Commissary": {
@@ -109,7 +109,7 @@ GROCERY_STORES = {
         "instructions": [
             "Place your order directly with the Commissary using your own account.",
             "Select store pick-up and specify the date and time.",
-            "Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "Food Lion": {
@@ -117,7 +117,7 @@ GROCERY_STORES = {
         "instructions": [
             "Place your order directly with Food Lion using your own account.",
             "Select store pick-up and specify the date and time.",
-            "Let your assigned butler know you've placed a pick-up order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     }
 }
@@ -128,14 +128,14 @@ RESTAURANTS = {
         "instructions": [
             "Place your order directly with The Hideaway using their website or app.",
             "Select pick-up and specify the date and time.",
-            "Let your assigned butler know you've placed an order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "Ruth's Chris Steak House": {
         "url": "https://order.ruthschris.com/",
         "instructions": [
             "Place your order directly with Ruth's Chris Steak House using their website or app.",
-            "Select pick-up and specify the date and time.","Let your assigned butler know you've placed an order, and we'll take care of the rest!"
+            "Select pick-up and specify the date and time.","Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "Baltimore Coffee & Tea Company": {
@@ -144,7 +144,7 @@ RESTAURANTS = {
             "Review the menu and decide on your order.",
             "Call Baltimore Coffee & Tea Company to place your order.",
             "Specify that you'll be using Local Butler for pick-up and delivery.",
-            "Let your assigned butler know the order you've placed, and we'll take care of the rest!",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
             "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
         ]
     },
@@ -153,7 +153,7 @@ RESTAURANTS = {
         "instructions": [
             "Place your order directly with The All American Steakhouse by using their website or app.",
             "Specify the items you want to order and the pick-up date and time.",
-            "Let your assigned butler know you've placed an order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "Jersey Mike's Subs": {
@@ -161,7 +161,7 @@ RESTAURANTS = {
         "instructions": [
             "Place your order directly with Jersey Mike's Subs using their website or app.",
             "Specify the items you want to order and the pick-up date and time.",
-            "Let your assigned butler know you've placed an order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "Bruster's Real Ice Cream": {
@@ -169,7 +169,7 @@ RESTAURANTS = {
         "instructions": [
             "Place your order directly with Bruster's Real Ice Cream using their website or app.",
             "Specify the items you want to order and the pick-up date and time.",
-            "Let your assigned butler know you've placed an order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "Luigino's": {
@@ -177,7 +177,7 @@ RESTAURANTS = {
         "instructions": [
             "Place your order directly with Luigino's by using their website or app.",
             "Specify the items you want to order and the pick-up date and time.",
-            "Let your assigned butler know you've placed an order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "PHO 5UP ODENTON": {
@@ -185,7 +185,7 @@ RESTAURANTS = {
         "instructions": [
             "Place your order directly with PHO 5UP ODENTON by using their website or app.",
             "Specify the items you want to order and the pick-up date and time.",
-            "Let your assigned butler know you've placed an order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "Dunkin": {
@@ -193,7 +193,7 @@ RESTAURANTS = {
         "instructions": [
             "Place your order directly with Dunkin' by using their APP.",
             "Specify the items you want to order and the pick-up date and time.",
-            "Let your assigned butler know you've placed an order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "Baskin-Robbins": {
@@ -201,7 +201,7 @@ RESTAURANTS = {
         "instructions": [
             "Place your order directly with Baskin-Robbins by using their website or app.",
             "Specify the items you want to order and the pick-up date and time.",
-            "Let your assigned butler know you've placed an order, and we'll take care of the rest!"
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     }
 }
