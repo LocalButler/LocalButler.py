@@ -390,7 +390,7 @@ def main():
         if not st.session_state['logged_in']:
             username = st.text_input("Username")
             password = st.text_input("Password", type='password')
-             if st.button("Login"):
+            if st.button("Login"):
                 if not username or not password:
                     st.error("Please enter both username and password.")
                 elif authenticate_user(username, password):
@@ -413,6 +413,12 @@ def main():
             st.warning("You are not logged in.")
 
         elif choice == "Register":
+        st.subheader("Register")
+        new_username = st.text_input("Username")
+        new_password = st.text_input("Password", type='password')
+        confirm_password = st.text_input("Confirm Password", type='password')
+
+elif choice == "Register":
         st.subheader("Register")
         new_username = st.text_input("Username")
         new_password = st.text_input("Password", type='password')
