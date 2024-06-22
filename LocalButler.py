@@ -412,11 +412,6 @@ def main():
         else:
             st.warning("You are not logged in.")
 
-        elif choice == "Register":
-        st.subheader("Register")
-        new_username = st.text_input("Username")
-        new_password = st.text_input("Password", type='password')
-        confirm_password = st.text_input("Confirm Password", type='password')
 
 elif choice == "Register":
         st.subheader("Register")
