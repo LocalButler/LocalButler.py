@@ -333,7 +333,7 @@ def main():
 
     # ... (existing title and logo code)
 
-    menu = ["Home", "Menu", "Order", "New Order", "Calendar", "About Us", "Login"]
+    menu = ["Home", "Menu", "Order", "Butler Bot", "Calendar", "About Us", "Login"]
     if st.session_state['logged_in']:
         menu.append("Logout")
     else:
@@ -373,8 +373,8 @@ def main():
         else:
             st.warning("Please log in to place an order.")
 
-    elif choice == "New Order":
-        st.subheader("New Order")
+    elif choice == "Butler Bot":
+        st.subheader("Butler Bot")
         display_new_order()
 
     elif choice == "Calendar":
