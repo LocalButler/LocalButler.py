@@ -277,6 +277,7 @@ def display_meal_delivery_services():
     st.write("Instructions for placing your order:")
     for instruction in restaurant_info["instructions"]:
         st.write(f"- {instruction}"),
+         
          elif "image_url" in store_info:
         st.image(store_info['image_url'], caption=f"Order Now", use_column_width=True)
 
