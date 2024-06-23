@@ -324,7 +324,10 @@ def display_new_order():
 
 def display_calendar():
     iframe_html = """
-    <iframe title="Calendar" src="https://localbutler.durablesites.com/book-now?pt=NjY2ODQ3Mjk2OTI2NTgzMjJmNGMwNDA5OjE3MTgxMTU0MDYuMjk3OnByZXZpZXc=" width="100%" height="680px" style="background:white"></iframe>
+    <!-- Calendly inline widget begin -->
+    <div class="calendly-inline-widget" data-url="https://calendly.com/localbutler" style="min-width:320px;height:700px;"></div>
+    <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+    <!-- Calendly inline widget end -->
     """
     components.html(iframe_html, height=680)
 
