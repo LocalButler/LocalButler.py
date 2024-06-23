@@ -2,9 +2,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 import sqlite3
 from pathlib import Path
-import bcrypt
+import hashlib
 import os
-from datetime import datetime, timedelta
 
 # Database setup
 DB_FILE = "users.db"
@@ -15,9 +14,7 @@ if not db_path.exists():
         CREATE TABLE users (
             id INTEGER PRIMARY KEY,
             username TEXT UNIQUE,
-            password TEXT,
-            last_login DATETIME,
-            login_attempts INTEGER DEFAULT 0
+            password TEXT
         )
     ''')
     conn.commit()
@@ -25,12 +22,33 @@ if not db_path.exists():
 
 # Database functions
 def get_db_connection():
-    return sqlite3.connect(DB_FILE)
+    """
+    Get a connection to the SQLite database.
+    Returns:
+        Connection object or None
+    """
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        return conn
+    except sqlite3.Error as e:
+        st.error(f"Error connecting to the database: {e}")
+        return None
 
 def insert_user(username, password):
+    """
+    Insert a new user into the database.
+    Args:
+        username (str): The username of the new user.
+        password (str): The password of the new user.
+    Returns:
+        True if the user was inserted successfully, False otherwise.
+    """
     conn = get_db_connection()
+    if conn is None:
+        return False
+
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
     try:
-        hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
         cursor = conn.cursor()
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
         conn.commit()
@@ -42,40 +60,31 @@ def insert_user(username, password):
         conn.close()
 
 def authenticate_user(username, password):
+    """
+    Authenticate a user by checking their username and password against the database.
+    Args:
+        username (str): The username of the user.
+        password (str): The password of the user.
+    Returns:
+        True if the user is authenticated, False otherwise.
+    """
     conn = get_db_connection()
+    if conn is None:
+        return False
+
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT password, login_attempts, last_login FROM users WHERE username = ?", (username,))
+        cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, hashed_password))
         user = cursor.fetchone()
-        if user:
-            stored_password, login_attempts, last_login = user
-            if last_login:
-                last_login = datetime.strptime(last_login, "%Y-%m-%d %H:%M:%S")
-                if datetime.now() - last_login > timedelta(minutes=15):
-                    cursor.execute("UPDATE users SET login_attempts = 0 WHERE username = ?", (username,))
-                    conn.commit()
-                    login_attempts = 0
-
-            if login_attempts >= 5:
-                st.error("Account locked. Please try again later.")
-                return False
-
-            if bcrypt.checkpw(password.encode(), stored_password):
-                cursor.execute("UPDATE users SET login_attempts = 0, last_login = ? WHERE username = ?", (datetime.now(), username))
-                conn.commit()
-                return True
-            else:
-                cursor.execute("UPDATE users SET login_attempts = login_attempts + 1 WHERE username = ?", (username,))
-                conn.commit()
-                return False
-        return False
+        return user is not None
     except sqlite3.Error as e:
         st.error(f"Error authenticating user: {e}")
         return False
     finally:
         conn.close()
 
-# Service data (Consider moving this to a database in a production environment)
+# Service data
 GROCERY_STORES = {
     "Weis Markets": {
         "url": "https://www.weismarkets.com/",
@@ -87,8 +96,34 @@ GROCERY_STORES = {
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
-    # ... (other grocery stores)
-}
+    "SafeWay": {
+        "url": "https://www.safeway.com/",
+        "instructions": [
+            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png"
+    },
+    "Commissary": {
+        "url": "https://shop.commissaries.com/",
+        "instructions": [
+            "Place your order directly with the Commissary using your own account.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/comissaries.jpg"
+    },
+    "Food Lion": {
+        "url": "https://shop.foodlion.com/?shopping_context=pickup&store=2517",
+        "instructions": [
+            "Place your order directly with Food Lion using your own account.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg
+}"
 
 RESTAURANTS = {
     "The Hideaway": {
@@ -99,33 +134,175 @@ RESTAURANTS = {
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
-    # ... (other restaurants)
+    "Ruth's Chris Steak House": {
+        "url": "https://order.ruthschris.com/",
+        "instructions": [
+            "Place your order directly with Ruth's Chris Steak House using their website or app.",
+            "Select pick-up and specify the date and time.","Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Baltimore Coffee & Tea Company": {
+        "url": "https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf",
+        "instructions": [
+            "Review the menu and decide on your order.",
+            "Call Baltimore Coffee & Tea Company to place your order.",
+            "Specify that you'll be using Local Butler for pick-up and delivery.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
+            "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
+        ]
+    },
+    "The All American Steakhouse": {
+        "url": "https://order.theallamericansteakhouse.com/menu/odenton",
+        "instructions": [
+            "Place your order directly with The All American Steakhouse by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Jersey Mike's Subs": {
+        "url": "https://www.jerseymikes.com/menu",
+        "instructions": [
+            "Place your order directly with Jersey Mike's Subs using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Bruster's Real Ice Cream": {
+        "url": "https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage",
+        "instructions": [
+            "Place your order directly with Bruster's Real Ice Cream using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Luigino's": {
+        "url": "https://order.yourmenu.com/luiginos",
+        "instructions": [
+            "Place your order directly with Luigino's by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "PHO 5UP ODENTON": {
+        "url": "https://www.clover.com/online-ordering/pho-5up-odenton",
+        "instructions": [
+            "Place your order directly with PHO 5UP ODENTON by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Dunkin": {
+        "url": "https://www.dunkindonuts.com/en/mobile-app",
+        "instructions": [
+            "Place your order directly with Dunkin' by using their APP.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Baskin-Robbins": {
+        "url": "https://order.baskinrobbins.com/categories?storeId=BR-339568",
+        "instructions": [
+            "Place your order directly with Baskin-Robbins by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    }
+}
+
+HOUSE_CLEANING_SERVICES = {
+    "Professional House Cleaning": {
+        "url": "https://www.example.com/house-cleaning",
+        "instructions": [
+            "Visit our website and fill out the online form to schedule a professional house cleaning service.",
+            "Provide details about your home, including the number of rooms, bathrooms, and any specific cleaning requirements.",
+            "Select a convenient date and time for the cleaning service.",
+            "Our team of professional cleaners will arrive at your home at the scheduled time and ensure a thorough cleaning."
+        ]
+    }
 }
 
 # Service display functions
-def display_service(service_type, services):
-    st.write(f"Select a {service_type}:")
-    service = st.selectbox(f"Choose a {service_type}:", list(services.keys()))
-    service_info = services[service]
-    st.write(f"ORDER NOW: [{service}]({service_info['url']})")
+def display_grocery_services():
+    st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
     
-    if "video_url" in service_info:
-        st.markdown(f"### {service_info['video_title']}")
-        video_html = f"""
+    # Use the GitHub raw video link
+    video_url = "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/119398d25abc62218ccaec71f44b30478d96485f/Local%20Butler%20Groceries.mp4"
+    
+    video_html = f"""
+        <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
+            <video autoplay loop muted playsinline
+                style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
+                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                <source src="{video_url}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 92%; background-color: black; opacity: 0.3;"></div>
+        </div>
+    """
+    components.html(video_html, height=315)
+
+    st.write("Select a grocery store:")
+    grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
+    store_info = GROCERY_STORES[grocery_store]
+    st.write(f"ORDER NOW: [{grocery_store}]({store_info['url']})")
+    
+# Display store-specific video or image
+    if "video_url" in store_info:
+        st.markdown(f"### {store_info['video_title']}")
+        store_video_html = f"""
             <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
                 <video autoplay playsinline controls
                     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
                     frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                    <source src="{service_info['video_url']}" type="video/mp4">
+                    <source src="{store_info['video_url']}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </div>
         """
-        components.html(video_html, height=315)
-    elif "image_url" in service_info:
-        st.image(service_info['image_url'], caption=f"{service} App", use_column_width=True)
+        components.html(store_video_html, height=315)
+    elif "image_url" in store_info:
+        st.image(store_info['image_url'], caption=f"{grocery_store} App", use_column_width=True)
     
     st.write("Instructions for placing your order:")
+    for instruction in store_info["instructions"]:
+        st.write(f"- {instruction}")
+
+def display_meal_delivery_services():
+    st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
+    st.write("Select a restaurant:")
+    restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
+    restaurant_info = RESTAURANTS[restaurant]
+    st.write(f"ORDER NOW: [{restaurant}]({restaurant_info['url']})")
+    st.write("Instructions for placing your order:")
+    for instruction in restaurant_info["instructions"]:
+        st.write(f"- {instruction}")
+
+def display_laundry_services():
+    st.write("Schedule laundry pickup and delivery services, ensuring your clothes are clean and fresh with minimal effort.")
+    # Add any additional instructions or options for laundry services
+
+def display_errand_services():
+    st.write("Get help with various errands such as shopping, mailing packages, or picking up prescriptions.")
+    # Add any additional instructions or options for errand services
+
+def display_pharmacy_services():
+    st.write("Order prescription medications and over-the-counter products from local pharmacies with convenient delivery options.")
+    # Add any additional instructions or options for pharmacy services
+
+def display_pet_care_services():
+    st.write("Ensure your furry friends receive the care they deserve with pet sitting, grooming, and walking services.")
+    # Add any additional instructions or options for pet care services
+
+def display_car_wash_services():
+    st.write("Schedule car wash and detailing services to keep your vehicle clean and looking its best.")
+    # Add any additional instructions or options for car wash services
+
+def display_house_cleaning_services():
+    st.write("Keep your home clean and tidy with our professional house cleaning services.")
+    service = st.selectbox("Choose a house cleaning service:", list(HOUSE_CLEANING_SERVICES.keys()))
+    service_info = HOUSE_CLEANING_SERVICES[service]
+    st.write(f"ORDER NOW: [{service}]({service_info['url']})")
+    st.write("Instructions for scheduling your service:")
     for instruction in service_info["instructions"]:
         st.write(f"- {instruction}")
 
@@ -159,8 +336,7 @@ if 'username' not in st.session_state:
 def main():
     st.set_page_config(page_title="Local Butler")
 
-    st.title("Local Butler")
-    st.image("https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/Local%20Butler.jpg", width=200)
+    # ... (existing title and logo code)
 
     menu = ["Home", "Menu", "Order", "Butler Bot", "Calendar", "About Us", "Login"]
     if st.session_state['logged_in']:
@@ -177,16 +353,28 @@ def main():
     elif choice == "Menu":
         st.subheader("Menu")
         with st.expander("Service Categories", expanded=False):
-            category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
+            category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services", "Laundry Services", "Errand Services", "Pharmacy Services", "Pet Care Services", "Car Wash Services", "House Cleaning Services"))
             if category == "Grocery Services":
-                display_service("grocery store", GROCERY_STORES)
+                display_grocery_services()
             elif category == "Meal Delivery Services":
-                display_service("restaurant", RESTAURANTS)
+                display_meal_delivery_services()
+            elif category == "Laundry Services":
+                display_laundry_services()
+            elif category == "Errand Services":
+                display_errand_services()
+            elif category == "Pharmacy Services":
+                display_pharmacy_services()
+            elif category == "Pet Care Services":
+                display_pet_care_services()
+            elif category == "Car Wash Services":
+                display_car_wash_services()
+            elif category == "House Cleaning Services":
+                display_house_cleaning_services()
 
     elif choice == "Order":
         if st.session_state['logged_in']:
             st.subheader("Order")
-            st.write("Order functionality coming soon!")
+            # Add order placement functionality here
         else:
             st.warning("Please log in to place an order.")
 
@@ -214,7 +402,6 @@ def main():
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = username
                     st.success("Logged in successfully!")
-                    st.experimental_rerun()
                 else:
                     st.error("Invalid username or password.")
         else:
@@ -223,12 +410,13 @@ def main():
     elif choice == "Logout":
         if st.session_state['logged_in']:
             if st.button("Logout"):
+                logout()
                 st.session_state['logged_in'] = False
                 st.session_state['username'] = ''
                 st.success("Logged out successfully!")
-                st.experimental_rerun()
         else:
             st.warning("You are not logged in.")
+
 
     elif choice == "Register":
         st.subheader("Register")
@@ -240,13 +428,19 @@ def main():
                 st.error("Please fill in all fields.")
             elif new_password != confirm_password:
                 st.error("Passwords do not match. Please try again.")
-            elif len(new_password) < 8:
-                st.error("Password must be at least 8 characters long.")
             else:
                 if insert_user(new_username, new_password):
                     st.success("Registration successful! You can now log in.")
                 else:
                     st.error("Registration failed. Please try again.")
+
+
+def logout():
+    """
+    Log out the current user by resetting the session state.
+    """
+    st.session_state['logged_in'] = False
+    st.session_state['username'] = ''
 
 if __name__ == "__main__":
     main()
