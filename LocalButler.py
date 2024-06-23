@@ -242,7 +242,7 @@ def display_grocery_services():
     st.write("Select a grocery store:")
     grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
     store_info = GROCERY_STORES[grocery_store]
-    st.write(f"You selected: [{grocery_store}]({store_info['url']})")
+    st.write(f"ORDER NOW: [{grocery_store}]({store_info['url']})")
     
 # Display store-specific video or image
     if "video_url" in store_info:
@@ -270,7 +270,7 @@ def display_meal_delivery_services():
     st.write("Select a restaurant:")
     restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
     restaurant_info = RESTAURANTS[restaurant]
-    st.write(f"You selected: [{restaurant}]({restaurant_info['url']})")
+    st.write(f"ORDER NOW: [{restaurant}]({restaurant_info['url']})")
     st.write("Instructions for placing your order:")
     for instruction in restaurant_info["instructions"]:
         st.write(f"- {instruction}")
@@ -299,7 +299,7 @@ def display_house_cleaning_services():
     st.write("Keep your home clean and tidy with our professional house cleaning services.")
     service = st.selectbox("Choose a house cleaning service:", list(HOUSE_CLEANING_SERVICES.keys()))
     service_info = HOUSE_CLEANING_SERVICES[service]
-    st.write(f"You selected: [{service}]({service_info['url']})")
+    st.write(f"ORDER NOW: [{service}]({service_info['url']})")
     st.write("Instructions for scheduling your service:")
     for instruction in service_info["instructions"]:
         st.write(f"- {instruction}")
