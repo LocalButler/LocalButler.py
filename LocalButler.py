@@ -322,7 +322,7 @@ def display_new_order():
     """
     components.html(iframe_html, height=680)
 
-def display_Book Now():
+def display_BookNow():
     iframe_html = """
     <!-- Calendly inline widget begin -->
     <div class="calendly-inline-widget" data-url="https://calendly.com/localbutler" style="min-width:320px;height:700px;"></div>
