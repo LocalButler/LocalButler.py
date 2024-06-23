@@ -114,14 +114,15 @@ GROCERY_STORES = {
         ],
         "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/comissaries.jpg"
     },
-    "Food Lion": {
+   "Food Lion": {
         "url": "https://shop.foodlion.com/?shopping_context=pickup&store=2517",
         "instructions": [
             "Place your order directly with Food Lion using your own account.",
             "Select store pick-up and specify the date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-    } "image_url":"https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg"
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg"
+    },
 },
 
 RESTAURANTS = {
