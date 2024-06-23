@@ -388,7 +388,7 @@ def main():
 
     elif choice == "Book Now":
         st.subheader("Book Now")
-        display_Book Now()
+        display_book now()
 
     elif choice == "About Us":
         st.subheader("About Us")
