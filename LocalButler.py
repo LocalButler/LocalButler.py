@@ -99,6 +99,7 @@ GROCERY_STORES = {
     "SafeWay": {
         "url": "https://www.safeway.com/",
         "instructions": [
+            "image_url": "safeway app ads.png" 
             "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
             "Select store pick-up and specify the date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
