@@ -322,7 +322,7 @@ def display_new_order():
     """
     components.html(iframe_html, height=680)
 
-def display_calendar():
+def display_Book Now():
     iframe_html = """
     <!-- Calendly inline widget begin -->
     <div class="calendly-inline-widget" data-url="https://calendly.com/localbutler" style="min-width:320px;height:700px;"></div>
@@ -342,7 +342,7 @@ def main():
 
     # ... (existing title and logo code)
 
-    menu = ["Home", "Menu", "Order", "Butler Bot", "Calendar", "About Us", "Login"]
+    menu = ["Home", "Menu", "Order", "Butler Bot", "Book Now", "About Us", "Login"]
     if st.session_state['logged_in']:
         menu.append("Logout")
     else:
@@ -386,9 +386,9 @@ def main():
         st.subheader("Butler Bot")
         display_new_order()
 
-    elif choice == "Calendar":
-        st.subheader("Calendar")
-        display_calendar()
+    elif choice == "Book Now":
+        st.subheader("Book Now")
+        display_Book Now()
 
     elif choice == "About Us":
         st.subheader("About Us")
