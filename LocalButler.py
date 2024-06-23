@@ -386,8 +386,8 @@ def main():
         st.subheader("Butler Bot")
         display_new_order()
 
-    elif choice == "Book Now":
-        st.subheader("Book Now")
+    elif choice == "book now":
+        st.subheader("book now")
         display_book now()
 
     elif choice == "About Us":
