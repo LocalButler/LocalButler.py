@@ -244,7 +244,7 @@ def display_grocery_services():
     store_info = GROCERY_STORES[grocery_store]
     st.write(f"You selected: [{grocery_store}]({store_info['url']})")
     
-    # Display store-specific video if available (using the same HTML5 video structure)
+# Display store-specific video or image
     if "video_url" in store_info:
         st.markdown(f"### {store_info['video_title']}")
         store_video_html = f"""
@@ -258,6 +258,8 @@ def display_grocery_services():
             </div>
         """
         components.html(store_video_html, height=315)
+    elif "image_url" in store_info:
+        st.image(store_info['image_url'], caption=f"{grocery_store} App", use_column_width=True)
     
     st.write("Instructions for placing your order:")
     for instruction in store_info["instructions"]:
