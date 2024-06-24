@@ -2,8 +2,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 import sqlite3
 from pathlib import Path
-import hashlib
+import bcrypt
 import os
+from functools import wraps
+from datetime import datetime, timedelta
 
 # Database setup
 DB_FILE = "users.db"
@@ -14,7 +16,9 @@ if not db_path.exists():
         CREATE TABLE users (
             id INTEGER PRIMARY KEY,
             username TEXT UNIQUE,
-            password TEXT
+            password TEXT,
+            failed_attempts INTEGER DEFAULT 0,
+            last_attempt TIMESTAMP
         )
     ''')
     conn.commit()
@@ -22,67 +26,50 @@ if not db_path.exists():
 
 # Database functions
 def get_db_connection():
-    """
-    Get a connection to the SQLite database.
-    Returns:
-        Connection object or None
-    """
-    try:
-        conn = sqlite3.connect(DB_FILE)
-        return conn
-    except sqlite3.Error as e:
-        st.error(f"Error connecting to the database: {e}")
-        return None
+    return sqlite3.connect(DB_FILE)
 
 def insert_user(username, password):
-    """
-    Insert a new user into the database.
-    Args:
-        username (str): The username of the new user.
-        password (str): The password of the new user.
-    Returns:
-        True if the user was inserted successfully, False otherwise.
-    """
-    conn = get_db_connection()
-    if conn is None:
-        return False
-
-    hashed_password = hashlib.sha256(password.encode()).hexdigest()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
-        conn.commit()
-        return True
-    except sqlite3.Error as e:
-        st.error(f"Error inserting user: {e}")
-        return False
-    finally:
-        conn.close()
+    with get_db_connection() as conn:
+        hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+        try:
+            conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
+            conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
 
 def authenticate_user(username, password):
-    """
-    Authenticate a user by checking their username and password against the database.
-    Args:
-        username (str): The username of the user.
-        password (str): The password of the user.
-    Returns:
-        True if the user is authenticated, False otherwise.
-    """
-    conn = get_db_connection()
-    if conn is None:
-        return False
-
-    hashed_password = hashlib.sha256(password.encode()).hexdigest()
-    try:
+    with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, hashed_password))
+        cursor.execute("SELECT password, failed_attempts, last_attempt FROM users WHERE username = ?", (username,))
         user = cursor.fetchone()
-        return user is not None
-    except sqlite3.Error as e:
-        st.error(f"Error authenticating user: {e}")
-        return False
-    finally:
-        conn.close()
+        if user:
+            stored_password, failed_attempts, last_attempt = user
+            if last_attempt:
+                last_attempt = datetime.fromisoformat(last_attempt)
+                if last_attempt + timedelta(minutes=15) > datetime.now() and failed_attempts >= 5:
+                    return False, "Account locked. Try again later."
+            
+            if bcrypt.checkpw(password.encode(), stored_password):
+                cursor.execute("UPDATE users SET failed_attempts = 0, last_attempt = NULL WHERE username = ?", (username,))
+                conn.commit()
+                return True, "Login successful"
+            else:
+                cursor.execute("UPDATE users SET failed_attempts = failed_attempts + 1, last_attempt = ? WHERE username = ?", 
+                               (datetime.now().isoformat(), username))
+                conn.commit()
+                return False, "Invalid username or password"
+        return False, "Invalid username or password"
+
+# Decorators
+def login_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not st.session_state.get('logged_in'):
+            st.warning("Please log in to access this feature.")
+            return
+        return func(*args, **kwargs)
+    return wrapper
 
 # Service data
 GROCERY_STORES = {
@@ -139,7 +126,8 @@ RESTAURANTS = {
         "url": "https://order.ruthschris.com/",
         "instructions": [
             "Place your order directly with Ruth's Chris Steak House using their website or app.",
-            "Select pick-up and specify the date and time.","Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+            "Select pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
     "Baltimore Coffee & Tea Company": {
@@ -210,23 +198,11 @@ RESTAURANTS = {
     }
 }
 
-HOUSE_CLEANING_SERVICES = {
-    "Professional House Cleaning": {
-        "url": "https://www.example.com/house-cleaning",
-        "instructions": [
-            "Visit our website and fill out the online form to schedule a professional house cleaning service.",
-            "Provide details about your home, including the number of rooms, bathrooms, and any specific cleaning requirements.",
-            "Select a convenient date and time for the cleaning service.",
-            "Our team of professional cleaners will arrive at your home at the scheduled time and ensure a thorough cleaning."
-        ]
-    }
-}
-
 # Service display functions
+@login_required
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
     
-    # Use the GitHub raw video link
     video_url = "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/119398d25abc62218ccaec71f44b30478d96485f/Local%20Butler%20Groceries.mp4"
     
     video_html = f"""
@@ -242,12 +218,10 @@ def display_grocery_services():
     """
     components.html(video_html, height=315)
 
-    st.write("Select a grocery store:")
     grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
     store_info = GROCERY_STORES[grocery_store]
     st.write(f"ORDER NOW: [{grocery_store}]({store_info['url']})")
     
-# Display store-specific video or image
     if "video_url" in store_info:
         st.markdown(f"### {store_info['video_title']}")
         store_video_html = f"""
@@ -268,43 +242,14 @@ def display_grocery_services():
     for instruction in store_info["instructions"]:
         st.write(f"- {instruction}")
 
+@login_required
 def display_meal_delivery_services():
     st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
-    st.write("Select a restaurant:")
     restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
     restaurant_info = RESTAURANTS[restaurant]
     st.write(f"ORDER NOW: [{restaurant}]({restaurant_info['url']})")
     st.write("Instructions for placing your order:")
     for instruction in restaurant_info["instructions"]:
-        st.write(f"- {instruction}")
-
-def display_laundry_services():
-    st.write("Schedule laundry pickup and delivery services, ensuring your clothes are clean and fresh with minimal effort.")
-    # Add any additional instructions or options for laundry services
-
-def display_errand_services():
-    st.write("Get help with various errands such as shopping, mailing packages, or picking up prescriptions.")
-    # Add any additional instructions or options for errand services
-
-def display_pharmacy_services():
-    st.write("Order prescription medications and over-the-counter products from local pharmacies with convenient delivery options.")
-    # Add any additional instructions or options for pharmacy services
-
-def display_pet_care_services():
-    st.write("Ensure your furry friends receive the care they deserve with pet sitting, grooming, and walking services.")
-    # Add any additional instructions or options for pet care services
-
-def display_car_wash_services():
-    st.write("Schedule car wash and detailing services to keep your vehicle clean and looking its best.")
-    # Add any additional instructions or options for car wash services
-
-def display_house_cleaning_services():
-    st.write("Keep your home clean and tidy with our professional house cleaning services.")
-    service = st.selectbox("Choose a house cleaning service:", list(HOUSE_CLEANING_SERVICES.keys()))
-    service_info = HOUSE_CLEANING_SERVICES[service]
-    st.write(f"ORDER NOW: [{service}]({service_info['url']})")
-    st.write("Instructions for scheduling your service:")
-    for instruction in service_info["instructions"]:
         st.write(f"- {instruction}")
 
 def display_about_us():
@@ -316,12 +261,14 @@ def display_how_it_works():
     st.write("3. Follow the prompts to complete your order.")
     st.write("4. Sit back and relax while we take care of the rest!")
 
+@login_required
 def display_new_order():
     iframe_html = """
     <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
     """
     components.html(iframe_html, height=680)
 
+@login_required
 def display_calendar():
     iframe_html = """
     <!-- Calendly inline widget begin -->
@@ -331,16 +278,13 @@ def display_calendar():
     """
     components.html(iframe_html, height=680)
 
-# Initialize session state
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-if 'username' not in st.session_state:
-    st.session_state['username'] = ''
-
 def main():
     st.set_page_config(page_title="Local Butler")
 
-    # ... (existing title and logo code)
+    if 'logged_in' not in st.session_state:
+        st.session_state['logged_in'] = False
+    if 'username' not in st.session_state:
+        st.session_state['username'] = ''
 
     menu = ["Home", "Menu", "Order", "Butler Bot", "Calendar", "About Us", "Login"]
     if st.session_state['logged_in']:
@@ -357,32 +301,20 @@ def main():
     elif choice == "Menu":
         st.subheader("Menu")
         with st.expander("Service Categories", expanded=False):
-            category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services", "Laundry Services", "Errand Services", "Pharmacy Services", "Pet Care Services", "Car Wash Services", "House Cleaning Services"))
+            category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
             if category == "Grocery Services":
                 display_grocery_services()
             elif category == "Meal Delivery Services":
                 display_meal_delivery_services()
-            elif category == "Laundry Services":
-                display_laundry_services()
-            elif category == "Errand Services":
-                display_errand_services()
-            elif category == "Pharmacy Services":
-                display_pharmacy_services()
-            elif category == "Pet Care Services":
-                display_pet_care_services()
-            elif category == "Car Wash Services":
-                display_car_wash_services()
-            elif category == "House Cleaning Services":
-                display_house_cleaning_services()
 
     elif choice == "Order":
         if st.session_state['logged_in']:
             st.subheader("Order")
-            # Add order placement functionality here
+            st.write("Order functionality coming soon!")
         else:
             st.warning("Please log in to place an order.")
 
-    elif choice == "Butler Bot":
+elif choice == "Butler Bot":
         st.subheader("Butler Bot")
         display_new_order()
 
@@ -402,25 +334,27 @@ def main():
             if st.button("Login"):
                 if not username or not password:
                     st.error("Please enter both username and password.")
-                elif authenticate_user(username, password):
-                    st.session_state['logged_in'] = True
-                    st.session_state['username'] = username
-                    st.success("Logged in successfully!")
                 else:
-                    st.error("Invalid username or password.")
+                    success, message = authenticate_user(username, password)
+                    if success:
+                        st.session_state['logged_in'] = True
+                        st.session_state['username'] = username
+                        st.success(message)
+                        st.experimental_rerun()
+                    else:
+                        st.error(message)
         else:
             st.warning("You are already logged in.")
 
     elif choice == "Logout":
         if st.session_state['logged_in']:
             if st.button("Logout"):
-                logout()
                 st.session_state['logged_in'] = False
                 st.session_state['username'] = ''
                 st.success("Logged out successfully!")
+                st.experimental_rerun()
         else:
             st.warning("You are not logged in.")
-
 
     elif choice == "Register":
         st.subheader("Register")
@@ -432,19 +366,13 @@ def main():
                 st.error("Please fill in all fields.")
             elif new_password != confirm_password:
                 st.error("Passwords do not match. Please try again.")
+            elif len(new_password) < 8:
+                st.error("Password must be at least 8 characters long.")
             else:
                 if insert_user(new_username, new_password):
                     st.success("Registration successful! You can now log in.")
                 else:
-                    st.error("Registration failed. Please try again.")
-
-
-def logout():
-    """
-    Log out the current user by resetting the session state.
-    """
-    st.session_state['logged_in'] = False
-    st.session_state['username'] = ''
+                    st.error("Username already exists. Please choose a different username.")
 
 if __name__ == "__main__":
     main()
