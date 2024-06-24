@@ -314,7 +314,7 @@ def main():
         else:
             st.warning("Please log in to place an order.")
 
-elif choice == "Butler Bot":
+    elif choice == "Butler Bot":
         st.subheader("Butler Bot")
         display_new_order()
 
