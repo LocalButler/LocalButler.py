@@ -316,7 +316,6 @@ def display_calendar(df_bookings):
     display_available_time_slots(df_bookings, selected_date)
 
 def display_available_time_slots(df_bookings, selected_date):
-    st.subheader(f"Availabledef display_available_time_slots(df_bookings, selected_date):
     st.subheader(f"Available Time Slots for {selected_date.strftime('%Y-%m-%d')}")
 
     # Generate all possible time slots for the selected date (7:00 AM to 8:00 PM, every 15 minutes)
