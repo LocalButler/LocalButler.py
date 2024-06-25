@@ -8,6 +8,43 @@ from functools import wraps
 from datetime import datetime, timedelta
 import pandas as pd
 
+# Define the function to get booked slots
+def get_booked_slots(df_bookings, selected_date):
+    booked_slots = []
+    try:
+        for index, row in df_bookings.iterrows():
+            date = row['Date']
+            time = row['Time']
+            
+            if date == selected_date:
+                booked_slots.append(time)
+    except Exception as e:
+        print(f"Error occurred: {e}")
+    
+    return booked_slots
+
+# Example of loading data from a CSV file
+def load_bookings_data():
+    df_bookings = pd.read_csv('bookings.csv')  # Replace with your actual CSV file path
+    return df_bookings
+
+# Function to display calendar
+def display_calendar():
+    st.subheader("Calendar")
+
+    # Example: Select a date (replace with your actual date selection logic)
+    selected_date_str = st.date_input("Select a date", datetime.now().date())
+    selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
+
+    # Get booked slots for the selected date
+    booked_slots = get_booked_slots(df_bookings, selected_date)
+
+    # Display booked slots
+    if booked_slots:
+        st.write(f"Booked slots for {selected_date}: {booked_slots}")
+    else:
+        st.write(f"No booked slots for {selected_date}")
+
 # Database setup
 DB_FILE = "users.db"
 db_path = Path(DB_FILE)
