@@ -279,7 +279,7 @@ def display_calendar():
     # Display available time slots for the selected date
     display_available_time_slots(selected_date)
 
-@login_required
+
 def display_available_time_slots(selected_date):
     st.subheader(f"Available Time Slots for {selected_date.strftime('%Y-%m-%d')}")
     
