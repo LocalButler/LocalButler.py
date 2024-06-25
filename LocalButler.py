@@ -27,49 +27,30 @@ def load_bookings_data():
             st.error(f"Error fetching CSV file from GitHub. Status code: {response.status_code}")
             return None
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error fetching CSV file: {e}")
         return None
-
-# Define date range
-start_date = datetime(2024, 6, 25)  # Start from tomorrow
-end_date = datetime(2024, 7, 25)   # End on December 31, 2024
-
-# Generate all weekdays from start_date to end_date
-date_range = pd.date_range(start=start_date, end=end_date, freq='B')  # 'B' means business days (Monday to Friday)
-
-# Generate all time slots from 7:00 AM to 9:00 PM with 15-minute intervals
-time_slots = pd.date_range(start='07:00', end='21:00', freq='15min').time
-
-# Create an empty DataFrame to hold bookings
-data = []
-for date in date_range:
-    for time in time_slots:
-        data.append([date.date(), time, ''])  # Initially all slots are empty
-
-# Convert data to DataFrame
-df_bookings = pd.DataFrame(data, columns=['Date', 'Time', 'User'])
-
-# Save DataFrame to CSV
-df_bookings.to_csv('bookings.csv', index=False)
-
-st.write("Pre-populated bookings.csv file created successfully.")
 
 # Function to display calendar
 def display_calendar():
     st.subheader("Calendar")
 
     # Example: Select a date (replace with your actual date selection logic)
-    selected_date_str = st.date_input("Select a date", datetime.now().date())
-    selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
+    default_date = datetime.now().date()
+    selected_date_str = st.date_input("Select a date", default_date)
+    selected_date = selected_date_str  # No need to convert to datetime.date()
 
     # Get booked slots for the selected date
-    booked_slots = get_booked_slots(df_bookings, selected_date)
+    df_bookings = load_bookings_data()  # Call function to load data
+    if df_bookings is not None:
+        booked_slots = get_booked_slots(df_bookings, selected_date)
 
-    # Display booked slots
-    if booked_slots:
-        st.write(f"Booked slots for {selected_date}: {booked_slots}")
+        # Display booked slots
+        if booked_slots:
+            st.write(f"Booked slots for {selected_date}: {booked_slots}")
+        else:
+            st.write(f"No booked slots for {selected_date}")
     else:
-        st.write(f"No booked slots for {selected_date}")
+        st.error("Failed to load booking data. Check logs for details.")
 
 # Function to get booked slots for a selected date
 def get_booked_slots(df_bookings, selected_date):
