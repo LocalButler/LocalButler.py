@@ -8,7 +8,7 @@ from functools import wraps
 import pandas as pd
 from datetime import datetime, timedelta
 import requests
-import StringIO
+from io import StringIO
 
 # Function to load bookings data from CSV
 def load_bookings_data():
