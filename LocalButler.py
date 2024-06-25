@@ -78,18 +78,24 @@ def login_required(func):
 def load_bookings_data():
     try:
         url = 'https://raw.githubusercontent.com/LocalButler/streamlit_app.py/41f00574aaa6772913b6119f25e4296403b71898/Schedule%2006-24-07-25.csv'
-        df_bookings = pd.read_csv(url)
         
-        # Print column names for debugging
+        # Print raw content of the CSV
+        response = requests.get(url)
+        st.write("Raw CSV content:")
+        st.write(response.text[:500])  # Show first 500 characters
+        
+        # Try to read CSV with explicit separator
+        df_bookings = pd.read_csv(StringIO(response.text), sep=',')
+        
         st.write("CSV Columns:", df_bookings.columns.tolist())
+        st.write("First few rows of the DataFrame:")
+        st.write(df_bookings.head())
         
-        # Check if 'Date' column exists
         if 'Date' in df_bookings.columns:
             df_bookings['Date'] = pd.to_datetime(df_bookings['Date'])
         else:
             st.warning("'Date' column not found in CSV file")
         
-        # Check if 'Time' column exists
         if 'Time' in df_bookings.columns:
             df_bookings['Time'] = pd.to_datetime(df_bookings['Time']).dt.time
         else:
