@@ -13,13 +13,9 @@ from io import StringIO
 # Function to load bookings data from CSV
 def load_bookings_data():
     try:
-        # Replace with your actual GitHub URL
         url = 'https://raw.githubusercontent.com/LocalButler/streamlit_app.py/41f00574aaa6772913b6119f25e4296403b71898/Schedule%2006-24-07-25.csv'
-        
-        # Fetch the CSV file from GitHub
         response = requests.get(url)
         if response.status_code == 200:
-            # Read the CSV data from the response
             csv_data = StringIO(response.text)
             df_bookings = pd.read_csv(csv_data)
             
@@ -35,7 +31,7 @@ def load_bookings_data():
             st.error(f"Error fetching CSV file from GitHub. Status code: {response.status_code}")
             return None
     except Exception as e:
-        st.error(f"Error fetching CSV file: {e}")
+        st.error(f"Error fetching CSV file: {str(e)}")
         return None
 
 # Function to display calendar
@@ -412,88 +408,88 @@ def main():
 
     choice = st.sidebar.selectbox("Menu", menu)
 
-    if choice == "Home":
-        st.subheader("Welcome to Local Butler!")
-        st.write("Please navigate through the sidebar to explore our app.")
+    if df_bookings is None:
+        st.error("Failed to load booking data. Check logs for details.")
+    else:
+        if choice == "Home":
+            st.subheader("Welcome to Local Butler!")
+            st.write("Please navigate through the sidebar to explore our app.")
 
-    elif choice == "Menu":
-        st.subheader("Menu")
-        with st.expander("Service Categories", expanded=False):
-            category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
-            if category == "Grocery Services":
-                display_grocery_services()
-            elif category == "Meal Delivery Services":
-                display_meal_delivery_services()
+        elif choice == "Menu":
+            st.subheader("Menu")
+            with st.expander("Service Categories", expanded=False):
+                category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
+                if category == "Grocery Services":
+                    display_grocery_services()
+                elif category == "Meal Delivery Services":
+                    display_meal_delivery_services()
 
-    elif choice == "Order":
-        if st.session_state['logged_in']:
-            st.subheader("Order")
-            st.write("Order functionality coming soon!")
-        else:
-            st.warning("Please log in to place an order.")
-
-    elif choice == "Butler Bot":
-        st.subheader("Butler Bot")
-        display_new_order()
-
-    elif choice == "Calendar":
-        st.subheader("Calendar")
-        if df_bookings is not None:
-            display_calendar(df_bookings)
-        else:
-            st.error("Failed to load booking data. Check logs for details.")
-
-    elif choice == "About Us":
-        st.subheader("About Us")
-        display_about_us()
-        display_how_it_works()
-
-    elif choice == "Login":
-        if not st.session_state['logged_in']:
-            username = st.text_input("Username")
-            password = st.text_input("Password", type='password')
-            if st.button("Login"):
-                if not username or not password:
-                    st.error("Please enter both username and password.")
-                else:
-                    success, message = authenticate_user(username, password)
-                    if success:
-                        st.session_state['logged_in'] = True
-                        st.session_state['username'] = username
-                        st.success(message)
-                        st.experimental_rerun()
-                    else:
-                        st.error(message)
-        else:
-            st.warning("You are already logged in.")
-
-    elif choice == "Logout":
-        if st.session_state['logged_in']:
-            if st.button("Logout"):
-                st.session_state['logged_in'] = False
-                st.session_state['username'] = ''
-                st.success("Logged out successfully!")
-                st.experimental_rerun()
-        else:
-            st.warning("You are not logged in.")
-
-    elif choice == "Register":
-        st.subheader("Register")
-        new_username = st.text_input("Username")
-        new_password = st.text_input("Password", type='password')
-        confirm_password = st.text_input("Confirm Password", type='password')
-        if st.button("Register"):
-            if not new_username or not new_password or not confirm_password:
-                st.error("Please fill in all fields.")
-            elif new_password != confirm_password:
-                st.error("Passwords do not match. Please try again.")
-            elif len(new_password) < 8:
-                st.error("Password must be at least 8 characters long.")
+        elif choice == "Order":
+            if st.session_state['logged_in']:
+                st.subheader("Order")
+                st.write("Order functionality coming soon!")
             else:
-                if insert_user(new_username, new_password):
-                    st.success("Registration successful! You can now log in.")
+                st.warning("Please log in to place an order.")
+
+        elif choice == "Butler Bot":
+            st.subheader("Butler Bot")
+            display_new_order()
+
+        elif choice == "Calendar":
+            st.subheader("Calendar")
+            display_calendar(df_bookings)
+
+        elif choice == "About Us":
+            st.subheader("About Us")
+            display_about_us()
+            display_how_it_works()
+
+        elif choice == "Login":
+            if not st.session_state['logged_in']:
+                username = st.text_input("Username")
+                password = st.text_input("Password", type='password')
+                if st.button("Login"):
+                    if not username or not password:
+                        st.error("Please enter both username and password.")
+                    else:
+                        success, message = authenticate_user(username, password)
+                        if success:
+                            st.session_state['logged_in'] = True
+                            st.session_state['username'] = username
+                            st.success(message)
+                            st.experimental_rerun()
+                        else:
+                            st.error(message)
+            else:
+                st.warning("You are already logged in.")
+
+        elif choice == "Logout":
+            if st.session_state['logged_in']:
+                if st.button("Logout"):
+                    st.session_state['logged_in'] = False
+                    st.session_state['username'] = ''
+                    st.success("Logged out successfully!")
+                    st.experimental_rerun()
+            else:
+                st.warning("You are not logged in.")
+
+        elif choice == "Register":
+            st.subheader("Register")
+            new_username = st.text_input("Username")
+            new_password = st.text_input("Password", type='password')
+            confirm_password = st.text_input("Confirm Password", type='password')
+            if st.button("Register"):
+                if not new_username or not new_password or not confirm_password:
+                    st.error("Please fill in all fields.")
+                elif new_password != confirm_password:
+                    st.error("Passwords do not match. Please try again.")
+                elif len(new_password) < 8:
+                    st.error("Password must be at least 8 characters long.")
                 else:
-                    st.error("Username already exists. Please choose a different username.")
+                    if insert_user(new_username, new_password):
+                        st.success("Registration successful! You can now log in.")
+                    else:
+                        st.error("Username already exists. Please choose a different username.")
 
 if __name__ == "__main__":
     main()
