@@ -5,34 +5,53 @@ from pathlib import Path
 import bcrypt
 import os
 from functools import wraps
-from datetime import datetime, timedelta
 import pandas as pd
+from datetime import datetime, timedelta
+import requests
 
-# Example of loading data from a CSV file
+# Function to load bookings data from CSV
 def load_bookings_data():
-    df_bookings = pd.read_csv('bookings.csv')  # Replace with your actual CSV file path
-    return df_bookings
-
-
-# Define the function to get booked slots
-def get_booked_slots(df_bookings, selected_date):
-    booked_slots = []
     try:
-        for index, row in df_bookings.iterrows():
-            date = row['Date']
-            time = row['Time']
-            
-            if date == selected_date:
-                booked_slots.append(time)
+        # Replace with your actual GitHub URL
+        url = 'https://raw.githubusercontent.com/LocalButler/streamlit_app.py/41f00574aaa6772913b6119f25e4296403b71898/Schedule%2006-24-07-25.csv'
+        
+        # Fetch the CSV file from GitHub
+        response = requests.get(url)
+        if response.status_code == 200:
+            # Read the CSV data from the response
+            csv_data = StringIO(response.text)
+            df_bookings = pd.read_csv(csv_data)
+            return df_bookings
+        else:
+            st.error(f"Error fetching CSV file from GitHub. Status code: {response.status_code}")
+            return None
     except Exception as e:
-        print(f"Error occurred: {e}")
-    
-    return booked_slots
+        st.error(f"Error: {e}")
+        return None
 
-# Example of loading data from a CSV file
-def load_bookings_data():
-    df_bookings = pd.read_csv('bookings.csv')  # Replace with your actual CSV file path
-    return df_bookings
+# Define date range
+start_date = datetime(2024, 6, 25)  # Start from tomorrow
+end_date = datetime(2024, 7, 25)   # End on December 31, 2024
+
+# Generate all weekdays from start_date to end_date
+date_range = pd.date_range(start=start_date, end=end_date, freq='B')  # 'B' means business days (Monday to Friday)
+
+# Generate all time slots from 7:00 AM to 9:00 PM with 15-minute intervals
+time_slots = pd.date_range(start='07:00', end='21:00', freq='15min').time
+
+# Create an empty DataFrame to hold bookings
+data = []
+for date in date_range:
+    for time in time_slots:
+        data.append([date.date(), time, ''])  # Initially all slots are empty
+
+# Convert data to DataFrame
+df_bookings = pd.DataFrame(data, columns=['Date', 'Time', 'User'])
+
+# Save DataFrame to CSV
+df_bookings.to_csv('bookings.csv', index=False)
+
+st.write("Pre-populated bookings.csv file created successfully.")
 
 # Function to display calendar
 def display_calendar():
@@ -50,6 +69,28 @@ def display_calendar():
         st.write(f"Booked slots for {selected_date}: {booked_slots}")
     else:
         st.write(f"No booked slots for {selected_date}")
+
+# Function to get booked slots for a selected date
+def get_booked_slots(df_bookings, selected_date):
+    # Filter bookings for the selected date
+    filtered_bookings = df_bookings[df_bookings['Date'] == selected_date]
+
+    # Extract booked slots
+    booked_slots = filtered_bookings['Time'].tolist()
+
+    return booked_slots
+
+def main():
+    st.title("Booking System")
+    df_bookings = load_bookings_data()
+
+    if df_bookings is not None:
+        display_calendar()
+    else:
+        st.error("Failed to load booking data. Check logs for details.")
+
+if __name__ == "__main__":
+    main()
 
 # Database setup
 DB_FILE = "users.db"
