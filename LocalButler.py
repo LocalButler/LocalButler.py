@@ -22,6 +22,14 @@ def load_bookings_data():
             # Read the CSV data from the response
             csv_data = StringIO(response.text)
             df_bookings = pd.read_csv(csv_data)
+            
+            # Debug: Print DataFrame info
+            st.write("DataFrame Info:")
+            st.write(df_bookings.info())
+            
+            # Ensure 'Date' column is in the correct format
+            df_bookings['Date'] = pd.to_datetime(df_bookings['Date']).dt.strftime('%Y-%m-%d')
+            
             return df_bookings
         else:
             st.error(f"Error fetching CSV file from GitHub. Status code: {response.status_code}")
@@ -55,18 +63,33 @@ def display_calendar():
 # Function to get booked slots for a selected date
 def get_booked_slots(df_bookings, selected_date):
     try:
+        # Debug: Print DataFrame columns
+        st.write("DataFrame columns:", df_bookings.columns)
+        
         # Convert selected_date to string format matching the DataFrame
         selected_date_str = selected_date.strftime("%Y-%m-%d")
-
+        
+        # Debug: Print the first few rows of the DataFrame
+        st.write("First few rows of df_bookings:", df_bookings.head())
+        
+        # Debug: Print unique values in the 'Date' column
+        st.write("Unique dates in DataFrame:", df_bookings['Date'].unique())
+        
         # Filter bookings for the selected date
         filtered_bookings = df_bookings[df_bookings['Date'] == selected_date_str]
-
+        
+        # Debug: Print filtered bookings
+        st.write("Filtered bookings:", filtered_bookings)
+        
         # Extract booked slots
         booked_slots = filtered_bookings['Time'].tolist()
-
+        
+        # Debug: Print booked slots
+        st.write("Booked slots:", booked_slots)
+        
         return booked_slots
     except KeyError as e:
-        st.error(f"KeyError: {e}. Column 'Date' not found in df_bookings. Check DataFrame structure.")
+        st.error(f"KeyError: {e}. Column not found in df_bookings. Check DataFrame structure.")
         return []
     except Exception as e:
         st.error(f"Error filtering bookings: {e}")
@@ -305,8 +328,7 @@ def display_grocery_services():
             <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
                 <video autoplay playsinline controls
                     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                    <source src="{store_info['video_url']}" type="video/mp4">
+                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"><source src="{store_info['video_url']}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -345,7 +367,6 @@ def display_new_order():
     """
     components.html(iframe_html, height=680)
 
-
 def display_calendar(df_bookings):
     st.subheader("Calendar")
     
@@ -372,14 +393,6 @@ def display_available_time_slots(df_bookings, selected_date):
     else:
         st.write("No available slots for this date.")
 
-def get_booked_slots(df_bookings, selected_date):
-    booked_slots = []
-    for index, row in df_bookings.iterrows():
-        if row['Date'] == selected_date.strftime('%Y-%m-%d'):
-            booked_slots.append(row['Time'].time())
-    return booked_slots
-
-
 def main():
     st.set_page_config(page_title="Local Butler")
 
@@ -388,8 +401,8 @@ def main():
     if 'username' not in st.session_state:
         st.session_state['username'] = ''
 
-        # Load bookings data (example function)
-    df_bookings = load_bookings_data()  # You need to define this function to load your data
+    # Load bookings data
+    df_bookings = load_bookings_data()
 
     menu = ["Home", "Menu", "Order", "Butler Bot", "Calendar", "About Us", "Login"]
     if st.session_state['logged_in']:
@@ -425,8 +438,10 @@ def main():
 
     elif choice == "Calendar":
         st.subheader("Calendar")
-        display_calendar()
-        display_calendar(df_bookings)
+        if df_bookings is not None:
+            display_calendar(df_bookings)
+        else:
+            st.error("Failed to load booking data. Check logs for details.")
 
     elif choice == "About Us":
         st.subheader("About Us")
