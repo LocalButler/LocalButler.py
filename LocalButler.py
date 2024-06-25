@@ -54,13 +54,23 @@ def display_calendar():
 
 # Function to get booked slots for a selected date
 def get_booked_slots(df_bookings, selected_date):
-    # Filter bookings for the selected date
-    filtered_bookings = df_bookings[df_bookings['Date'] == selected_date]
+    try:
+        # Convert selected_date to string format matching the DataFrame
+        selected_date_str = selected_date.strftime("%Y-%m-%d")
 
-    # Extract booked slots
-    booked_slots = filtered_bookings['Time'].tolist()
+        # Filter bookings for the selected date
+        filtered_bookings = df_bookings[df_bookings['Date'] == selected_date_str]
 
-    return booked_slots
+        # Extract booked slots
+        booked_slots = filtered_bookings['Time'].tolist()
+
+        return booked_slots
+    except KeyError as e:
+        st.error(f"KeyError: {e}. Column 'Date' not found in df_bookings. Check DataFrame structure.")
+        return []
+    except Exception as e:
+        st.error(f"Error filtering bookings: {e}")
+        return []
 
 def main():
     st.title("Booking System")
