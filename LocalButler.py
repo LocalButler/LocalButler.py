@@ -6,102 +6,9 @@ import bcrypt
 import os
 from functools import wraps
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import requests
 from io import StringIO
-
-# Function to load bookings data from CSV
-def load_bookings_data():
-    try:
-        url = 'https://raw.githubusercontent.com/LocalButler/streamlit_app.py/41f00574aaa6772913b6119f25e4296403b71898/Schedule%2006-24-07-25.csv'
-        response = requests.get(url)
-        if response.status_code == 200:
-            csv_data = StringIO(response.text)
-            df_bookings = pd.read_csv(csv_data)
-            
-            # Debug: Print DataFrame info
-            st.write("DataFrame Info:")
-            st.write(df_bookings.info())
-            
-            # Ensure 'Date' column is in the correct format
-            df_bookings['Date'] = pd.to_datetime(df_bookings['Date']).dt.strftime('%Y-%m-%d')
-            
-            return df_bookings
-        else:
-            st.error(f"Error fetching CSV file from GitHub. Status code: {response.status_code}")
-            return None
-    except Exception as e:
-        st.error(f"Error fetching CSV file: {str(e)}")
-        return None
-
-# Function to display calendar
-def display_calendar():
-    st.subheader("Calendar")
-
-    # Example: Select a date (replace with your actual date selection logic)
-    default_date = datetime.now().date()
-    selected_date_str = st.date_input("Select a date", default_date)
-    selected_date = selected_date_str  # No need to convert to datetime.date()
-
-    # Get booked slots for the selected date
-    df_bookings = load_bookings_data()  # Call function to load data
-    if df_bookings is not None:
-        booked_slots = get_booked_slots(df_bookings, selected_date)
-
-        # Display booked slots
-        if booked_slots:
-            st.write(f"Booked slots for {selected_date}: {booked_slots}")
-        else:
-            st.write(f"No booked slots for {selected_date}")
-    else:
-        st.error("Failed to load booking data. Check logs for details.")
-
-# Function to get booked slots for a selected date
-def get_booked_slots(df_bookings, selected_date):
-    try:
-        # Debug: Print DataFrame columns
-        st.write("DataFrame columns:", df_bookings.columns)
-        
-        # Convert selected_date to string format matching the DataFrame
-        selected_date_str = selected_date.strftime("%Y-%m-%d")
-        
-        # Debug: Print the first few rows of the DataFrame
-        st.write("First few rows of df_bookings:", df_bookings.head())
-        
-        # Debug: Print unique values in the 'Date' column
-        st.write("Unique dates in DataFrame:", df_bookings['Date'].unique())
-        
-        # Filter bookings for the selected date
-        filtered_bookings = df_bookings[df_bookings['Date'] == selected_date_str]
-        
-        # Debug: Print filtered bookings
-        st.write("Filtered bookings:", filtered_bookings)
-        
-        # Extract booked slots
-        booked_slots = filtered_bookings['Time'].tolist()
-        
-        # Debug: Print booked slots
-        st.write("Booked slots:", booked_slots)
-        
-        return booked_slots
-    except KeyError as e:
-        st.error(f"KeyError: {e}. Column not found in df_bookings. Check DataFrame structure.")
-        return []
-    except Exception as e:
-        st.error(f"Error filtering bookings: {e}")
-        return []
-
-def main():
-    st.title("Booking System")
-    df_bookings = load_bookings_data()
-
-    if df_bookings is not None:
-        display_calendar()
-    else:
-        st.error("Failed to load booking data. Check logs for details.")
-
-if __name__ == "__main__":
-    main()
 
 # Database setup
 DB_FILE = "users.db"
@@ -166,6 +73,37 @@ def login_required(func):
             return
         return func(*args, **kwargs)
     return wrapper
+
+# Function to load bookings data from CSV
+def load_bookings_data():
+    try:
+        url = 'https://raw.githubusercontent.com/LocalButler/streamlit_app.py/41f00574aaa6772913b6119f25e4296403b71898/Schedule%2006-24-07-25.csv'
+        df_bookings = pd.read_csv(url, parse_dates=['Date'])
+        
+        # Convert Time column to datetime.time objects
+        df_bookings['Time'] = pd.to_datetime(df_bookings['Time']).dt.time
+        
+        return df_bookings
+    except Exception as e:
+        st.error(f"Error fetching CSV file: {str(e)}")
+        return None
+
+# Function to get booked slots for a selected date
+def get_booked_slots(df_bookings, selected_date):
+    if df_bookings is None:
+        return []
+    
+    # Convert selected_date to datetime.date
+    if isinstance(selected_date, str):
+        selected_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
+    
+    # Filter bookings for the selected date
+    filtered_bookings = df_bookings[df_bookings['Date'].dt.date == selected_date]
+    
+    # Extract booked slots
+    booked_slots = filtered_bookings['Time'].tolist()
+    
+    return booked_slots
 
 # Service data
 GROCERY_STORES = {
@@ -324,7 +262,8 @@ def display_grocery_services():
             <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
                 <video autoplay playsinline controls
                     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"><source src="{store_info['video_url']}" type="video/mp4">
+                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                    <source src="{store_info['video_url']}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -366,6 +305,10 @@ def display_new_order():
 def display_calendar(df_bookings):
     st.subheader("Calendar")
     
+    if df_bookings is None:
+        st.error("Failed to load booking data.")
+        return
+    
     # Select a date to view available slots
     selected_date = st.date_input("Select a date", min_value=datetime.today())
     
@@ -373,10 +316,11 @@ def display_calendar(df_bookings):
     display_available_time_slots(df_bookings, selected_date)
 
 def display_available_time_slots(df_bookings, selected_date):
+    st.subheader(f"Availabledef display_available_time_slots(df_bookings, selected_date):
     st.subheader(f"Available Time Slots for {selected_date.strftime('%Y-%m-%d')}")
 
-    # Generate all possible time slots for the selected date (9:00 AM to 6:00 PM, every 30 minutes)
-    all_slots = pd.date_range(start=f"{selected_date} 09:00", end=f"{selected_date} 18:00", freq="30min")
+    # Generate all possible time slots for the selected date (7:00 AM to 8:00 PM, every 15 minutes)
+    all_slots = pd.date_range(start=f"{selected_date} 07:00", end=f"{selected_date} 20:00", freq="15min")
     
     # Filter out booked slots
     booked_slots = get_booked_slots(df_bookings, selected_date)
@@ -408,88 +352,85 @@ def main():
 
     choice = st.sidebar.selectbox("Menu", menu)
 
-    if df_bookings is None:
-        st.error("Failed to load booking data. Check logs for details.")
-    else:
-        if choice == "Home":
-            st.subheader("Welcome to Local Butler!")
-            st.write("Please navigate through the sidebar to explore our app.")
+    if choice == "Home":
+        st.subheader("Welcome to Local Butler!")
+        st.write("Please navigate through the sidebar to explore our app.")
 
-        elif choice == "Menu":
-            st.subheader("Menu")
-            with st.expander("Service Categories", expanded=False):
-                category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
-                if category == "Grocery Services":
-                    display_grocery_services()
-                elif category == "Meal Delivery Services":
-                    display_meal_delivery_services()
+    elif choice == "Menu":
+        st.subheader("Menu")
+        with st.expander("Service Categories", expanded=False):
+            category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
+            if category == "Grocery Services":
+                display_grocery_services()
+            elif category == "Meal Delivery Services":
+                display_meal_delivery_services()
 
-        elif choice == "Order":
-            if st.session_state['logged_in']:
-                st.subheader("Order")
-                st.write("Order functionality coming soon!")
-            else:
-                st.warning("Please log in to place an order.")
+    elif choice == "Order":
+        if st.session_state['logged_in']:
+            st.subheader("Order")
+            st.write("Order functionality coming soon!")
+        else:
+            st.warning("Please log in to place an order.")
 
-        elif choice == "Butler Bot":
-            st.subheader("Butler Bot")
-            display_new_order()
+    elif choice == "Butler Bot":
+        st.subheader("Butler Bot")
+        display_new_order()
 
-        elif choice == "Calendar":
-            st.subheader("Calendar")
-            display_calendar(df_bookings)
+    elif choice == "Calendar":
+        st.subheader("Calendar")
+        display_calendar(df_bookings)
 
-        elif choice == "About Us":
-            st.subheader("About Us")
-            display_about_us()
-            display_how_it_works()
+    elif choice == "About Us":
+        st.subheader("About Us")
+        display_about_us()
+        display_how_it_works()
 
-        elif choice == "Login":
-            if not st.session_state['logged_in']:
-                username = st.text_input("Username")
-                password = st.text_input("Password", type='password')
-                if st.button("Login"):
-                    if not username or not password:
-                        st.error("Please enter both username and password.")
-                    else:
-                        success, message = authenticate_user(username, password)
-                        if success:
-                            st.session_state['logged_in'] = True
-                            st.session_state['username'] = username
-                            st.success(message)
-                            st.experimental_rerun()
-                        else:
-                            st.error(message)
-            else:
-                st.warning("You are already logged in.")
-
-        elif choice == "Logout":
-            if st.session_state['logged_in']:
-                if st.button("Logout"):
-                    st.session_state['logged_in'] = False
-                    st.session_state['username'] = ''
-                    st.success("Logged out successfully!")
-                    st.experimental_rerun()
-            else:
-                st.warning("You are not logged in.")
-
-        elif choice == "Register":
-            st.subheader("Register")
-            new_username = st.text_input("Username")
-            new_password = st.text_input("Password", type='password')
-            confirm_password = st.text_input("Confirm Password", type='password')
-            if st.button("Register"):
-                if not new_username or not new_password or not confirm_password:
-                    st.error("Please fill in all fields.")
-                elif new_password != confirm_password:
-                    st.error("Passwords do not match. Please try again.")
-                elif len(new_password) < 8:
-                    st.error("Password must be at least 8 characters long.")
+    elif choice == "Login":
+        if not st.session_state['logged_in']:
+            username = st.text_input("Username")
+            password = st.text_input("Password", type='password')
+            if st.button("Login"):
+                if not username or not password:
+                    st.error("Please enter both username and password.")
                 else:
-                    if insert_user(new_username, new_password):
-                        st.success("Registration successful! You can now log in.")
+                    success, message = authenticate_user(username, password)
+                    if success:
+                        st.session_state['logged_in'] = True
+                        st.session_state['username'] = username
+                        st.success(message)
+                        st.experimental_rerun()
                     else:
-                        st.error("Username already exists. Please choose a different username.")
+                        st.error(message)
+        else:
+            st.warning("You are already logged in.")
+
+    elif choice == "Logout":
+        if st.session_state['logged_in']:
+            if st.button("Logout"):
+                st.session_state['logged_in'] = False
+                st.session_state['username'] = ''
+                st.success("Logged out successfully!")
+                st.experimental_rerun()
+        else:
+            st.warning("You are not logged in.")
+
+    elif choice == "Register":
+        st.subheader("Register")
+        new_username = st.text_input("Username")
+        new_password = st.text_input("Password", type='password')
+        confirm_password = st.text_input("Confirm Password", type='password')
+        if st.button("Register"):
+            if not new_username or not new_password or not confirm_password:
+                st.error("Please fill in all fields.")
+            elif new_password != confirm_password:
+                st.error("Passwords do not match. Please try again.")
+            elif len(new_password) < 8:
+                st.error("Password must be at least 8 characters long.")
+            else:
+                if insert_user(new_username, new_password):
+                    st.success("Registration successful! You can now log in.")
+                else:
+                    st.error("Username already exists. Please choose a different username.")
 
 if __name__ == "__main__":
     main()
