@@ -6,6 +6,7 @@ import bcrypt
 import os
 from functools import wraps
 from datetime import datetime, timedelta
+import pandas as pd
 
 # Database setup
 DB_FILE = "users.db"
@@ -270,13 +271,44 @@ def display_new_order():
 
 @login_required
 def display_calendar():
-    iframe_html = """
-    <!-- Calendly inline widget begin -->
-    <div class="calendly-inline-widget" data-url="https://calendly.com/localbutler" style="min-width:320px;height:700px;"></div>
-    <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
-    <!-- Calendly inline widget end -->
-    """
-    components.html(iframe_html, height=680)
+    st.subheader("Calendar")
+    
+    # Select a date to view available slots
+    selected_date = st.date_input("Select a date", min_value=datetime.today())
+    
+    # Display available time slots for the selected date
+    display_available_time_slots(selected_date)
+
+@login_required
+def display_available_time_slots(selected_date):
+    st.subheader(f"Available Time Slots for {selected_date.strftime('%Y-%m-%d')}")
+    
+    # Assume df_bookings is defined somewhere in your code
+    # Example: df_bookings = pd.DataFrame(columns=['Date', 'Time', 'User'])
+    
+    # Generate all possible time slots for the selected date (9:00 AM to 6:00 PM, every 30 minutes)
+    all_slots = pd.date_range(start=f"{selected_date} 09:00", end=f"{selected_date} 18:00", freq="30min")
+    
+    # Filter out booked slots
+    booked_slots = get_booked_slots(selected_date)
+    available_slots = [slot.time() for slot in all_slots if slot.time() not in booked_slots]
+    
+    if available_slots:
+        st.write("Available slots:")
+        for slot in available_slots:
+            st.write(slot.strftime("%I:%M %p"))
+    else:
+        st.write("No available slots for this date.")
+
+def get_booked_slots(selected_date):
+    # Function to retrieve booked slots from df_bookings for the selected date
+    # Example: Replace with your actual logic to fetch booked slots from a database or dataframe
+    booked_slots = []
+    # Assuming df_bookings is a global dataframe containing booked slots
+    for index, row in df_bookings.iterrows():
+        if row['Date'] == selected_date:
+            booked_slots.append(row['Time'].time())
+    return booked_slots
 
 def main():
     st.set_page_config(page_title="Local Butler")
