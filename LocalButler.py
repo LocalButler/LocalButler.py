@@ -8,6 +8,12 @@ from functools import wraps
 from datetime import datetime, timedelta
 import pandas as pd
 
+# Example of loading data from a CSV file
+def load_bookings_data():
+    df_bookings = pd.read_csv('bookings.csv')  # Replace with your actual CSV file path
+    return df_bookings
+
+
 # Define the function to get booked slots
 def get_booked_slots(df_bookings, selected_date):
     booked_slots = []
@@ -307,27 +313,23 @@ def display_new_order():
     components.html(iframe_html, height=680)
 
 
-def display_calendar():
+def display_calendar(df_bookings):
     st.subheader("Calendar")
     
     # Select a date to view available slots
     selected_date = st.date_input("Select a date", min_value=datetime.today())
     
     # Display available time slots for the selected date
-    display_available_time_slots(selected_date)
+    display_available_time_slots(df_bookings, selected_date)
 
-
-def display_available_time_slots(selected_date):
+def display_available_time_slots(df_bookings, selected_date):
     st.subheader(f"Available Time Slots for {selected_date.strftime('%Y-%m-%d')}")
-    
-    # Assume df_bookings is defined somewhere in your code
-    # Example: df_bookings = pd.DataFrame(columns=['Date', 'Time', 'User'])
-    
+
     # Generate all possible time slots for the selected date (9:00 AM to 6:00 PM, every 30 minutes)
     all_slots = pd.date_range(start=f"{selected_date} 09:00", end=f"{selected_date} 18:00", freq="30min")
     
     # Filter out booked slots
-    booked_slots = get_booked_slots(selected_date)
+    booked_slots = get_booked_slots(df_bookings, selected_date)
     available_slots = [slot.time() for slot in all_slots if slot.time() not in booked_slots]
     
     if available_slots:
@@ -337,15 +339,13 @@ def display_available_time_slots(selected_date):
     else:
         st.write("No available slots for this date.")
 
-def get_booked_slots(selected_date):
-    # Function to retrieve booked slots from df_bookings for the selected date
-    # Example: Replace with your actual logic to fetch booked slots from a database or dataframe
+def get_booked_slots(df_bookings, selected_date):
     booked_slots = []
-    # Assuming df_bookings is a global dataframe containing booked slots
     for index, row in df_bookings.iterrows():
-        if row['Date'] == selected_date:
+        if row['Date'] == selected_date.strftime('%Y-%m-%d'):
             booked_slots.append(row['Time'].time())
     return booked_slots
+
 
 def main():
     st.set_page_config(page_title="Local Butler")
@@ -354,6 +354,9 @@ def main():
         st.session_state['logged_in'] = False
     if 'username' not in st.session_state:
         st.session_state['username'] = ''
+
+        # Load bookings data (example function)
+    df_bookings = load_bookings_data()  # You need to define this function to load your data
 
     menu = ["Home", "Menu", "Order", "Butler Bot", "Calendar", "About Us", "Login"]
     if st.session_state['logged_in']:
@@ -390,6 +393,7 @@ def main():
     elif choice == "Calendar":
         st.subheader("Calendar")
         display_calendar()
+        display_calendar(df_bookings)
 
     elif choice == "About Us":
         st.subheader("About Us")
