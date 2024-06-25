@@ -269,7 +269,7 @@ def display_new_order():
     """
     components.html(iframe_html, height=680)
 
-@login_required
+
 def display_calendar():
     st.subheader("Calendar")
     
