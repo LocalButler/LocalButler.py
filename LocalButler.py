@@ -5,10 +5,7 @@ from pathlib import Path
 import bcrypt
 import os
 from functools import wraps
-import pandas as pd
-from datetime import datetime, timedelta, time
-import requests
-from io import StringIO
+from datetime import datetime, timedelta
 
 # Database setup
 DB_FILE = "users.db"
@@ -73,55 +70,6 @@ def login_required(func):
             return
         return func(*args, **kwargs)
     return wrapper
-
-# Function to load bookings data from CSV
-def load_bookings_data():
-    try:
-        url = 'https://raw.githubusercontent.com/LocalButler/streamlit_app.py/41f00574aaa6772913b6119f25e4296403b71898/Schedule%2006-24-07-25.csv'
-        
-        # Print raw content of the CSV
-        response = requests.get(url)
-        st.write("Raw CSV content:")
-        st.write(response.text[:500])  # Show first 500 characters
-        
-        # Try to read CSV with explicit separator
-        df_bookings = pd.read_csv(StringIO(response.text), sep=',')
-        
-        st.write("CSV Columns:", df_bookings.columns.tolist())
-        st.write("First few rows of the DataFrame:")
-        st.write(df_bookings.head())
-        
-        if 'Date' in df_bookings.columns:
-            df_bookings['Date'] = pd.to_datetime(df_bookings['Date'])
-        else:
-            st.warning("'Date' column not found in CSV file")
-        
-        if 'Time' in df_bookings.columns:
-            df_bookings['Time'] = pd.to_datetime(df_bookings['Time']).dt.time
-        else:
-            st.warning("'Time' column not found in CSV file")
-        
-        return df_bookings
-    except Exception as e:
-        st.error(f"Error fetching CSV file: {str(e)}")
-        return None
-
-# Function to get booked slots for a selected date
-def get_booked_slots(df_bookings, selected_date):
-    if df_bookings is None:
-        return []
-    
-    # Convert selected_date to datetime.date
-    if isinstance(selected_date, str):
-        selected_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
-    
-    # Filter bookings for the selected date
-    filtered_bookings = df_bookings[df_bookings['Date'].dt.date == selected_date]
-    
-    # Extract booked slots
-    booked_slots = filtered_bookings['Time'].tolist()
-    
-    return booked_slots
 
 # Service data
 GROCERY_STORES = {
@@ -320,35 +268,15 @@ def display_new_order():
     """
     components.html(iframe_html, height=680)
 
-def display_calendar(df_bookings):
-    st.subheader("Calendar")
-    
-    if df_bookings is None:
-        st.error("Failed to load booking data.")
-        return
-    
-    # Select a date to view available slots
-    selected_date = st.date_input("Select a date", min_value=datetime.today())
-    
-    # Display available time slots for the selected date
-    display_available_time_slots(df_bookings, selected_date)
-
-def display_available_time_slots(df_bookings, selected_date):
-    st.subheader(f"Available Time Slots for {selected_date.strftime('%Y-%m-%d')}")
-
-    # Generate all possible time slots for the selected date (7:00 AM to 8:00 PM, every 15 minutes)
-    all_slots = pd.date_range(start=f"{selected_date} 07:00", end=f"{selected_date} 20:00", freq="15min")
-    
-    # Filter out booked slots
-    booked_slots = get_booked_slots(df_bookings, selected_date)
-    available_slots = [slot.time() for slot in all_slots if slot.time() not in booked_slots]
-    
-    if available_slots:
-        st.write("Available slots:")
-        for slot in available_slots:
-            st.write(slot.strftime("%I:%M %p"))
-    else:
-        st.write("No available slots for this date.")
+@login_required
+def display_calendar():
+    iframe_html = """
+    <!-- Calendly inline widget begin -->
+    <div class="calendly-inline-widget" data-url="https://calendly.com/localbutler" style="min-width:320px;height:700px;"></div>
+    <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+    <!-- Calendly inline widget end -->
+    """
+    components.html(iframe_html, height=680)
 
 def main():
     st.set_page_config(page_title="Local Butler")
@@ -357,9 +285,6 @@ def main():
         st.session_state['logged_in'] = False
     if 'username' not in st.session_state:
         st.session_state['username'] = ''
-
-    # Load bookings data
-    df_bookings = load_bookings_data()
 
     menu = ["Home", "Menu", "Order", "Butler Bot", "Calendar", "About Us", "Login"]
     if st.session_state['logged_in']:
@@ -395,7 +320,7 @@ def main():
 
     elif choice == "Calendar":
         st.subheader("Calendar")
-        display_calendar(df_bookings)
+        display_calendar()
 
     elif choice == "About Us":
         st.subheader("About Us")
