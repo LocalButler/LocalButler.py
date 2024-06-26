@@ -311,7 +311,7 @@ def modify_booking():
     new_time = st.time_input("New time", datetime.strptime(existing_booking['time'], '%H:%M').time())
     new_service = st.selectbox("New service", ["Grocery Pickup", "Meal Delivery"], index=0 if existing_booking['service'] == "Grocery Pickup" else 1)
     
-if st.button("Confirm Modification"):
+    if st.button("Confirm Modification"):
         # Here you would update the booking in your database
         st.success("Booking modified successfully!")
         send_email("Booking Modified", f"Your booking has been modified to {new_date} at {new_time} for {new_service}")
@@ -447,11 +447,14 @@ def main():
                 else:
                     st.error("Username already exists. Please choose a different username.")
 
-    elif choice == "Modify Booking":
-        if st.session_state['logged_in']:
+elif choice == "Modify Booking":
+    if st.session_state['logged_in']:
+        if user_has_orders(st.session_state['username']):
             modify_booking()
         else:
-            st.warning("Please log in to modify a booking.")
+            st.warning("You don't have any orders to modify.")
+    else:
+        st.warning("Please log in to modify a booking.")
 
     elif choice == "Cancel Booking":
         if st.session_state['logged_in']:
