@@ -13,22 +13,32 @@ from email.mime.multipart import MIMEMultipart
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
 
-# Database setup
-DB_FILE = "users.db"
-db_path = Path(DB_FILE)
-if not db_path.exists():
+def setup_database():
     conn = sqlite3.connect(DB_FILE)
-    conn.execute('''
-        CREATE TABLE users (
-            id INTEGER PRIMARY KEY,
-            username TEXT UNIQUE,
-            password TEXT,
-            failed_attempts INTEGER DEFAULT 0,
-            last_attempt TIMESTAMP
-        )
-    ''')
+    cursor = conn.cursor()
+
+    # Check if the table exists, if not create it
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users
+                      (id INTEGER PRIMARY KEY,
+                       username TEXT UNIQUE,
+                       password TEXT,
+                       failed_attempts INTEGER DEFAULT 0,
+                       last_attempt TIMESTAMP)''')
+
+    # Check if the columns exist
+    cursor.execute("PRAGMA table_info(users)")
+    columns = [column[1] for column in cursor.fetchall()]
+
+    if 'failed_attempts' not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN failed_attempts INTEGER DEFAULT 0")
+
+    if 'last_attempt' not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN last_attempt TIMESTAMP")
+
     conn.commit()
     conn.close()
+# Call setup_database at the start
+setup_database()
 
 # Database functions
 def get_db_connection():
