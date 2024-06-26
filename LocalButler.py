@@ -275,7 +275,7 @@ def display_how_it_works():
     st.write("3. Follow the prompts to complete your order.")
     st.write("4. Sit back and relax while we take care of the rest!")
 
-
+@login_required
 def display_new_order():
     iframe_html = """
     <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
