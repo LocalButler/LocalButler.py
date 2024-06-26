@@ -344,8 +344,6 @@ def user_has_orders(username):
     return True
 
 def main():
-
-
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
     if 'username' not in st.session_state:
@@ -447,14 +445,14 @@ def main():
                 else:
                     st.error("Username already exists. Please choose a different username.")
 
-elif choice == "Modify Booking":
-    if st.session_state['logged_in']:
-        if user_has_orders(st.session_state['username']):
-            modify_booking()
+    elif choice == "Modify Booking":
+        if st.session_state['logged_in']:
+            if user_has_orders(st.session_state['username']):
+                modify_booking()
+            else:
+                st.warning("You don't have any orders to modify.")
         else:
-            st.warning("You don't have any orders to modify.")
-    else:
-        st.warning("Please log in to modify a booking.")
+            st.warning("Please log in to modify a booking.")
 
     elif choice == "Cancel Booking":
         if st.session_state['logged_in']:
