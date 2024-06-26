@@ -37,8 +37,6 @@ def setup_database():
 
     conn.commit()
     conn.close()
-# Call setup_database at the start
-setup_database()
 
 # Database functions
 def get_db_connection():
