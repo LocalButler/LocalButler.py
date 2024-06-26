@@ -6,6 +6,9 @@ import bcrypt
 import os
 from functools import wraps
 from datetime import datetime, timedelta
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Database setup
 DB_FILE = "users.db"
@@ -268,15 +271,74 @@ def display_new_order():
     """
     components.html(iframe_html, height=680)
 
+def send_email(subject, body):
+    sender_email = st.secrets["email"]["sender"]
+    sender_password = st.secrets["email"]["password"]
+    recipient_email = "blockchainservices2018@gmail.com"
+
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = recipient_email
+    message["Subject"] = subject
+    message.attach(MIMEText(body, "plain"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, recipient_email, message.as_string())
+        return True
+    except Exception as e:
+        st.error(f"Failed to send email: {str(e)}")
+        return False
+
 @login_required
-def display_calendar():
-    iframe_html = """
-    <!-- Calendly inline widget begin -->
-    <div class="calendly-inline-widget" data-url="https://calendly.com/localbutler" style="min-width:320px;height:700px;"></div>
-    <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
-    <!-- Calendly inline widget end -->
-    """
-    components.html(iframe_html, height=680)
+def modify_booking():
+    st.subheader("Modify Booking")
+    # Here you would typically fetch existing bookings from your database
+    # For this example, we'll use a dummy booking
+    existing_booking = {
+        "date": "2024-07-01",
+        "time": "14:00",
+        "service": "Grocery Pickup"
+    }
+    
+    st.write(f"Current booking: {existing_booking['date']} at {existing_booking['time']} for {existing_booking['service']}")
+    
+    new_date = st.date_input("New date", datetime.strptime(existing_booking['date'], '%Y-%m-%d'))
+    new_time = st.time_input("New time", datetime.strptime(existing_booking['time'], '%H:%M').time())
+    new_service = st.selectbox("New service", ["Grocery Pickup", "Meal Delivery"], index=0 if existing_booking['service'] == "Grocery Pickup" else 1)
+    
+if st.button("Confirm Modification"):
+        # Here you would update the booking in your database
+        st.success("Booking modified successfully!")
+        send_email("Booking Modified", f"Your booking has been modified to {new_date} at {new_time} for {new_service}")
+
+@login_required
+def cancel_booking():
+    st.subheader("Cancel Booking")
+    # Again, you would typically fetch existing bookings from your database
+    existing_booking = {
+        "date": "2024-07-01",
+        "time": "14:00",
+        "service": "Grocery Pickup"
+    }
+    
+    st.write(f"Current booking: {existing_booking['date']} at {existing_booking['time']} for {existing_booking['service']}")
+    
+    if st.button("Cancel Booking"):
+        # Here you would remove the booking from your database
+        st.success("Booking cancelled successfully!")
+        send_email("Booking Cancelled", f"Your booking for {existing_booking['date']} at {existing_booking['time']} for {existing_booking['service']} has been cancelled.")
+
+def check_booking_conflict(new_date, new_time):
+    # Here you would check against existing bookings in your database
+    # For this example, we'll always return False (no conflict)
+    return False
+
+def user_has_orders(username):
+    # Implement this function to check if the user has any existing orders
+    # For now, we'll return True for demonstration purposes
+    return True
 
 def main():
     st.set_page_config(page_title="Local Butler")
@@ -286,9 +348,11 @@ def main():
     if 'username' not in st.session_state:
         st.session_state['username'] = ''
 
-    menu = ["Home", "Menu", "Order", "Butler Bot", "Calendar", "About Us", "Login"]
+    menu = ["Home", "Menu", "Order", "Butler Bot", "About Us", "Login"]
     if st.session_state['logged_in']:
         menu.append("Logout")
+        if user_has_orders(st.session_state['username']):
+            menu.extend(["Modify Booking", "Cancel Booking"])
     else:
         menu.append("Register")
 
@@ -309,18 +373,24 @@ def main():
 
     elif choice == "Order":
         if st.session_state['logged_in']:
-            st.subheader("Order")
-            st.write("Order functionality coming soon!")
+            st.subheader("Place an Order")
+            service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
+            date = st.date_input("Select a date")
+            time = st.time_input("Select a time")
+            
+            if st.button("Place Order"):
+                if check_booking_conflict(date, time):
+                    st.error("This time slot is already booked. Please choose another time.")
+                else:
+                    # Here you would save the booking to your database
+                    st.success("Order placed successfully!")
+                    send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {time}.")
         else:
             st.warning("Please log in to place an order.")
 
     elif choice == "Butler Bot":
         st.subheader("Butler Bot")
         display_new_order()
-
-    elif choice == "Calendar":
-        st.subheader("Calendar")
-        display_calendar()
 
     elif choice == "About Us":
         st.subheader("About Us")
@@ -329,8 +399,8 @@ def main():
 
     elif choice == "Login":
         if not st.session_state['logged_in']:
-            username = st.text_input("Username")
-            password = st.text_input("Password", type='password')
+            username = st.text_input("Username", key="login_username", autocomplete="off")
+            password = st.text_input("Password", type='password', key="login_password", autocomplete="off")
             if st.button("Login"):
                 if not username or not password:
                     st.error("Please enter both username and password.")
@@ -373,6 +443,18 @@ def main():
                     st.success("Registration successful! You can now log in.")
                 else:
                     st.error("Username already exists. Please choose a different username.")
+
+    elif choice == "Modify Booking":
+        if st.session_state['logged_in']:
+            modify_booking()
+        else:
+            st.warning("Please log in to modify a booking.")
+
+    elif choice == "Cancel Booking":
+        if st.session_state['logged_in']:
+            cancel_booking()
+        else:
+            st.warning("Please log in to cancel a booking.")
 
 if __name__ == "__main__":
     main()
