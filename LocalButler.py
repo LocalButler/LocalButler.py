@@ -10,6 +10,9 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+# Set page config at the very beginning
+st.set_page_config(page_title="Local Butler")
+
 # Database setup
 DB_FILE = "users.db"
 db_path = Path(DB_FILE)
@@ -341,7 +344,7 @@ def user_has_orders(username):
     return True
 
 def main():
-    st.set_page_config(page_title="Local Butler")
+
 
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
