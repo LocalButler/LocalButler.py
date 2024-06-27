@@ -358,7 +358,8 @@ def user_has_orders(username):
     # For now, we'll return True for demonstration purposes
     return True
 
-def main():
+Certainly! Here's the entire main() function, properly indented and ready to paste:
+pythonCopydef main():
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
     if 'username' not in st.session_state:
@@ -387,30 +388,29 @@ def main():
             elif category == "Meal Delivery Services":
                 display_meal_delivery_services()
 
-elif choice == "Order":
-    if st.session_state['logged_in']:
-        st.subheader("Place an Order")
-        service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
-        date = st.date_input("Select a date")
-
-        import datetime
-        # Create a list of time slots from 7 AM to 9 PM
-        time_slots = [datetime.time(hour=h, minute=m) for h in range(7, 22) for m in (0, 30)]
-        time_strings = [t.strftime("%I:%M %p") for t in time_slots]
-        # Use a selectbox for time selection
-        selected_time_str = st.selectbox("Select a time", time_strings)
-        # Convert the selected time string back to a time object if needed
-        selected_time = datetime.datetime.strptime(selected_time_str, "%I:%M %p").time()
-        
-        if st.button("Place Order"):
-            if check_booking_conflict(date, selected_time):
-                st.error("This time slot is already booked. Please choose another time.")
-            else:
-                # Here you would save the booking to your database
-                st.success("Order placed successfully!")
-                send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {selected_time_str}.")
-    else:
-        st.warning("Please log in to place an order.")
+    elif choice == "Order":
+        if st.session_state['logged_in']:
+            st.subheader("Place an Order")
+            service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
+            date = st.date_input("Select a date")
+            import datetime
+            # Create a list of time slots from 7 AM to 9 PM
+            time_slots = [datetime.time(hour=h, minute=m) for h in range(7, 22) for m in (0, 30)]
+            time_strings = [t.strftime("%I:%M %p") for t in time_slots]
+            # Use a selectbox for time selection
+            selected_time_str = st.selectbox("Select a time", time_strings)
+            # Convert the selected time string back to a time object if needed
+            selected_time = datetime.datetime.strptime(selected_time_str, "%I:%M %p").time()
+            
+            if st.button("Place Order"):
+                if check_booking_conflict(date, selected_time):
+                    st.error("This time slot is already booked. Please choose another time.")
+                else:
+                    # Here you would save the booking to your database
+                    st.success("Order placed successfully!")
+                    send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {selected_time_str}.")
+        else:
+            st.warning("Please log in to place an order.")
 
     elif choice == "Butler Bot":
         st.subheader("Butler Bot")
