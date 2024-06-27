@@ -1,3 +1,4 @@
 bcrypt
 pandas
 streamlit-folium
+geopy
