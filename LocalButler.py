@@ -363,8 +363,7 @@ def user_has_orders(username):
     # For now, we'll return True for demonstration purposes
     return True
 
-Certainly. Here's the entire code with the indentation issue fixed and ready to paste:
-pythonCopydef main():
+def main():
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
     if 'username' not in st.session_state:
@@ -403,31 +402,23 @@ pythonCopydef main():
             selected_time_str = st.selectbox("Select a time", time_strings)
             selected_time = datetime.strptime(selected_time_str, "%I:%M %p").time()
             
-            # Add map for location selection
             st.subheader("Select Delivery Location")
             
-            # Initialize the geocoder
             geolocator = Nominatim(user_agent="local_butler_app")
 
-            # Get the coordinates for Fort Meade, MD
             fort_meade = geolocator.geocode("Fort Meade, MD")
 
-            # Initialize the map
             m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
             
-            # Add a search box for addresses
             address_search = st.text_input("Search for an address")
             if st.button("Search"):
                 try:
-                    # Geocode the address
                     location = geolocator.geocode(address_search)
                     if location:
-                        # Update the map center and add a marker
                         m.location = [location.latitude, location.longitude]
                         m.zoom_start = 15
                         folium.Marker([location.latitude, location.longitude], popup=location.address).add_to(m)
                         
-                        # Update the location input
                         location_input = location.address
                         st.success(f"Location found: {location.address}")
                     else:
@@ -435,25 +426,19 @@ pythonCopydef main():
                 except Exception as e:
                     st.error(f"An error occurred: {str(e)}")
             
-            # Add the map to the Streamlit app
             map_data = st_folium(m, height=400, width=700)
             
-            # Initialize location variable
             selected_location = ""
             
-            # Check if a location was clicked on the map
             if map_data['last_clicked'] is not None:
                 lat = map_data['last_clicked']['lat']
                 lng = map_data['last_clicked']['lng']
                 
-                # Reverse geocode to get the address
                 location = geolocator.reverse(f"{lat}, {lng}")
                 selected_location = location.address
                 
-                # Add a marker to the map
                 m.add_child(folium.Marker([lat, lng], popup=selected_location))
             
-            # Display the selected location
             location_input = st.text_input("Delivery Location", value=selected_location, 
                                            help="You can manually enter the location or select it on the map above.")
             
@@ -463,7 +448,6 @@ pythonCopydef main():
                 elif check_booking_conflict(date, selected_time):
                     st.error("This time slot is already booked. Please choose another time.")
                 else:
-                    # Here you would save the booking to your database
                     st.success(f"Order placed successfully! Delivery to: {location_input}")
                     send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {selected_time_str} to be delivered to {location_input}.")
         else:
