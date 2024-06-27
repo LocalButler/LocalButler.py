@@ -358,8 +358,7 @@ def user_has_orders(username):
     # For now, we'll return True for demonstration purposes
     return True
 
-Certainly! Here's the entire main() function, properly indented and ready to paste:
-pythonCopydef main():
+def main():
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
     if 'username' not in st.session_state:
