@@ -3,8 +3,6 @@ import streamlit.components.v1 as components
 import sqlite3
 from pathlib import Path
 import bcrypt
-import os
-from functools import wraps
 from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
@@ -173,359 +171,130 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
-    },
-    "Jersey Mike's Subs": {
-        "url": "https://www.jerseymikes.com/menu",
-        "instructions": [
-            "Place your order directly with Jersey Mike's Subs using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ]
-    },
-    "Bruster's Real Ice Cream": {
-        "url": "https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage",
-        "instructions": [
-            "Place your order directly with Bruster's Real Ice Cream using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ]
-    },
-    "Luigino's": {
-        "url": "https://order.yourmenu.com/luiginos",
-        "instructions": [
-            "Place your order directly with Luigino's by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ]
-    },
-    "PHO 5UP ODENTON": {
-        "url": "https://www.clover.com/online-ordering/pho-5up-odenton",
-        "instructions": [
-            "Place your order directly with PHO 5UP ODENTON by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ]
-    },
-    "Dunkin": {
-        "url": "https://www.dunkindonuts.com/en/mobile-app",
-        "instructions": [
-            "Place your order directly with Dunkin' by using their APP.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ]
-    },
-    "Baskin-Robbins": {
-        "url": "https://order.baskinrobbins.com/categories?storeId=BR-339568",
-        "instructions": [
-            "Place your order directly with Baskin-Robbins by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ]
     }
 }
 
-# Service display functions
-@login_required
-def display_grocery_services():
-    st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
-    
-    video_url = "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/119398d25abc62218ccaec71f44b30478d96485f/Local%20Butler%20Groceries.mp4"
-    
-    video_html = f"""
-        <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-            <video autoplay loop muted playsinline
-                style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
-                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                <source src="{video_url}" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 92%; background-color: black; opacity: 0.3;"></div>
-        </div>
-    """
-    components.html(video_html, height=315)
+# Email notification function
+def send_email(subject, body, recipient):
+    # Replace with your email credentials
+    sender_email = "youremail@example.com"
+    sender_password = "yourpassword"
+    smtp_server = "smtp.example.com"
+    smtp_port = 587
 
-    grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
-    store_info = GROCERY_STORES[grocery_store]
-    st.write(f"ORDER NOW: [{grocery_store}]({store_info['url']})")
-    
-    if "video_url" in store_info:
-        st.markdown(f"### {store_info['video_title']}")
-        store_video_html = f"""
-            <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-                <video autoplay playsinline controls
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                    <source src="{store_info['video_url']}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
-        """
-        components.html(store_video_html, height=315)
-    elif "image_url" in store_info:
-        st.image(store_info['image_url'], caption=f"{grocery_store} App", use_column_width=True)
-    
-    st.write("Instructions for placing your order:")
-    for instruction in store_info["instructions"]:
-        st.write(f"- {instruction}")
-
-@login_required
-def display_meal_delivery_services():
-    st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
-    restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
-    restaurant_info = RESTAURANTS[restaurant]
-    st.write(f"ORDER NOW: [{restaurant}]({restaurant_info['url']})")
-    st.write("Instructions for placing your order:")
-    for instruction in restaurant_info["instructions"]:
-        st.write(f"- {instruction}")
-
-def display_about_us():
-    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade, Maryland 20755. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
-
-def display_how_it_works():
-    st.write("1. Choose a service category from the menu.")
-    st.write("2. Select your desired service.")
-    st.write("3. Follow the prompts to complete your order.")
-    st.write("4. Sit back and relax while we take care of the rest!")
-
-@login_required
-def display_new_order():
-    iframe_html = """
-    <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
-    """
-    components.html(iframe_html, height=680)
-
-def send_email(subject, body):
-    sender_email = st.secrets["email"]["sender"]
-    sender_password = st.secrets["email"]["password"]
-    recipient_email = "blockchainservices2018@gmail.com"
-
-    message = MIMEMultipart()
-    message["From"] = sender_email
-    message["To"] = recipient_email
-    message["Subject"] = subject
-    message.attach(MIMEText(body, "plain"))
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = recipient
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
 
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
             server.login(sender_email, sender_password)
-            server.sendmail(sender_email, recipient_email, message.as_string())
-        return True
+            server.sendmail(sender_email, recipient, msg.as_string())
+        st.success(f"Email sent to {recipient}")
     except Exception as e:
-        st.error(f"Failed to send email: {str(e)}")
-        return False
+        st.error(f"Failed to send email: {e}")
 
-@login_required
-def modify_booking():
-    st.subheader("Modify Booking")
-    # Here you would typically fetch existing bookings from your database
-    # For this example, we'll use a dummy booking
-    existing_booking = {
-        "date": "2024-07-01",
-        "time": "14:00",
-        "service": "Grocery Pickup"
-    }
-    
-    st.write(f"Current booking: {existing_booking['date']} at {existing_booking['time']} for {existing_booking['service']}")
-    
-    new_date = st.date_input("New date", datetime.strptime(existing_booking['date'], '%Y-%m-%d'))
-    new_time = st.time_input("New time", datetime.strptime(existing_booking['time'], '%H:%M').time())
-    new_service = st.selectbox("New service", ["Grocery Pickup", "Meal Delivery"], index=0 if existing_booking['service'] == "Grocery Pickup" else 1)
-    
-    if st.button("Confirm Modification"):
-        # Here you would update the booking in your database
-        st.success("Booking modified successfully!")
-        send_email("Booking Modified", f"Your booking has been modified to {new_date} at {new_time} for {new_service}")
+# Session management
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
+    st.session_state['username'] = ''
 
-@login_required
-def cancel_booking():
-    st.subheader("Cancel Booking")
-    # Again, you would typically fetch existing bookings from your database
-    existing_booking = {
-        "date": "2024-07-01",
-        "time": "14:00",
-        "service": "Grocery Pickup"
-    }
-    
-    st.write(f"Current booking: {existing_booking['date']} at {existing_booking['time']} for {existing_booking['service']}")
-    
-    if st.button("Cancel Booking"):
-        # Here you would remove the booking from your database
-        st.success("Booking cancelled successfully!")
-        send_email("Booking Cancelled", f"Your booking for {existing_booking['date']} at {existing_booking['time']} for {existing_booking['service']} has been cancelled.")
+def login():
+    st.title("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        authenticated, message = authenticate_user(username, password)
+        if authenticated:
+            st.session_state['logged_in'] = True
+            st.session_state['username'] = username
+            st.success(message)
+        else:
+            st.error(message)
 
-def check_booking_conflict(new_date, new_time):
-    # Here you would check against existing bookings in your database
-    # For this example, we'll always return False (no conflict)
-    return False
+def register():
+    st.title("Register")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Register"):
+        if insert_user(username, password):
+            st.success("Registration successful. You can now log in.")
+        else:
+            st.error("Registration failed. Username may already be taken.")
 
-def user_has_orders(username):
-    # Implement this function to check if the user has any existing orders
-    # For now, we'll return True for demonstration purposes
-    return True
+def show_grocery_services():
+    st.title("Grocery Delivery Services")
+    for store, data in GROCERY_STORES.items():
+        st.subheader(store)
+        st.markdown(f"[Visit {store}]({data['url']})")
+        if 'video_url' in data:
+            st.video(data['video_url'])
+            st.write(data['video_title'])
+        if 'image_url' in data:
+            st.image(data['image_url'])
+        for instruction in data['instructions']:
+            st.write(instruction)
+
+def show_meal_services():
+    st.title("Meal Delivery Services")
+    for restaurant, data in RESTAURANTS.items():
+        st.subheader(restaurant)
+        st.markdown(f"[Visit {restaurant}]({data['url']})")
+        if 'image_url' in data:
+            st.image(data['image_url'])
+        for instruction in data['instructions']:
+            st.write(instruction)
+
+def place_order():
+    st.title("Place an Order")
+    st.write("Choose your delivery location on the map below:")
+
+    geolocator = Nominatim(user_agent="local_butler")
+    m = folium.Map(location=[38.9072, -77.0369], zoom_start=12)
+    folium.Marker([38.9072, -77.0369], tooltip="Your location").add_to(m)
+    map_data = st_folium(m, width=700, height=500)
+
+    if map_data and 'last_clicked' in map_data:
+        lat, lon = map_data['last_clicked']
+        location = geolocator.reverse((lat, lon))
+        st.write("Selected location:", location.address)
+
+        recipient_email = st.text_input("Your email")
+        if st.button("Confirm Order"):
+            send_email("New Order", f"Order placed at location: {location.address}", recipient_email)
+            st.success("Order confirmed!")
+
+def modify_or_cancel_booking():
+    st.title("Modify or Cancel Booking")
+    st.write("Functionality to modify or cancel bookings will be added here.")
 
 def main():
-    if 'logged_in' not in st.session_state:
-        st.session_state['logged_in'] = False
-    if 'username' not in st.session_state:
-        st.session_state['username'] = ''
-
-    menu = ["Home", "Menu", "Order", "Butler Bot", "About Us", "Login"]
     if st.session_state['logged_in']:
-        menu.append("Logout")
-        if user_has_orders(st.session_state['username']):
-            menu.extend(["Modify Booking", "Cancel Booking"])
+        st.sidebar.write(f"Welcome, {st.session_state['username']}")
+        if st.sidebar.button("Logout"):
+            st.session_state['logged_in'] = False
+            st.session_state['username'] = ''
+            st.success("Logged out successfully")
+
+        selected_option = st.sidebar.radio("Navigate", ["Grocery Delivery", "Meal Delivery", "Place Order", "Modify/Cancel Booking"])
+
+        if selected_option == "Grocery Delivery":
+            show_grocery_services()
+        elif selected_option == "Meal Delivery":
+            show_meal_services()
+        elif selected_option == "Place Order":
+            place_order()
+        elif selected_option == "Modify/Cancel Booking":
+            modify_or_cancel_booking()
     else:
-        menu.append("Register")
-
-    choice = st.sidebar.selectbox("Menu", menu)
-
-    if choice == "Home":
-        st.subheader("Welcome to Local Butler!")
-        st.write("Please navigate through the sidebar to explore our app.")
-
-    elif choice == "Menu":
-        st.subheader("Menu")
-        with st.expander("Service Categories", expanded=False):
-            category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
-            if category == "Grocery Services":
-                display_grocery_services()
-            elif category == "Meal Delivery Services":
-                display_meal_delivery_services()
-
-    elif choice == "Order":
-        if st.session_state['logged_in']:
-            st.subheader("Place an Order")
-            service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
-            date = st.date_input("Select a date")
-            time_slots = [time(hour=h, minute=m) for h in range(7, 21) for m in (0, 15, 30, 45)]
-            time_strings = [t.strftime("%I:%M %p") for t in time_slots]
-            selected_time_str = st.selectbox("Select a time", time_strings)
-            selected_time = datetime.strptime(selected_time_str, "%I:%M %p").time()
-
-            st.subheader("Select Delivery Location")
-
-            geolocator = Nominatim(user_agent="local_butler_app")
-
-            fort_meade = geolocator.geocode("Fort Meade, MD")
-
-            m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
-
-            address_search = st.text_input("Search for an address")
-            searched_location = None
-            if st.button("Search"):
-                try:
-                    searched_location = geolocator.geocode(address_search)
-                    if searched_location:
-                        m = folium.Map(location=[searched_location.latitude, searched_location.longitude], zoom_start=15)
-                        folium.Marker([searched_location.latitude, searched_location.longitude], popup=searched_location.address).add_to(m)
-                        st.success(f"Location found: {searched_location.address}")
-                    else:
-                        st.error("Location not found. Please try a different address.")
-                except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
-
-            map_data = st_folium(m, height=400, width=700)
-
-            selected_location = ""
-
-            if map_data['last_clicked'] is not None:
-                lat = map_data['last_clicked']['lat']
-                lng = map_data['last_clicked']['lng']
-
-                clicked_location = geolocator.reverse(f"{lat}, {lng}")
-                selected_location = clicked_location.address
-
-                m = folium.Map(location=[lat, lng], zoom_start=15)
-                folium.Marker([lat, lng], popup=selected_location).add_to(m)
-                st_folium(m, height=400, width=700)
-
-            if searched_location:
-                selected_location = searched_location.address
-
-            location_input = st.text_input("Delivery Location", value=selected_location, 
-                                           help="You can manually enter the location or select it on the map above.")
-
-            if st.button("Place Order"):
-                if not location_input:
-                    st.error("Please select a delivery location.")
-                elif check_booking_conflict(date, selected_time):
-                    st.error("This time slot is already booked. Please choose another time.")
-                else:
-                    st.success(f"Order placed successfully! Delivery to: {location_input}")
-                    send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {selected_time_str} to be delivered to {location_input}.")
+        page = st.sidebar.selectbox("Choose a page", ["Login", "Register"])
+        if page == "Login":
+            login()
         else:
-            st.warning("Please log in to place an order.")
-
-    elif choice == "Butler Bot":
-        st.subheader("Butler Bot")
-        display_new_order()
-
-    elif choice == "About Us":
-        st.subheader("About Us")
-        display_about_us()
-        display_how_it_works()
-
-    elif choice == "Login":
-        if not st.session_state['logged_in']:
-            username = st.text_input("Username", key="login_username", autocomplete="off")
-            password = st.text_input("Password", type='password', key="login_password", autocomplete="off")
-            if st.button("Login"):
-                if not username or not password:
-                    st.error("Please enter both username and password.")
-                else:
-                    success, message = authenticate_user(username, password)
-                    if success:
-                        st.session_state['logged_in'] = True
-                        st.session_state['username'] = username
-                        st.success(message)
-                        st.experimental_rerun()
-                    else:
-                        st.error(message)
-        else:
-            st.warning("You are already logged in.")
-
-    elif choice == "Logout":
-        if st.session_state['logged_in']:
-            if st.button("Logout"):
-                st.session_state['logged_in'] = False
-                st.session_state['username'] = ''
-                st.success("Logged out successfully!")
-                st.experimental_rerun()
-        else:
-            st.warning("You are not logged in.")
-
-    elif choice == "Register":
-        st.subheader("Register")
-        new_username = st.text_input("Username")
-        new_password = st.text_input("Password", type='password')
-        confirm_password = st.text_input("Confirm Password", type='password')
-        if st.button("Register"):
-            if not new_username or not new_password or not confirm_password:
-                st.error("Please fill in all fields.")
-            elif new_password != confirm_password:
-                st.error("Passwords do not match. Please try again.")
-            elif len(new_password) < 8:
-                st.error("Password must be at least 8 characters long.")
-            else:
-                if insert_user(new_username, new_password):
-                    st.success("Registration successful! You can now log in.")
-                else:
-                    st.error("Username already exists. Please choose a different username.")
-
-    elif choice == "Modify Booking":
-        if st.session_state['logged_in']:
-            if user_has_orders(st.session_state['username']):
-                modify_booking()
-            else:
-                st.warning("You don't have any orders to modify.")
-        else:
-            st.warning("Please log in to modify a booking.")
-
-    elif choice == "Cancel Booking":
-        if st.session_state['logged_in']:
-            cancel_booking()
-        else:
-            st.warning("Please log in to cancel a booking.")
+            register()
 
 if __name__ == "__main__":
     main()
