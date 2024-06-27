@@ -393,8 +393,8 @@ def main():
                 display_meal_delivery_services()
 
     elif choice == "Order":
-    if st.session_state['logged_in']:
-        st.subheader("Place an Order")
+        if st.session_state['logged_in']:
+            st.subheader("Place an Order")
         service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
         date = st.date_input("Select a date")
         time_slots = [time(hour=h, minute=m) for h in range(7, 21) for m in (0, 15, 30, 45)]
