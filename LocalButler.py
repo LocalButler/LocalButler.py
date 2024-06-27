@@ -393,65 +393,68 @@ def main():
                 display_meal_delivery_services()
 
     elif choice == "Order":
-        if st.session_state['logged_in']:
-            st.subheader("Place an Order")
-            service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
-            date = st.date_input("Select a date")
-            time_slots = [time(hour=h, minute=m) for h in range(7, 21) for m in (0, 15, 30, 45)]
-            time_strings = [t.strftime("%I:%M %p") for t in time_slots]
-            selected_time_str = st.selectbox("Select a time", time_strings)
-            selected_time = datetime.strptime(selected_time_str, "%I:%M %p").time()
-            
-            st.subheader("Select Delivery Location")
-            
-            geolocator = Nominatim(user_agent="local_butler_app")
+    if st.session_state['logged_in']:
+        st.subheader("Place an Order")
+        service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
+        date = st.date_input("Select a date")
+        time_slots = [time(hour=h, minute=m) for h in range(7, 21) for m in (0, 15, 30, 45)]
+        time_strings = [t.strftime("%I:%M %p") for t in time_slots]
+        selected_time_str = st.selectbox("Select a time", time_strings)
+        selected_time = datetime.strptime(selected_time_str, "%I:%M %p").time()
+        
+        st.subheader("Select Delivery Location")
+        
+        geolocator = Nominatim(user_agent="local_butler_app")
 
-            fort_meade = geolocator.geocode("Fort Meade, MD")
+        fort_meade = geolocator.geocode("Fort Meade, MD")
 
-            m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
-            
-            address_search = st.text_input("Search for an address")
-            if st.button("Search"):
-                try:
-                    location = geolocator.geocode(address_search)
-                    if location:
-                        m.location = [location.latitude, location.longitude]
-                        m.zoom_start = 15
-                        folium.Marker([location.latitude, location.longitude], popup=location.address).add_to(m)
-                        
-                        location_input = location.address
-                        st.success(f"Location found: {location.address}")
-                    else:
-                        st.error("Location not found. Please try a different address.")
-                except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
-            
-            map_data = st_folium(m, height=400, width=700)
-            
-            selected_location = ""
-            
-            if map_data['last_clicked'] is not None:
-                lat = map_data['last_clicked']['lat']
-                lng = map_data['last_clicked']['lng']
-                
-                location = geolocator.reverse(f"{lat}, {lng}")
-                selected_location = location.address
-                
-                m.add_child(folium.Marker([lat, lng], popup=selected_location))
-            
-            location_input = st.text_input("Delivery Location", value=selected_location, 
-                                           help="You can manually enter the location or select it on the map above.")
-            
-            if st.button("Place Order"):
-                if not location_input:
-                    st.error("Please select a delivery location.")
-                elif check_booking_conflict(date, selected_time):
-                    st.error("This time slot is already booked. Please choose another time.")
+        m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
+        
+        address_search = st.text_input("Search for an address")
+        searched_location = None
+        if st.button("Search"):
+            try:
+                searched_location = geolocator.geocode(address_search)
+                if searched_location:
+                    m = folium.Map(location=[searched_location.latitude, searched_location.longitude], zoom_start=15)
+                    folium.Marker([searched_location.latitude, searched_location.longitude], popup=searched_location.address).add_to(m)
+                    st.success(f"Location found: {searched_location.address}")
                 else:
-                    st.success(f"Order placed successfully! Delivery to: {location_input}")
-                    send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {selected_time_str} to be delivered to {location_input}.")
-        else:
-            st.warning("Please log in to place an order.")
+                    st.error("Location not found. Please try a different address.")
+            except Exception as e:
+                st.error(f"An error occurred: {str(e)}")
+        
+        map_data = st_folium(m, height=400, width=700)
+        
+        selected_location = ""
+        
+        if map_data['last_clicked'] is not None:
+            lat = map_data['last_clicked']['lat']
+            lng = map_data['last_clicked']['lng']
+            
+            clicked_location = geolocator.reverse(f"{lat}, {lng}")
+            selected_location = clicked_location.address
+            
+            m = folium.Map(location=[lat, lng], zoom_start=15)
+            folium.Marker([lat, lng], popup=selected_location).add_to(m)
+            st_folium(m, height=400, width=700)
+        
+        if searched_location:
+            selected_location = searched_location.address
+        
+        location_input = st.text_input("Delivery Location", value=selected_location, 
+                                       help="You can manually enter the location or select it on the map above.")
+        
+        if st.button("Place Order"):
+            if not location_input:
+                st.error("Please select a delivery location.")
+            elif check_booking_conflict(date, selected_time):
+                st.error("This time slot is already booked. Please choose another time.")
+            else:
+                st.success(f"Order placed successfully! Delivery to: {location_input}")
+                send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {selected_time_str} to be delivered to {location_input}.")
+    else:
+        st.warning("Please log in to place an order.")
 
     elif choice == "Butler Bot":
         st.subheader("Butler Bot")
