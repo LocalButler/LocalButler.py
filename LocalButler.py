@@ -394,7 +394,7 @@ def main():
             date = st.date_input("Select a date")
             import datetime
             # Create a list of time slots from 7 AM to 9 PM
-            time_slots = [datetime.time(hour=h, minute=m) for h in range(7, 22) for m in (0, 30)]
+            time_slots = [datetime.time(hour=h, minute=m) for h in range(7, 22) for m in (0, 15)]
             time_strings = [t.strftime("%I:%M %p") for t in time_slots]
             # Use a selectbox for time selection
             selected_time_str = st.selectbox("Select a time", time_strings)
