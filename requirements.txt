@@ -1,2 +1,3 @@
 bcrypt
 pandas
+streamlit-folium
