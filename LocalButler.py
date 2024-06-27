@@ -11,6 +11,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import folium
 from streamlit_folium import st_folium
+from datetime import datetime, time, timedelta
 
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
@@ -394,10 +395,10 @@ def main():
             st.subheader("Place an Order")
             service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
             date = st.date_input("Select a date")
-            time_slots = [datetime.time(hour=h, minute=m) for h in range(7, 21) for m in (0, 15, 30, 45)]
+            time_slots = [time(hour=h, minute=m) for h in range(7, 21) for m in (0, 15, 30, 45)]
             time_strings = [t.strftime("%I:%M %p") for t in time_slots]
             selected_time_str = st.selectbox("Select a time", time_strings)
-            selected_time = datetime.datetime.strptime(selected_time_str, "%I:%M %p").time()
+            selected_time = datetime.strptime(selected_time_str, "%I:%M %p").time()
             
             # Add map for location selection
             st.subheader("Select Delivery Location")
