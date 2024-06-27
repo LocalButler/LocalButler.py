@@ -9,8 +9,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import folium
 from streamlit_folium import st_folium
-from datetime import datetime, time, timedelta
-import geopy
 from geopy.geocoders import Nominatim
 
 # Set page config at the very beginning
@@ -23,25 +21,12 @@ db_path = Path(DB_FILE)
 def setup_database():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-
-    # Check if the table exists, if not create it
     cursor.execute('''CREATE TABLE IF NOT EXISTS users
                       (id INTEGER PRIMARY KEY,
                        username TEXT UNIQUE,
                        password TEXT,
                        failed_attempts INTEGER DEFAULT 0,
                        last_attempt TIMESTAMP)''')
-
-    # Check if the columns exist
-    cursor.execute("PRAGMA table_info(users)")
-    columns = [column[1] for column in cursor.fetchall()]
-
-    if 'failed_attempts' not in columns:
-        cursor.execute("ALTER TABLE users ADD COLUMN failed_attempts INTEGER DEFAULT 0")
-
-    if 'last_attempt' not in columns:
-        cursor.execute("ALTER TABLE users ADD COLUMN last_attempt TIMESTAMP")
-
     conn.commit()
     conn.close()
 
@@ -99,7 +84,7 @@ def login_required(func):
 GROCERY_STORES = {
     "Weis Markets": {
         "url": "https://www.weismarkets.com/",
-        "video_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/1ff75ee91b2717fabadb44ee645612d6e48e8ee3/Weis%20Promo%20Online%20ordering%20%E2%80%90.mp4",
+        "video_url": "https://example.com/weis_video.mp4",
         "video_title": "Watch this video to learn how to order from Weis Markets:",
         "instructions": [
             "Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.",
@@ -114,26 +99,9 @@ GROCERY_STORES = {
             "Select store pick-up and specify the date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png"
+        "image_url": "https://example.com/safeway_image.png"
     },
-    "Commissary": {
-        "url": "https://shop.commissaries.com/",
-        "instructions": [
-            "Place your order directly with the Commissary using your own account.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/comissaries.jpg"
-    },
-    "Food Lion": {
-        "url": "https://shop.foodlion.com/?shopping_context=pickup&store=2517",
-        "instructions": [
-            "Place your order directly with Food Lion using your own account.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg"
-    }
+    # Other stores...
 }
 
 RESTAURANTS = {
@@ -144,39 +112,13 @@ RESTAURANTS = {
             "Select pick-up and specify the date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/TheHideAway.jpg"
+        "image_url": "https://example.com/hideaway_image.jpg"
     },
-    "Ruth's Chris Steak House": {
-        "url": "https://order.ruthschris.com/",
-        "instructions": [
-            "Place your order directly with Ruth's Chris Steak House using their website or app.",
-            "Select pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ]
-    },
-    "Baltimore Coffee & Tea Company": {
-        "url": "https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf",
-        "instructions": [
-            "Review the menu and decide on your order.",
-            "Call Baltimore Coffee & Tea Company to place your order.",
-            "Specify that you'll be using Local Butler for pick-up and delivery.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
-            "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
-        ]
-    },
-    "The All American Steakhouse": {
-        "url": "https://order.theallamericansteakhouse.com/menu/odenton",
-        "instructions": [
-            "Place your order directly with The All American Steakhouse by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ]
-    }
+    # Other restaurants...
 }
 
 # Email notification function
 def send_email(subject, body, recipient):
-    # Replace with your email credentials
     sender_email = "youremail@example.com"
     sender_password = "yourpassword"
     smtp_server = "smtp.example.com"
