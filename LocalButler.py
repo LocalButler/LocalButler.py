@@ -12,6 +12,8 @@ from email.mime.multipart import MIMEMultipart
 import folium
 from streamlit_folium import st_folium
 from datetime import datetime, time, timedelta
+import geopy
+from geopy.geocoders import Nominatim
 
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
@@ -391,46 +393,80 @@ def main():
                 display_meal_delivery_services()
 
     elif choice == "Order":
-        if st.session_state['logged_in']:
-            st.subheader("Place an Order")
-            service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
-            date = st.date_input("Select a date")
-            time_slots = [time(hour=h, minute=m) for h in range(7, 21) for m in (0, 15, 30, 45)]
-            time_strings = [t.strftime("%I:%M %p") for t in time_slots]
-            selected_time_str = st.selectbox("Select a time", time_strings)
-            selected_time = datetime.strptime(selected_time_str, "%I:%M %p").time()
-            
-            # Add map for location selection
-            st.subheader("Select Delivery Location")
-            
-            # Initialize the map
-            m = folium.Map(location=[33.748997, -84.387985], zoom_start=10)
-            
-            # Add the map to the Streamlit app
-            map_data = st_folium(m, height=400, width=700)
-            
-            # Initialize location variable
-            selected_location = ""
-            
-            # Check if a location was clicked on the map
-            if map_data['last_clicked'] is not None:
-                selected_location = f"{map_data['last_clicked']['lat']:.6f}, {map_data['last_clicked']['lng']:.6f}"
-            
-            # Display the selected location
-            location_input = st.text_input("Delivery Location", value=selected_location, 
-                                           help="You can manually enter the location or select it on the map above.")
-            
-            if st.button("Place Order"):
-                if not location_input:
-                    st.error("Please select a delivery location.")
-                elif check_booking_conflict(date, selected_time):
-                    st.error("This time slot is already booked. Please choose another time.")
+    if st.session_state['logged_in']:
+        st.subheader("Place an Order")
+        service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
+        date = st.date_input("Select a date")
+        time_slots = [time(hour=h, minute=m) for h in range(7, 21) for m in (0, 15, 30, 45)]
+        time_strings = [t.strftime("%I:%M %p") for t in time_slots]
+        selected_time_str = st.selectbox("Select a time", time_strings)
+        selected_time = datetime.strptime(selected_time_str, "%I:%M %p").time()
+        
+        # Add map for location selection
+        st.subheader("Select Delivery Location")
+        
+        # Initialize the geocoder
+        geolocator = Nominatim(user_agent="local_butler_app")
+
+        # Get the coordinates for Fort Meade, MD
+        fort_meade = geolocator.geocode("Fort Meade, MD")
+
+        # Initialize the map
+        m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
+        
+        # Add a search box for addresses
+        address_search = st.text_input("Search for an address")
+        if st.button("Search"):
+            try:
+                # Geocode the address
+                location = geolocator.geocode(address_search)
+                if location:
+                    # Update the map center and add a marker
+                    m.location = [location.latitude, location.longitude]
+                    m.zoom_start = 15
+                    folium.Marker([location.latitude, location.longitude], popup=location.address).add_to(m)
+                    
+                    # Update the location input
+                    location_input = location.address
+                    st.success(f"Location found: {location.address}")
                 else:
-                    # Here you would save the booking to your database
-                    st.success(f"Order placed successfully! Delivery to: {location_input}")
-                    send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {selected_time_str} to be delivered to {location_input}.")
-        else:
-            st.warning("Please log in to place an order.")
+                    st.error("Location not found. Please try a different address.")
+            except Exception as e:
+                st.error(f"An error occurred: {str(e)}")
+        
+        # Add the map to the Streamlit app
+        map_data = st_folium(m, height=400, width=700)
+        
+        # Initialize location variable
+        selected_location = ""
+        
+        # Check if a location was clicked on the map
+        if map_data['last_clicked'] is not None:
+            lat = map_data['last_clicked']['lat']
+            lng = map_data['last_clicked']['lng']
+            
+            # Reverse geocode to get the address
+            location = geolocator.reverse(f"{lat}, {lng}")
+            selected_location = location.address
+            
+            # Add a marker to the map
+            m.add_child(folium.Marker([lat, lng], popup=selected_location))
+        
+        # Display the selected location
+        location_input = st.text_input("Delivery Location", value=selected_location, 
+                                       help="You can manually enter the location or select it on the map above.")
+        
+        if st.button("Place Order"):
+            if not location_input:
+                st.error("Please select a delivery location.")
+            elif check_booking_conflict(date, selected_time):
+                st.error("This time slot is already booked. Please choose another time.")
+            else:
+                # Here you would save the booking to your database
+                st.success(f"Order placed successfully! Delivery to: {location_input}")
+                send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {selected_time_str} to be delivered to {location_input}.")
+    else:
+        st.warning("Please log in to place an order.")
 
     elif choice == "Butler Bot":
         st.subheader("Butler Bot")
