@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import folium
+from streamlit_folium import st_folium
 
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
@@ -388,28 +390,47 @@ def main():
                 display_meal_delivery_services()
 
     elif choice == "Order":
-        if st.session_state['logged_in']:
-            st.subheader("Place an Order")
-            service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
-            date = st.date_input("Select a date")
-            import datetime
-            # Create a list of time slots from 7 AM to 9 PM
-            time_slots = [datetime.time(hour=h, minute=m) for h in range(7, 21) for m in (0, 15, 30, 45)]
-            time_strings = [t.strftime("%I:%M %p") for t in time_slots]
-            # Use a selectbox for time selection
-            selected_time_str = st.selectbox("Select a time", time_strings)
-            # Convert the selected time string back to a time object if needed
-            selected_time = datetime.datetime.strptime(selected_time_str, "%I:%M %p").time()
-            
-            if st.button("Place Order"):
-                if check_booking_conflict(date, selected_time):
-                    st.error("This time slot is already booked. Please choose another time.")
-                else:
-                    # Here you would save the booking to your database
-                    st.success("Order placed successfully!")
-                    send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {selected_time_str}.")
-        else:
-            st.warning("Please log in to place an order.")
+    if st.session_state['logged_in']:
+        st.subheader("Place an Order")
+        service = st.selectbox("Select a service", ["Grocery Pickup", "Meal Delivery"])
+        date = st.date_input("Select a date")
+        import datetime
+        time_slots = [datetime.time(hour=h, minute=m) for h in range(7, 21) for m in (0, 15, 30, 45)]
+        time_strings = [t.strftime("%I:%M %p") for t in time_slots]
+        selected_time_str = st.selectbox("Select a time", time_strings)
+        selected_time = datetime.datetime.strptime(selected_time_str, "%I:%M %p").time()
+        
+        # Add map for location selection
+        st.subheader("Select Delivery Location")
+        
+        # Initialize the map
+        m = folium.Map(location=[33.748997, -84.387985], zoom_start=10)
+        
+        # Add the map to the Streamlit app
+        map_data = st_folium(m, height=400, width=700)
+        
+        # Initialize location variable
+        selected_location = ""
+        
+        # Check if a location was clicked on the map
+        if map_data['last_clicked'] is not None:
+            selected_location = f"{map_data['last_clicked']['lat']:.6f}, {map_data['last_clicked']['lng']:.6f}"
+        
+        # Display the selected location
+        location_input = st.text_input("Delivery Location", value=selected_location, 
+                                       help="You can manually enter the location or select it on the map above.")
+        
+        if st.button("Place Order"):
+            if not location_input:
+                st.error("Please select a delivery location.")
+            elif check_booking_conflict(date, selected_time):
+                st.error("This time slot is already booked. Please choose another time.")
+            else:
+                # Here you would save the booking to your database
+                st.success(f"Order placed successfully! Delivery to: {location_input}")
+                send_email("New Order Placed", f"A new order has been placed for {service} on {date} at {selected_time_str} to be delivered to {location_input}.")
+    else:
+        st.warning("Please log in to place an order.")
 
     elif choice == "Butler Bot":
         st.subheader("Butler Bot")
