@@ -569,10 +569,11 @@ def main():
             else:
                 st.warning("Please log in to place an order.")
         elif choice == "Butler Bot":
-        st.subheader("Butler Bot")
-        iframe_html = """
-        <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
-        """
+    st.subheader("Butler Bot")
+    iframe_html = """
+    <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
+    """
+    components.html(iframe_html, height=680)
         components.html(iframe_html, height=680)
         elif choice == "About Us":
             st.subheader("About Us")
