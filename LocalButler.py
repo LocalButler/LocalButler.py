@@ -582,29 +582,29 @@ def main():
             st.subheader("About Us")
             display_about_us()
             display_how_it_works()
-elif choice == "Login":
-    if not st.session_state['logged_in']:
-        username = st.text_input("Username", key="login_username")
-        password = st.text_input("Password", type='password', key="login_password")
-        if st.button("Login"):
-            if not username or not password:
-                st.error("Please enter both username and password.")
+        elif choice == "Login":
+            if not st.session_state['logged_in']:
+                username = st.text_input("Username", key="login_username")
+                password = st.text_input("Password", type='password', key="login_password")
+                if st.button("Login"):
+                    if not username or not password:
+                        st.error("Please enter both username and password.")
+                    else:
+                        success, message, user_type, user_id = authenticate_user(username, password)
+                        if login_successful:
+    user_id = get_user_id_from_database(username)  
+    st.session_state['user_id'] = user_id
+                        if success:
+                            st.session_state['logged_in'] = True
+                            st.session_state['username'] = username
+                            st.session_state['user_type'] = user_type
+                            st.session_state['user_id'] = user_id
+                            st.success(message)
+                            st.experimental_rerun()
+                        else:
+                            st.error(message)
             else:
-                success, message, user_type, user_id = authenticate_user(username, password)
-                if success:
-                    user_id = get_user_id_from_database(username)  # This line should be indented correctly
-                    st.session_state['user_id'] = user_id
-                    st.session_state['logged_in'] = True
-                    st.session_state['username'] = username
-                    st.session_state['user_type'] = user_type
-                    st.session_state['user_id'] = user_id
-                    st.success(message)
-                    st.experimental_rerun()
-                else:
-                    st.error(message)
-        else:
-            st.warning("You are already logged in.")
-
+                st.warning("You are already logged in.")
         elif choice == "Logout":
             if st.session_state['logged_in']:
                 if st.button("Logout"):
