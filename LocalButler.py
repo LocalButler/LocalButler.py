@@ -367,21 +367,22 @@ def display_new_order():
     st.subheader("Your Orders")
     
     # Fetch and display user's orders
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, service, date, time, location, status FROM orders WHERE user_id = ? ORDER BY date DESC, time DESC", (st.session_state['user_id'],))
-    orders = cursor.fetchall()
-    conn.close()
-    
-    if orders:
-        for order in orders:
-            order_id, service, date, time, location, status = order
-            with st.expander(f"Order {order_id} - {service} ({status})"):
-                st.write(f"Date: {date}, Time: {time}")
-                st.write(f"Location: {location}")
-                st.write(f"Status: {status}")
-    else:
-        st.info("You have no orders yet.")
+conn = get_db_connection()
+cursor = conn.cursor()
+cursor.execute("SELECT id, service, date, time, location, status FROM orders WHERE user_id = ? ORDER BY date DESC, time DESC", (st.session_state['user_id'],))
+orders = cursor.fetchall()
+conn.close()
+
+if orders:
+    for order in orders:
+        order_id, service, date, time_str, location, status = order
+        time_obj = datetime.strptime(time_str, '%H:%M:%S').time()  # Convert time string to time object
+        with st.expander(f"Order {order_id} - {service} ({status})"):
+            st.write(f"Date: {date}, Time: {time_obj.strftime('%I:%M %p')}")
+            st.write(f"Location: {location}")
+            st.write(f"Status: {status}")
+else:
+    st.info("You have no orders yet.")
 
 @login_required
 def modify_booking():
@@ -432,23 +433,25 @@ def check_time_slot_available(date, time):
     return result and result[0]
 
 def update_time_slot(date, time, available):
+    if isinstance(time, datetime.time):
+        time = time.strftime('%H:%M:%S')  # Convert time to string if it's a time object
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT OR REPLACE INTO schedule (date, time, available) VALUES (?, ?, ?)", 
                    (date, time, available))
     conn.commit()
     conn.close()
-
 def place_order(user_id, service, date, time, location):
-    if check_time_slot_available(date, time):
+    time_str = time.strftime('%H:%M:%S')  # Convert time to string
+    if check_time_slot_available(date, time_str):
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("INSERT INTO orders (user_id, service, date, time, location, status) VALUES (?, ?, ?, ?, ?, ?)",
-                       (user_id, service, date, time, location, "Pending"))
+                       (user_id, service, date, time_str, location, "Pending"))
         order_id = cursor.lastrowid
         conn.commit()
         conn.close()
-        update_time_slot(date, time, False)
+        update_time_slot(date, time_str, False)
         return order_id
     else:
         return None
