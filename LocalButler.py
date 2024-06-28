@@ -376,23 +376,22 @@ def main():
         st.session_state['user_id'] = None
 
     if st.session_state['logged_in'] and st.session_state['user_type'] == 'Driver':
-    driver_dashboard()
-else:
-    # Your existing code for other user types
-    menu = ["Home", "Menu", "Order", "Butler Bot", "About Us", "Login"]
-    if st.session_state['logged_in']:
-        menu.append("Logout")
-        if user_has_orders(st.session_state['username']):
-            menu.extend(["Modify Booking", "Cancel Booking"])
+        driver_dashboard()
     else:
-        menu.append("Register")
+        # Your existing code for other user types
+        menu = ["Home", "Menu", "Order", "Butler Bot", "About Us", "Login"]
+        if st.session_state['logged_in']:
+            menu.append("Logout")
+            if user_has_orders(st.session_state['username']):
+                menu.extend(["Modify Booking", "Cancel Booking"])
+        else:
+            menu.append("Register")
 
-    choice = st.sidebar.selectbox("Menu", menu)
+        choice = st.sidebar.selectbox("Menu", menu)
 
         if choice == "Home":
             st.subheader("Welcome to Local Butler!")
             st.write("Please navigate through the sidebar to explore our app.")
-
         elif choice == "Menu":
             st.subheader("Menu")
             with st.expander("Service Categories", expanded=False):
@@ -401,22 +400,18 @@ else:
                     display_grocery_services()
                 elif category == "Meal Delivery Services":
                     display_meal_delivery_services()
-
         elif choice == "Order":
             if st.session_state['logged_in']:
                 display_new_order()
             else:
                 st.warning("Please log in to place an order.")
-
         elif choice == "Butler Bot":
             st.subheader("Butler Bot")
             display_new_order()
-
         elif choice == "About Us":
             st.subheader("About Us")
             display_about_us()
             display_how_it_works()
-
         elif choice == "Login":
             if not st.session_state['logged_in']:
                 username = st.text_input("Username", key="login_username")
@@ -437,7 +432,6 @@ else:
                             st.error(message)
             else:
                 st.warning("You are already logged in.")
-
         elif choice == "Logout":
             if st.session_state['logged_in']:
                 if st.button("Logout"):
@@ -449,13 +443,10 @@ else:
                     st.experimental_rerun()
             else:
                 st.warning("You are not logged in.")
-
         elif choice == "Register":
             register()
-
         elif choice == "Modify Booking":
             modify_booking()
-
         elif choice == "Cancel Booking":
             cancel_booking()
 
