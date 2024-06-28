@@ -297,9 +297,9 @@ def display_car_wash_services():
 
 def login():
     st.subheader("Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type='password')
-    if st.button("Login"):
+    username = st.text_input("Username", key="login_username")
+    password = st.text_input("Password", type='password', key="login_password")
+    if st.button("Login", key="login_button"):
         success, message, user_type, user_id = authenticate_user(username, password)
         if success:
             st.session_state['logged_in'] = True
@@ -312,11 +312,11 @@ def login():
 
 def register():
     st.subheader("Register")
-    new_username = st.text_input("Username")
-    new_password = st.text_input("Password", type='password')
-    confirm_password = st.text_input("Confirm Password", type='password')
-    user_type = st.selectbox("User Type", ["Consumer", "Driver", "Merchant", "Partner"])
-    if st.button("Register"):
+    new_username = st.text_input("Username", key="register_username")
+    new_password = st.text_input("Password", type='password', key="register_password")
+    confirm_password = st.text_input("Confirm Password", type='password', key="register_confirm_password")
+    user_type = st.selectbox("User Type", ["Consumer", "Driver", "Merchant", "Partner"], key="register_user_type")
+    if st.button("Register", key="register_button"):
         if not new_username or not new_password or not confirm_password:
             st.error("Please fill in all fields.")
         elif new_password != confirm_password:
@@ -331,8 +331,8 @@ def register():
 
 def chatbot():
     st.subheader("Chat with Butler Bot")
-    user_input = st.text_input("You:", key="user_input")
-    if st.button("Send"):
+    user_input = st.text_input("You:", key="chatbot_input")
+    if st.button("Send", key="chatbot_send"):
         if user_input.lower() == "hello":
             st.write("Butler Bot: Hello there! My name is Butler Bot, and I'm here to assist you with anything you need from Local Butler. How can I be of service to you today?")
         elif "laundry" in user_input.lower() and "price" in user_input.lower():
@@ -351,7 +351,8 @@ def main():
     else:
         st.write(f"Welcome back, {st.session_state['username']}!")
         service = st.selectbox("Select a service", 
-                               ["Grocery Delivery", "Restaurant Delivery", "Laundry Services", "Pet Care", "Car Wash", "Chat with Butler Bot"])
+                               ["Grocery Delivery", "Restaurant Delivery", "Laundry Services", "Pet Care", "Car Wash", "Chat with Butler Bot"],
+                               key="service_selector")
         
         if service == "Grocery Delivery":
             display_grocery_services()
