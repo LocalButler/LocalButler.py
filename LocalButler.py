@@ -310,6 +310,14 @@ def assign_order_to_driver(order_id, driver_id):
 def driver_dashboard():
     st.subheader("Driver Dashboard")
     
+    # Add a sign out button in the sidebar
+    if st.sidebar.button("Sign Out"):
+        st.session_state['logged_in'] = False
+        st.session_state['username'] = ''
+        st.session_state['user_type'] = ''
+        st.session_state['user_id'] = None
+        st.experimental_rerun()
+    
     tab1, tab2, tab3, tab4 = st.tabs(["Marketplace", "Current Delivery", "Scheduling", "Earnings"])
     
     with tab1:
@@ -317,56 +325,46 @@ def driver_dashboard():
         orders = get_available_orders()
         for order in orders:
             order_id, service, date, time, location = order
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.write(f"Order ID: {order_id}")
-                st.write(f"Service: {service}")
+            with st.expander(f"Order {order_id} - {service}"):
                 st.write(f"Date: {date}, Time: {time}")
                 st.write(f"Location: {location}")
-            with col2:
-                if st.button(f"Accept Order {order_id}"):
+                if st.button(f"Accept Order", key=f"accept_{order_id}"):
                     assign_order_to_driver(order_id, st.session_state['user_id'])
                     st.success(f"You have accepted order {order_id}")
                     st.experimental_rerun()
     
     with tab2:
         st.subheader("Current Delivery")
-        # Implement current delivery logic here
+        st.info("No current delivery.")  # Placeholder, implement actual logic later
     
     with tab3:
         st.subheader("Scheduling")
-        # Implement scheduling logic here
+        date = st.date_input("Select date")
+        start_time = st.time_input("Start time")
+        end_time = st.time_input("End time")
+        if st.button("Set Availability"):
+            st.success("Availability set successfully!")  # Placeholder, implement actual logic later
     
     with tab4:
         st.subheader("Earnings")
-        # Implement earnings logic here
-    # Map showing current location
+        st.write("Total Earnings: $0.00")  # Placeholder, implement actual logic later
+    
+    # Location permission and map
     st.subheader("Your Location")
-    # Implement map functionality here
-    geolocator = Nominatim(user_agent="local_butler_app")
-    fort_meade = geolocator.geocode("Fort Meade, MD")
-    m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
-    st_folium(m, height=400, width=700)
-
-def register():
-    st.subheader("Register")
-    new_username = st.text_input("Username")
-    new_password = st.text_input("Password", type='password')
-    confirm_password = st.text_input("Confirm Password", type='password')
-    user_type = st.selectbox("User Type", ["Consumer", "Driver", "Merchant", "Partner"])
-    if st.button("Register"):
-        if not new_username or not new_password or not confirm_password:
-            st.error("Please fill in all fields.")
-        elif new_password != confirm_password:
-            st.error("Passwords do not match. Please try again.")
-        elif len(new_password) < 8:
-            st.error("Password must be at least 8 characters long.")
-        else:
-            if insert_user(new_username, new_password, user_type):
-                st.success("Registration successful! You can now log in.")
-            else:
-                st.error("Username already exists. Please choose a different username.")
-
+    if 'location_enabled' not in st.session_state:
+        st.session_state['location_enabled'] = False
+    
+    if st.button("Enable Location"):
+        st.session_state['location_enabled'] = True
+        st.success("Location enabled. Please refresh the page.")
+    
+    if st.session_state['location_enabled']:
+        geolocator = Nominatim(user_agent="local_butler_app")
+        fort_meade = geolocator.geocode("Fort Meade, MD")
+        m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
+        st_folium(m, height=400, width=700)
+    else:
+        st.info("Please enable location to view the map.")
 def main():
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
@@ -378,17 +376,18 @@ def main():
         st.session_state['user_id'] = None
 
     if st.session_state['logged_in'] and st.session_state['user_type'] == 'Driver':
-        driver_dashboard()
+    driver_dashboard()
+else:
+    # Your existing code for other user types
+    menu = ["Home", "Menu", "Order", "Butler Bot", "About Us", "Login"]
+    if st.session_state['logged_in']:
+        menu.append("Logout")
+        if user_has_orders(st.session_state['username']):
+            menu.extend(["Modify Booking", "Cancel Booking"])
     else:
-        menu = ["Home", "Menu", "Order", "Butler Bot", "About Us", "Login"]
-        if st.session_state['logged_in']:
-            menu.append("Logout")
-            if user_has_orders(st.session_state['username']):
-                menu.extend(["Modify Booking", "Cancel Booking"])
-        else:
-            menu.append("Register")
+        menu.append("Register")
 
-        choice = st.sidebar.selectbox("Menu", menu)
+    choice = st.sidebar.selectbox("Menu", menu)
 
         if choice == "Home":
             st.subheader("Welcome to Local Butler!")
