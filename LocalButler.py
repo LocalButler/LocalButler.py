@@ -53,9 +53,7 @@ class ScheduleModel(Base):
     time = Column(Time)
     available = Column(Boolean)
 
-engine = create_engine(config['database']['url'])
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
+
 
 # Dataclasses
 @dataclass
