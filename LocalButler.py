@@ -218,6 +218,9 @@ def display_how_it_works():
 
 @login_required
 def display_new_order():
+    # Your display_new_order code here
+    pass
+
 def send_email(subject, body):
     sender_email = st.secrets["email"]["sender"]
     sender_password = st.secrets["email"]["password"]
