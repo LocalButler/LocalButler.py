@@ -72,6 +72,26 @@ def insert_user(username, password, user_type):
         except sqlite3.IntegrityError:
             return False
 
+def register():
+    st.subheader("Register")
+    new_username = st.text_input("Username")
+    new_password = st.text_input("Password", type='password')
+    confirm_password = st.text_input("Confirm Password", type='password')
+    user_type = st.selectbox("User Type", ["Consumer", "Driver", "Merchant", "Partner"])
+    
+    if st.button("Register"):
+        if not new_username or not new_password or not confirm_password:
+            st.error("Please fill in all fields.")
+        elif new_password != confirm_password:
+            st.error("Passwords do not match. Please try again.")
+        elif len(new_password) < 8:
+            st.error("Password must be at least 8 characters long.")
+        else:
+            if insert_user(new_username, new_password, user_type):
+                st.success("Registration successful! You can now log in.")
+            else:
+                st.error("Username already exists. Please choose a different username.")
+
 def authenticate_user(username, password):
     with get_db_connection() as conn:
         cursor = conn.cursor()
