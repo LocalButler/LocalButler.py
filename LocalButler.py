@@ -315,26 +315,7 @@ def display_how_it_works():
     st.write("3. Follow the prompts to complete your order.")
     st.write("4. Sit back and relax while we take care of the rest!")
 
-@login_required
-def display_meal_delivery_services():
-    st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
-    restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
-    restaurant_info = RESTAURANTS[restaurant]
-    st.write(f"ORDER NOW: [{restaurant}]({restaurant_info['url']})")
-    st.write("Instructions for placing your order:")
-    for instruction in restaurant_info["instructions"]:
-        st.write(f"- {instruction}")
-
-def display_about_us():
-    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade, Maryland 20755. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
-
-def display_how_it_works():
-    st.write("1. Choose a service category from the menu.")
-    st.write("2. Select your desired service.")
-    st.write("3. Follow the prompts to complete your order.")
-    st.write("4. Sit back and relax while we take care of the rest!")
-
-    def generate_time_slots():
+def generate_time_slots():
     start = datetime.combine(datetime.today(), time(7, 0))  # 7 AM
     end = datetime.combine(datetime.today(), time(21, 0))  # 9 PM
     time_slots = []
@@ -355,9 +336,20 @@ def display_new_order():
     selected_time = st.selectbox("Select a time:", time_slots)
     
     location = st.text_input("Enter your location:")
-
-    # ... rest of the function
-
+    
+    if location:
+        geolocator = Nominatim(user_agent="local_butler_app")
+        try:
+            location_data = geolocator.geocode(location)
+            if location_data:
+                m = folium.Map(location=[location_data.latitude, location_data.longitude], zoom_start=15)
+                folium.Marker([location_data.latitude, location_data.longitude]).add_to(m)
+                st_folium(m, width=700, height=400)
+            else:
+                st.warning("Location not found. Please enter a valid address.")
+        except Exception as e:
+            st.error(f"Error occurred while geocoding: {str(e)}")
+    
     if st.button("Place Order"):
         if not service or not date or not selected_time or not location:
             st.error("Please fill in all fields.")
@@ -371,7 +363,6 @@ def display_new_order():
             else:
                 st.error("Unable to place order. The selected time slot may not be available.")
 
-    # ... rest of the function
     st.write("---")
     st.subheader("Your Orders")
     
@@ -391,6 +382,7 @@ def display_new_order():
                 st.write(f"Status: {status}")
     else:
         st.info("You have no orders yet.")
+
 @login_required
 def modify_booking():
     st.subheader("Modify Booking")
