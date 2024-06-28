@@ -357,7 +357,35 @@ def display_new_order():
             st.error(f"Error occurred while geocoding: {str(e)}")
     
     if st.button("Place Order"):
+        if not service or not date or not time or not location:
+            st.error("Please fill in all fields.")
+        else:
+            order_id = place_order(st.session_state['user_id'], service, date, time, location)
+            if order_id:
+                st.success(f"Order placed successfully! Your order ID is {order_id}")
+                send_email("New Order Placed", f"A new order (ID: {order_id}) has been placed for {service} on {date} at {time} to be delivered to {location}.")
+            else:
+                st.error("Unable to place order. The selected time slot may not be available.")
 
+    st.write("---")
+    st.subheader("Your Orders")
+    
+    # Fetch and display user's orders
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, service, date, time, location, status FROM orders WHERE user_id = ? ORDER BY date DESC, time DESC", (st.session_state['user_id'],))
+    orders = cursor.fetchall()
+    conn.close()
+    
+    if orders:
+        for order in orders:
+            order_id, service, date, time, location, status = order
+            with st.expander(f"Order {order_id} - {service} ({status})"):
+                st.write(f"Date: {date}, Time: {time}")
+                st.write(f"Location: {location}")
+                st.write(f"Status: {status}")
+    else:
+        st.info("You have no orders yet.")
 @login_required
 def modify_booking():
     st.subheader("Modify Booking")
