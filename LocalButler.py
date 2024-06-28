@@ -398,8 +398,7 @@ def driver_dashboard():
         st_folium(m, height=400, width=700)
     else:
         st.info("Please enable location to view the map.")
-I apologize for the confusion. You're right, I didn't provide the entire context. Let me give you the complete main() function along with the surrounding code. Here's the full section including the main() function and the code that follows it:
-pythonCopydef main():
+def main():
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
     if 'username' not in st.session_state:
@@ -490,4 +489,5 @@ def user_has_orders(username):
     return True
 
 if __name__ == "__main__":
+    main()
     main()
