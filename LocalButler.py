@@ -125,7 +125,7 @@ def login_required(func):
         return func(*args, **kwargs)
     return wrapper
 
-# Service data (keeping the original data)
+# Service data
 GROCERY_STORES = {
     "Weis Markets": {
         "url": "https://www.weismarkets.com/",
@@ -137,7 +137,33 @@ GROCERY_STORES = {
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ]
     },
-    # ... (other grocery stores)
+    "SafeWay": {
+        "url": "https://www.safeway.com/",
+        "instructions": [
+            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png"
+    },
+    "Commissary": {
+        "url": "https://shop.commissaries.com/",
+        "instructions": [
+            "Place your order directly with the Commissary using your own account.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/comissaries.jpg"
+    },
+    "Food Lion": {
+        "url": "https://shop.foodlion.com/?shopping_context=pickup&store=2517",
+        "instructions": [
+            "Place your order directly with Food Lion using your own account.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg"
+    }
 }
 
 RESTAURANTS = {
@@ -150,7 +176,80 @@ RESTAURANTS = {
         ],
         "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/TheHideAway.jpg"
     },
-    # ... (other restaurants)
+    "Ruth's Chris Steak House": {
+        "url": "https://order.ruthschris.com/",
+        "instructions": [
+            "Place your order directly with Ruth's Chris Steak House using their website or app.",
+            "Select pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Baltimore Coffee & Tea Company": {
+        "url": "https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf",
+        "instructions": [
+            "Review the menu and decide on your order.",
+            "Call Baltimore Coffee & Tea Company to place your order.",
+            "Specify that you'll be using Local Butler for pick-up and delivery.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
+            "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
+        ]
+    },
+    "The All American Steakhouse": {
+        "url": "https://order.theallamericansteakhouse.com/menu/odenton",
+        "instructions": [
+            "Place your order directly with The All American Steakhouse by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Jersey Mike's Subs": {
+        "url": "https://www.jerseymikes.com/menu",
+        "instructions": [
+            "Place your order directly with Jersey Mike's Subs using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Bruster's Real Ice Cream": {
+        "url": "https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage",
+        "instructions": [
+            "Place your order directly with Bruster's Real Ice Cream using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Luigino's": {
+        "url": "https://order.yourmenu.com/luiginos",
+        "instructions": [
+            "Place your order directly with Luigino's by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "PHO 5UP ODENTON": {
+        "url": "https://www.clover.com/online-ordering/pho-5up-odenton",
+        "instructions": [
+            "Place your order directly with PHO 5UP ODENTON by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Dunkin": {
+        "url": "https://www.dunkindonuts.com/en/mobile-app",
+        "instructions": [
+            "Place your order directly with Dunkin' by using their APP.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    },
+    "Baskin-Robbins": {
+        "url": "https://order.baskinrobbins.com/categories?storeId=BR-339568",
+        "instructions": [
+            "Place your order directly with Baskin-Robbins by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ]
+    }
 }
 
 # Service display functions
@@ -217,6 +316,25 @@ def display_how_it_works():
     st.write("4. Sit back and relax while we take care of the rest!")
 
 @login_required
+def display_meal_delivery_services():
+    st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
+    restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
+    restaurant_info = RESTAURANTS[restaurant]
+    st.write(f"ORDER NOW: [{restaurant}]({restaurant_info['url']})")
+    st.write("Instructions for placing your order:")
+    for instruction in restaurant_info["instructions"]:
+        st.write(f"- {instruction}")
+
+def display_about_us():
+    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade, Maryland 20755. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
+
+def display_how_it_works():
+    st.write("1. Choose a service category from the menu.")
+    st.write("2. Select your desired service.")
+    st.write("3. Follow the prompts to complete your order.")
+    st.write("4. Sit back and relax while we take care of the rest!")
+
+@login_required
 def display_new_order():
     st.subheader("Place a New Order")
     
@@ -225,36 +343,20 @@ def display_new_order():
     time = st.time_input("Select a time:")
     location = st.text_input("Enter your location:")
     
-    if st.button("Place Order"):
-        if not service or not date or not time or not location:
-            st.error("Please fill in all fields.")
-        else:
-            order_id = place_order(st.session_state['user_id'], service, date, time, location)
-            if order_id:
-                st.success(f"Order placed successfully! Your order ID is {order_id}")
-                send_email("New Order Placed", f"A new order (ID: {order_id}) has been placed for {service} on {date} at {time} to be delivered to {location}.")
+    if location:
+        geolocator = Nominatim(user_agent="local_butler_app")
+        try:
+            location_data = geolocator.geocode(location)
+            if location_data:
+                m = folium.Map(location=[location_data.latitude, location_data.longitude], zoom_start=15)
+                folium.Marker([location_data.latitude, location_data.longitude]).add_to(m)
+                st_folium(m, width=700, height=400)
             else:
-                st.error("Unable to place order. The selected time slot may not be available.")
-
-    st.write("---")
-    st.subheader("Your Orders")
+                st.warning("Location not found. Please enter a valid address.")
+        except Exception as e:
+            st.error(f"Error occurred while geocoding: {str(e)}")
     
-    # Fetch and display user's orders
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, service, date, time, location, status FROM orders WHERE user_id = ? ORDER BY date DESC, time DESC", (st.session_state['user_id'],))
-    orders = cursor.fetchall()
-    conn.close()
-    
-    if orders:
-        for order in orders:
-            order_id, service, date, time, location, status = order
-            with st.expander(f"Order {order_id} - {service} ({status})"):
-                st.write(f"Date: {date}, Time: {time}")
-                st.write(f"Location: {location}")
-                st.write(f"Status: {status}")
-    else:
-        st.info("You have no orders yet.")
+    if st.button("Place Order"):
 
 @login_required
 def modify_booking():
