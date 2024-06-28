@@ -354,7 +354,6 @@ def register():
     new_password = st.text_input("Password", type='password')
     confirm_password = st.text_input("Confirm Password", type='password')
     user_type = st.selectbox("User Type", ["Consumer", "Driver", "Merchant", "Partner"])
-    
     if st.button("Register"):
         if not new_username or not new_password or not confirm_password:
             st.error("Please fill in all fields.")
