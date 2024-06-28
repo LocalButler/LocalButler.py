@@ -17,6 +17,9 @@ from geopy.geocoders import Nominatim
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
 
+if 'user_id' not in st.session_state:
+    st.session_state['user_id'] = None
+
 # Database setup
 DB_FILE = "users.db"
 db_path = Path(DB_FILE)
@@ -588,6 +591,9 @@ def main():
                         st.error("Please enter both username and password.")
                     else:
                         success, message, user_type, user_id = authenticate_user(username, password)
+                        if login_successful:
+    user_id = get_user_id_from_database(username)  # Replace with your method
+    st.session_state['user_id'] = user_id
                         if success:
                             st.session_state['logged_in'] = True
                             st.session_state['username'] = username
