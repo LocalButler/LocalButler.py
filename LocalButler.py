@@ -17,12 +17,11 @@ from geopy.geocoders import Nominatim
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
 
+# Session state initialization
 if 'user_id' not in st.session_state:
     st.session_state['user_id'] = None
-
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
-
 
 # Database setup
 DB_FILE = "users.db"
@@ -31,33 +30,29 @@ db_path = Path(DB_FILE)
 def setup_database():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-
-    cursor.execute('''CREATE TABLE IF NOT EXISTS users
-                      (id INTEGER PRIMARY KEY,
-                       username TEXT UNIQUE,
-                       password TEXT,
-                       user_type TEXT,
-                       failed_attempts INTEGER DEFAULT 0,
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users 
+                      (id INTEGER PRIMARY KEY, 
+                       username TEXT UNIQUE, 
+                       password TEXT, 
+                       user_type TEXT, 
+                       failed_attempts INTEGER DEFAULT 0, 
                        last_attempt TIMESTAMP)''')
-
-    cursor.execute('''CREATE TABLE IF NOT EXISTS orders
-                      (id INTEGER PRIMARY KEY,
-                       user_id INTEGER,
-                       service TEXT,
-                       date DATE,
-                       time TIME,
-                       location TEXT,
-                       status TEXT,
-                       driver_id INTEGER,
-                       FOREIGN KEY (user_id) REFERENCES users(id),
+    cursor.execute('''CREATE TABLE IF NOT EXISTS orders 
+                      (id INTEGER PRIMARY KEY, 
+                       user_id INTEGER, 
+                       service TEXT, 
+                       date DATE, 
+                       time TIME, 
+                       location TEXT, 
+                       status TEXT, 
+                       driver_id INTEGER, 
+                       FOREIGN KEY (user_id) REFERENCES users(id), 
                        FOREIGN KEY (driver_id) REFERENCES users(id))''')
-
-    cursor.execute('''CREATE TABLE IF NOT EXISTS schedule
-                      (id INTEGER PRIMARY KEY,
-                       date DATE,
-                       time TIME,
+    cursor.execute('''CREATE TABLE IF NOT EXISTS schedule 
+                      (id INTEGER PRIMARY KEY, 
+                       date DATE, 
+                       time TIME, 
                        available BOOLEAN)''')
-
     conn.commit()
     conn.close()
 
@@ -72,37 +67,17 @@ def insert_user(username, password, user_type):
     with get_db_connection() as conn:
         hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
         try:
-            conn.execute("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", 
+            conn.execute("INSERT INTO users (username, password, user_type) VALUES (?,?,?)", 
                          (username, hashed_password, user_type))
             conn.commit()
             return True
         except sqlite3.IntegrityError:
             return False
 
-def register():
-    st.subheader("Register")
-    new_username = st.text_input("Username")
-    new_password = st.text_input("Password", type='password')
-    confirm_password = st.text_input("Confirm Password", type='password')
-    user_type = st.selectbox("User Type", ["Consumer", "Driver", "Merchant", "Partner"])
-    
-    if st.button("Register"):
-        if not new_username or not new_password or not confirm_password:
-            st.error("Please fill in all fields.")
-        elif new_password != confirm_password:
-            st.error("Passwords do not match. Please try again.")
-        elif len(new_password) < 8:
-            st.error("Password must be at least 8 characters long.")
-        else:
-            if insert_user(new_username, new_password, user_type):
-                st.success("Registration successful! You can now log in.")
-            else:
-                st.error("Username already exists. Please choose a different username.")
-
 def authenticate_user(username, password):
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, password, user_type, failed_attempts, last_attempt FROM users WHERE username = ?", (username,))
+        cursor.execute("SELECT id, password, user_type, failed_attempts, last_attempt FROM users WHERE username =?", (username,))
         user = cursor.fetchone()
         if user:
             user_id, stored_password, user_type, failed_attempts, last_attempt = user
@@ -110,13 +85,12 @@ def authenticate_user(username, password):
                 last_attempt = datetime.fromisoformat(last_attempt)
                 if last_attempt + timedelta(minutes=15) > datetime.now() and failed_attempts >= 5:
                     return False, "Account locked. Try again later.", None, None
-            
             if bcrypt.checkpw(password.encode(), stored_password):
-                cursor.execute("UPDATE users SET failed_attempts = 0, last_attempt = NULL WHERE username = ?", (username,))
+                cursor.execute("UPDATE users SET failed_attempts = 0, last_attempt = NULL WHERE username =?", (username,))
                 conn.commit()
                 return True, "Login successful", user_type, user_id
             else:
-                cursor.execute("UPDATE users SET failed_attempts = failed_attempts + 1, last_attempt = ? WHERE username = ?", 
+                cursor.execute("UPDATE users SET failed_attempts = failed_attempts + 1, last_attempt =? WHERE username =?", 
                                (datetime.now().isoformat(), username))
                 conn.commit()
                 return False, "Invalid username or password", None, None
@@ -263,370 +237,134 @@ RESTAURANTS = {
 @login_required
 def display_grocery_services():
     st.write("Order fresh groceries from your favorite local stores and have them delivered straight to your doorstep.")
-    
     video_url = "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/119398d25abc62218ccaec71f44b30478d96485f/Local%20Butler%20Groceries.mp4"
-    
     video_html = f"""
-        <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-            <video autoplay loop muted playsinline
-                style="position: absolute; top: -25%; left: 0; width: 100%; height: 125%;"
-                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                <source src="{video_url}" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <div style="position: absolute; top: -5%; left: 0; width: 100%; height: 92%; background-color: black; opacity: 0.3;"></div>
-        </div>
+        <video controls width="100%">
+            <source src="{video_url}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
     """
-    components.html(video_html, height=315)
-
-    grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
-    store_info = GROCERY_STORES[grocery_store]
-    st.write(f"ORDER NOW: [{grocery_store}]({store_info['url']})")
+    st.components.v1.html(video_html, height=300)
     
-    if "video_url" in store_info:
-        st.markdown(f"### {store_info['video_title']}")
-        store_video_html = f"""
-            <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
-                <video autoplay playsinline controls
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                    <source src="{store_info['video_url']}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
-        """
-        components.html(store_video_html, height=315)
-    elif "image_url" in store_info:
-        st.image(store_info['image_url'], caption=f"{grocery_store} App", use_column_width=True)
-    
-    st.write("Instructions for placing your order:")
-    for instruction in store_info["instructions"]:
-        st.write(f"- {instruction}")
+    for store, details in GROCERY_STORES.items():
+        st.subheader(store)
+        st.write(f"[Order from {store}]({details['url']})")
+        for instruction in details['instructions']:
+            st.write(f"- {instruction}")
+        if 'video_url' in details:
+            st.video(details['video_url'])
+        if 'image_url' in details:
+            st.image(details['image_url'])
 
 @login_required
-def display_meal_delivery_services():
-    st.write("Enjoy delicious meals from top restaurants in your area delivered to your home or office.")
-    restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
-    restaurant_info = RESTAURANTS[restaurant]
-    st.write(f"ORDER NOW: [{restaurant}]({restaurant_info['url']})")
-    st.write("Instructions for placing your order:")
-    for instruction in restaurant_info["instructions"]:
-        st.write(f"- {instruction}")
-
-def display_about_us():
-    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade, Maryland 20755. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
-
-def display_how_it_works():
-    st.write("1. Choose a service category from the menu.")
-    st.write("2. Select your desired service.")
-    st.write("3. Follow the prompts to complete your order.")
-    st.write("4. Sit back and relax while we take care of the rest!")
-
-def generate_time_slots():
-    start = datetime.combine(datetime.today(), time(7, 0))  # 7 AM
-    end = datetime.combine(datetime.today(), time(21, 0))  # 9 PM
-    time_slots = []
-    while start <= end:
-        time_slots.append(start.strftime("%I:%M %p"))
-        start += timedelta(minutes=15)
-    return time_slots
+def display_restaurant_services():
+    st.write("Order delicious meals from your favorite local restaurants and have them delivered hot and fresh to your doorstep.")
+    for restaurant, details in RESTAURANTS.items():
+        st.subheader(restaurant)
+        st.write(f"[Order from {restaurant}]({details['url']})")
+        for instruction in details['instructions']:
+            st.write(f"- {instruction}")
+        if 'image_url' in details:
+            st.image(details['image_url'])
 
 @login_required
-def display_new_order():
-    st.subheader("Place a New Order")
-    
-    service = st.selectbox("Select a service:", ["Grocery Pickup", "Meal Delivery"])
-    date = st.date_input("Select a date:")
-    
-    # Replace the original time input with a custom time slot selector
-    time_slots = generate_time_slots()
-    selected_time = st.selectbox("Select a time:", time_slots)
-    
-    location = st.text_input("Enter your location:")
-    
-    if location:
-        geolocator = Nominatim(user_agent="local_butler_app")
-        try:
-            location_data = geolocator.geocode(location)
-            if location_data:
-                m = folium.Map(location=[location_data.latitude, location_data.longitude], zoom_start=15)
-                folium.Marker([location_data.latitude, location_data.longitude]).add_to(m)
-                st_folium(m, width=700, height=400)
-            else:
-                st.warning("Location not found. Please enter a valid address.")
-        except Exception as e:
-            st.error(f"Error occurred while geocoding: {str(e)}")
-    
-    if st.button("Place Order"):
-        if not service or not date or not selected_time or not location:
+def display_laundry_services():
+    st.write("Let us take care of your laundry needs. We'll pick up, wash, fold, and deliver your clothes back to you.")
+    st.write("Our laundry service costs $1.50 per pound.")
+    st.write("Benefits of using our laundry services:")
+    st.write("- Save on utilities: No need to worry about water, electricity, or gas costs.")
+    st.write("- No detergent costs: We provide all necessary cleaning agents.")
+    st.write("- Time-saving: Let us handle your laundry while you focus on other tasks.")
+    st.write("To use our laundry service, simply let us know how many bags of laundry you have and their approximate sizes.")
+
+@login_required
+def display_pet_care_services():
+    st.write("We offer a range of pet care services to keep your furry friends happy and healthy.")
+    st.write("Our services include:")
+    st.write("- Dog walking")
+    st.write("- Pet sitting")
+    st.write("- Grooming")
+    st.write("Let us know what type of pet care service you need, and we'll connect you with trusted professionals in your area.")
+
+@login_required
+def display_car_wash_services():
+    st.write("Keep your vehicle looking its best with our car wash services.")
+    st.write("We offer:")
+    st.write("- Quick wash")
+    st.write("- Detailed cleaning")
+    st.write("- Interior cleaning")
+    st.write("Let us know what type of car wash service you need, and we'll schedule it for you.")
+
+def login():
+    st.subheader("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type='password')
+    if st.button("Login"):
+        success, message, user_type, user_id = authenticate_user(username, password)
+        if success:
+            st.session_state['logged_in'] = True
+            st.session_state['user_id'] = user_id
+            st.session_state['username'] = username
+            st.session_state['user_type'] = user_type
+            st.success(message)
+        else:
+            st.error(message)
+
+def register():
+    st.subheader("Register")
+    new_username = st.text_input("Username")
+    new_password = st.text_input("Password", type='password')
+    confirm_password = st.text_input("Confirm Password", type='password')
+    user_type = st.selectbox("User Type", ["Consumer", "Driver", "Merchant", "Partner"])
+    if st.button("Register"):
+        if not new_username or not new_password or not confirm_password:
             st.error("Please fill in all fields.")
+        elif new_password != confirm_password:
+            st.error("Passwords do not match. Please try again.")
+        elif len(new_password) < 8:
+            st.error("Password must be at least 8 characters long.")
         else:
-            # Convert selected_time string back to time object
-            time_obj = datetime.strptime(selected_time, "%I:%M %p").time()
-            order_id = place_order(st.session_state['user_id'], service, date, time_obj, location)
-            if order_id:
-                st.success(f"Order placed successfully! Your order ID is {order_id}")
-                send_email("New Order Placed", f"A new order (ID: {order_id}) has been placed for {service} on {date} at {selected_time} to be delivered to {location}.")
+            if insert_user(new_username, new_password, user_type):
+                st.success("Registration successful! You can now log in.")
             else:
-                st.error("Unable to place order. The selected time slot may not be available.")
+                st.error("Username already exists. Please choose a different username.")
 
-    st.write("---")
-    st.subheader("Your Orders")
-    
-    # Fetch and display user's orders
-conn = get_db_connection()
-cursor = conn.cursor()
-cursor.execute("SELECT id, service, date, time, location, status FROM orders WHERE user_id = ? ORDER BY date DESC, time DESC", (st.session_state['user_id'],))
-orders = cursor.fetchall()
-conn.close()
+def chatbot():
+    st.subheader("Chat with Butler Bot")
+    user_input = st.text_input("You:", key="user_input")
+    if st.button("Send"):
+        if user_input.lower() == "hello":
+            st.write("Butler Bot: Hello there! My name is Butler Bot, and I'm here to assist you with anything you need from Local Butler. How can I be of service to you today?")
+        elif "laundry" in user_input.lower() and "price" in user_input.lower():
+            st.write("Butler Bot: Hello there! I'm delighted to assist you with our laundry services. The cost for our laundry services is $1.50 per pound. We understand that laundry needs may vary, so we offer this per-pound rate to ensure you only pay for the exact amount of laundry you need cleaned. This price includes the pickup, washing, drying, folding, and delivery of your clothes.")
+        elif "order" in user_input.lower() and "myself" in user_input.lower():
+            st.write("Butler Bot: That's a great idea! Here's how it works: you'll provide me with the list of ingredients you need, and I'll help you find the best options available for purchase. Once you have the list ready, you can place the order yourself through your preferred grocery store's website or app. After you've placed the order and obtained the order number, simply share it with me, and I'll take care of the pickup and delivery process.")
+        else:
+            st.write("Butler Bot: I'm here to help! Could you please provide more details about what you need assistance with?")
 
-if orders:
-    for order in orders:
-        order_id, service, date, time_str, location, status = order
-        time_obj = datetime.strptime(time_str, '%H:%M:%S').time()  # Convert time string to time object
-        with st.expander(f"Order {order_id} - {service} ({status})"):
-            st.write(f"Date: {date}, Time: {time_obj.strftime('%I:%M %p')}")
-            st.write(f"Location: {location}")
-            st.write(f"Status: {status}")
-else:
-    st.info("You have no orders yet.")
-
-@login_required
-def modify_booking():
-    st.subheader("Modify Booking")
-    # Here you would typically fetch existing bookings from your database
-    # For this example, we'll use a dummy booking
-    existing_booking = {
-        "date": "2024-07-01",
-        "time": "14:00",
-        "service": "Grocery Pickup"
-    }
-    
-    st.write(f"Current booking: {existing_booking['date']} at {existing_booking['time']} for {existing_booking['service']}")
-    
-    new_date = st.date_input("New date", datetime.strptime(existing_booking['date'], '%Y-%m-%d'))
-    new_time = st.time_input("New time", datetime.strptime(existing_booking['time'], '%H:%M').time())
-    new_service = st.selectbox("New service", ["Grocery Pickup", "Meal Delivery"], index=0 if existing_booking['service'] == "Grocery Pickup" else 1)
-    
-    if st.button("Confirm Modification"):
-        # Here you would update the booking in your database
-        st.success("Booking modified successfully!")
-        send_email("Booking Modified", f"Your booking has been modified to {new_date} at {new_time} for {new_service}")
-
-@login_required
-def cancel_booking():
-    st.subheader("Cancel Booking")
-    # Again, you would typically fetch existing bookings from your database
-    existing_booking = {
-        "date": "2024-07-01",
-        "time": "14:00",
-        "service": "Grocery Pickup"
-    }
-    
-    st.write(f"Current booking: {existing_booking['date']} at {existing_booking['time']} for {existing_booking['service']}")
-    
-    if st.button("Cancel Booking"):
-        # Here you would remove the booking from your database
-        st.success("Booking cancelled successfully!")
-        send_email("Booking Cancelled", f"Your booking for {existing_booking['date']} at {existing_booking['time']} for {existing_booking['service']} has been cancelled.")
-
-def check_time_slot_available(date, time):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    time_str = time.strftime('%H:%M:%S')  # Convert time to string
-    cursor.execute("SELECT available FROM schedule WHERE date = ? AND time = ?", (date, time_str))
-    result = cursor.fetchone()
-    conn.close()
-    return result and result[0]
-
-def update_time_slot(date, time, available):
-    if isinstance(time, datetime.time):
-        time = time.strftime('%H:%M:%S')  # Convert time to string if it's a time object
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR REPLACE INTO schedule (date, time, available) VALUES (?, ?, ?)", 
-                   (date, time, available))
-    conn.commit()
-    conn.close()
-def place_order(user_id, service, date, time, location):
-    time_str = time.strftime('%H:%M:%S')  # Convert time to string
-    if check_time_slot_available(date, time_str):
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO orders (user_id, service, date, time, location, status) VALUES (?, ?, ?, ?, ?, ?)",
-                       (user_id, service, date, time_str, location, "Pending"))
-        order_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        update_time_slot(date, time_str, False)
-        return order_id
-    else:
-        return None
-
-def get_available_orders():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, service, date, time, location FROM orders WHERE status = 'Pending' ORDER BY date, time")
-    orders = cursor.fetchall()
-    conn.close()
-    return orders
-
-def assign_order_to_driver(order_id, driver_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE orders SET status = 'Assigned', driver_id = ? WHERE id = ?", (driver_id, order_id))
-    conn.commit()
-    conn.close()
-
-def driver_dashboard():
-    st.subheader("Driver Dashboard")
-    
-    # Add a sign out button in the sidebar
-    if st.sidebar.button("Sign Out"):
-        st.session_state['logged_in'] = False
-        st.session_state['username'] = ''
-        st.session_state['user_type'] = ''
-        st.session_state['user_id'] = None
-        st.experimental_rerun()
-    
-    tab1, tab2, tab3, tab4 = st.tabs(["Marketplace", "Current Delivery", "Scheduling", "Earnings"])
-    
-    with tab1:
-        st.subheader("Available Orders")
-        orders = get_available_orders()
-        for order in orders:
-            order_id, service, date, time, location = order
-            with st.expander(f"Order {order_id} - {service}"):
-                st.write(f"Date: {date}, Time: {time}")
-                st.write(f"Location: {location}")
-                if st.button(f"Accept Order", key=f"accept_{order_id}"):
-                    assign_order_to_driver(order_id, st.session_state['user_id'])
-                    st.success(f"You have accepted order {order_id}")
-                    st.experimental_rerun()
-    
-    with tab2:
-        st.subheader("Current Delivery")
-        st.info("No current delivery.")  # Placeholder, implement actual logic later
-    
-    with tab3:
-        st.subheader("Scheduling")
-        date = st.date_input("Select date")
-        start_time = st.time_input("Start time")
-        end_time = st.time_input("End time")
-        if st.button("Set Availability"):
-            st.success("Availability set successfully!")  # Placeholder, implement actual logic later
-    
-    with tab4:
-        st.subheader("Earnings")
-        st.write("Total Earnings: $0.00")  # Placeholder, implement actual logic later
-    
-    # Location permission and map
-    st.subheader("Your Location")
-    if 'location_enabled' not in st.session_state:
-        st.session_state['location_enabled'] = False
-    
-    if st.button("Enable Location"):
-        st.session_state['location_enabled'] = True
-        st.success("Location enabled. Please refresh the page.")
-    
-    if st.session_state['location_enabled']:
-        geolocator = Nominatim(user_agent="local_butler_app")
-        fort_meade = geolocator.geocode("Fort Meade, MD")
-        m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
-        st_folium(m, height=400, width=700)
-    else:
-        st.info("Please enable location to view the map.")
 def main():
-    if 'logged_in' not in st.session_state:
-        st.session_state['logged_in'] = False
-    if 'username' not in st.session_state:
-        st.session_state['username'] = ''
-    if 'user_type' not in st.session_state:
-        st.session_state['user_type'] = ''
-    if 'user_id' not in st.session_state:
-        st.session_state['user_id'] = None
-
-    if st.session_state['logged_in'] and st.session_state['user_type'] == 'Driver':
-        driver_dashboard()
+    st.title("Welcome to Local Butler")
+    
+    if not st.session_state['logged_in']:
+        login()
+        register()
     else:
-        # Your existing code for other user types
-        menu = ["Home", "Menu", "Order", "Butler Bot", "About Us", "Login"]
-        if st.session_state['logged_in']:
-            menu.append("Logout")
-            if user_has_orders(st.session_state['username']):
-                menu.extend(["Modify Booking", "Cancel Booking"])
-        else:
-            menu.append("Register")
-
-        choice = st.sidebar.selectbox("Menu", menu)
-
-        if choice == "Home":
-            st.subheader("Welcome to Local Butler!")
-            st.write("Please navigate through the sidebar to explore our app.")
-        elif choice == "Menu":
-            st.subheader("Menu")
-            with st.expander("Service Categories", expanded=False):
-                category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
-                if category == "Grocery Services":
-                    display_grocery_services()
-                elif category == "Meal Delivery Services":
-                    display_meal_delivery_services()
-        elif choice == "Order":
-            if st.session_state['logged_in']:
-                display_new_order()
-            else:
-                st.warning("Please log in to place an order.")
-        elif choice == "Butler Bot":
-            st.subheader("Butler Bot")
-            iframe_html = """
-            <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
-            """
-            st.components.html(iframe_html, height=680)
-        elif choice == "About Us":
-            st.subheader("About Us")
-            display_about_us()
-            display_how_it_works()
-        elif choice == "Login":
-            if not st.session_state['logged_in']:
-                username = st.text_input("Username", key="login_username")
-                password = st.text_input("Password", type='password', key="login_password")
-                if st.button("Login"):
-                    if not username or not password:
-                        st.error("Please enter both username and password.")
-                    else:
-                        success, message, user_type, user_id = authenticate_user(username, password)
-                        if success:
-                            user_id = get_user_id_from_database(username)
-                            st.session_state['user_id'] = user_id
-                            st.session_state['logged_in'] = True
-                            st.session_state['username'] = username
-                            st.session_state['user_type'] = user_type
-                            st.success(message)
-                        else:
-                            st.error(message)
-            else:
-                st.warning("You are already logged in.")
-        elif choice == "Logout":
-            if st.session_state['logged_in']:
-                if st.button("Logout"):
-                    st.session_state['logged_in'] = False
-                    st.session_state['username'] = ''
-                    st.session_state['user_type'] = ''
-                    st.session_state['user_id'] = None
-                    st.success("Logged out successfully!")
-            else:
-                st.warning("You are not logged in.")
-        elif choice == "Register":
-            register()
-        elif choice == "Modify Booking":
-            modify_booking()
-        elif choice == "Cancel Booking":
-            cancel_booking()
-
-def user_has_orders(username):
-    # Implement this function to check if the user has any existing orders
-    # For now, we'll return True for demonstration purposes
-    return True
+        st.write(f"Welcome back, {st.session_state['username']}!")
+        service = st.selectbox("Select a service", 
+                               ["Grocery Delivery", "Restaurant Delivery", "Laundry Services", "Pet Care", "Car Wash", "Chat with Butler Bot"])
+        
+        if service == "Grocery Delivery":
+            display_grocery_services()
+        elif service == "Restaurant Delivery":
+            display_restaurant_services()
+        elif service == "Laundry Services":
+            display_laundry_services()
+        elif service == "Pet Care":
+            display_pet_care_services()
+        elif service == "Car Wash":
+            display_car_wash_services()
+        elif service == "Chat with Butler Bot":
+            chatbot()
 
 if __name__ == "__main__":
     main()
