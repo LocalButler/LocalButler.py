@@ -218,10 +218,7 @@ def display_how_it_works():
 
 @login_required
 def display_new_order():
-    iframe_html = """
-    <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
-    """
-    components.html(iframe_html, height=680)
+
 
 def send_email(subject, body):
     sender_email = st.secrets["email"]["sender"]
