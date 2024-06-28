@@ -218,28 +218,43 @@ def display_how_it_works():
 
 @login_required
 def display_new_order():
-    # Your display_new_order code here
-    pass
+    st.subheader("Place a New Order")
+    
+    service = st.selectbox("Select a service:", ["Grocery Pickup", "Meal Delivery"])
+    date = st.date_input("Select a date:")
+    time = st.time_input("Select a time:")
+    location = st.text_input("Enter your location:")
+    
+    if st.button("Place Order"):
+        if not service or not date or not time or not location:
+            st.error("Please fill in all fields.")
+        else:
+            order_id = place_order(st.session_state['user_id'], service, date, time, location)
+            if order_id:
+                st.success(f"Order placed successfully! Your order ID is {order_id}")
+                send_email("New Order Placed", f"A new order (ID: {order_id}) has been placed for {service} on {date} at {time} to be delivered to {location}.")
+            else:
+                st.error("Unable to place order. The selected time slot may not be available.")
 
-def send_email(subject, body):
-    sender_email = st.secrets["email"]["sender"]
-    sender_password = st.secrets["email"]["password"]
-    recipient_email = "blockchainservices2018@gmail.com"
-
-    message = MIMEMultipart()
-    message["From"] = sender_email
-    message["To"] = recipient_email
-    message["Subject"] = subject
-    message.attach(MIMEText(body, "plain"))
-
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, recipient_email, message.as_string())
-        return True
-    except Exception as e:
-        st.error(f"Failed to send email: {str(e)}")
-        return False
+    st.write("---")
+    st.subheader("Your Orders")
+    
+    # Fetch and display user's orders
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, service, date, time, location, status FROM orders WHERE user_id = ? ORDER BY date DESC, time DESC", (st.session_state['user_id'],))
+    orders = cursor.fetchall()
+    conn.close()
+    
+    if orders:
+        for order in orders:
+            order_id, service, date, time, location, status = order
+            with st.expander(f"Order {order_id} - {service} ({status})"):
+                st.write(f"Date: {date}, Time: {time}")
+                st.write(f"Location: {location}")
+                st.write(f"Status: {status}")
+    else:
+        st.info("You have no orders yet.")
 
 @login_required
 def modify_booking():
@@ -419,8 +434,10 @@ def main():
                 elif category == "Meal Delivery Services":
                     display_meal_delivery_services()
         elif choice == "Order":
-            if st.session_state['logged_in']:
-                display_new_order()
+    if st.session_state['logged_in']:
+        display_new_order()
+    else:
+        st.warning("Please log in to place an order.")
             else:
                 st.warning("Please log in to place an order.")
         elif choice == "Butler Bot":
