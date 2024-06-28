@@ -19,9 +19,7 @@ from geopy.geocoders import Nominatim
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
 
-# Load configuration
-with open('config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
+
 
 # Database setup
 Base = declarative_base()
