@@ -425,7 +425,8 @@ def cancel_booking():
 def check_time_slot_available(date, time):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT available FROM schedule WHERE date = ? AND time = ?", (date, time))
+    time_str = time.strftime('%H:%M:%S')  # Convert time to string
+    cursor.execute("SELECT available FROM schedule WHERE date = ? AND time = ?", (date, time_str))
     result = cursor.fetchone()
     conn.close()
     return result and result[0]
