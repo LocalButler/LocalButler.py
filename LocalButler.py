@@ -569,9 +569,8 @@ def main():
             else:
                 st.warning("Please log in to place an order.")
         elif choice == "Butler Bot":
-        st.subheader("Butler Bot")
-        display_new_order()
-         
+            st.subheader("Butler Bot")
+            display_new_order()
         elif choice == "About Us":
             st.subheader("About Us")
             display_about_us()
