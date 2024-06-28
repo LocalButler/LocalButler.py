@@ -334,39 +334,44 @@ def display_how_it_works():
     st.write("3. Follow the prompts to complete your order.")
     st.write("4. Sit back and relax while we take care of the rest!")
 
+    def generate_time_slots():
+    start = datetime.combine(datetime.today(), time(7, 0))  # 7 AM
+    end = datetime.combine(datetime.today(), time(21, 0))  # 9 PM
+    time_slots = []
+    while start <= end:
+        time_slots.append(start.strftime("%I:%M %p"))
+        start += timedelta(minutes=15)
+    return time_slots
+
 @login_required
 def display_new_order():
     st.subheader("Place a New Order")
     
     service = st.selectbox("Select a service:", ["Grocery Pickup", "Meal Delivery"])
     date = st.date_input("Select a date:")
-    time = st.time_input("Select a time:")
+    
+    # Replace the original time input with a custom time slot selector
+    time_slots = generate_time_slots()
+    selected_time = st.selectbox("Select a time:", time_slots)
+    
     location = st.text_input("Enter your location:")
-    
-    if location:
-        geolocator = Nominatim(user_agent="local_butler_app")
-        try:
-            location_data = geolocator.geocode(location)
-            if location_data:
-                m = folium.Map(location=[location_data.latitude, location_data.longitude], zoom_start=15)
-                folium.Marker([location_data.latitude, location_data.longitude]).add_to(m)
-                st_folium(m, width=700, height=400)
-            else:
-                st.warning("Location not found. Please enter a valid address.")
-        except Exception as e:
-            st.error(f"Error occurred while geocoding: {str(e)}")
-    
+
+    # ... rest of the function
+
     if st.button("Place Order"):
-        if not service or not date or not time or not location:
+        if not service or not date or not selected_time or not location:
             st.error("Please fill in all fields.")
         else:
-            order_id = place_order(st.session_state['user_id'], service, date, time, location)
+            # Convert selected_time string back to time object
+            time_obj = datetime.strptime(selected_time, "%I:%M %p").time()
+            order_id = place_order(st.session_state['user_id'], service, date, time_obj, location)
             if order_id:
                 st.success(f"Order placed successfully! Your order ID is {order_id}")
-                send_email("New Order Placed", f"A new order (ID: {order_id}) has been placed for {service} on {date} at {time} to be delivered to {location}.")
+                send_email("New Order Placed", f"A new order (ID: {order_id}) has been placed for {service} on {date} at {selected_time} to be delivered to {location}.")
             else:
                 st.error("Unable to place order. The selected time slot may not be available.")
 
+    # ... rest of the function
     st.write("---")
     st.subheader("Your Orders")
     
