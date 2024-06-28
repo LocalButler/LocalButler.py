@@ -592,7 +592,7 @@ def main():
                     else:
                         success, message, user_type, user_id = authenticate_user(username, password)
                         if login_successful:
-    user_id = get_user_id_from_database(username)  # Replace with your method
+    user_id = get_user_id_from_database(username)  
     st.session_state['user_id'] = user_id
                         if success:
                             st.session_state['logged_in'] = True
