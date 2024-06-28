@@ -20,6 +20,10 @@ st.set_page_config(page_title="Local Butler")
 if 'user_id' not in st.session_state:
     st.session_state['user_id'] = None
 
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
+
+
 # Database setup
 DB_FILE = "users.db"
 db_path = Path(DB_FILE)
