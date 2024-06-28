@@ -32,7 +32,8 @@ class UserModel(Base):
     user_type = Column(String)
     failed_attempts = Column(Integer, default=0)
     last_attempt = Column(DateTime)
-    orders = relationship("OrderModel", back_populates="user")
+    orders = relationship("OrderModel", back_populates="user", foreign_keys=[OrderModel.user_id])
+
 
 class OrderModel(Base):
     __tablename__ = 'orders'
