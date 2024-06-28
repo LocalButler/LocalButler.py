@@ -17,7 +17,6 @@ from geopy.geocoders import Nominatim
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
 
-# Session state initialization
 if 'user_id' not in st.session_state:
     st.session_state['user_id'] = None
 if 'logged_in' not in st.session_state:
