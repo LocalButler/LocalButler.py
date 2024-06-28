@@ -490,4 +490,3 @@ def user_has_orders(username):
 
 if __name__ == "__main__":
     main()
-    main()
