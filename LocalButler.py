@@ -493,6 +493,12 @@ def display_menu():
         restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
         display_service(Service(name=restaurant, **RESTAURANTS[restaurant]))
 
+def create_map(lat, lon):
+    m = folium.Map(location=[lat, lon], zoom_start=13)
+    m.add_child(folium.LatLngPopup())
+    m.add_child(folium.ClickForMarker(popup="Selected Location"))
+    return m
+
 @handle_error
 @log_action("display_new_order")
 def display_new_order():
@@ -553,9 +559,6 @@ def display_new_order():
         except Exception as e:
             st.error(f"Error occurred while processing location: {str(e)}")
 
-# Call the function to display the new order form
-display_new_order()
-    
     delivery_notes = st.text_area("Delivery Notes (optional)")
     
     if st.button("Review Order"):
@@ -573,8 +576,11 @@ display_new_order()
             st.write(f"Delivery Notes: {delivery_notes}")
         
         if st.button("Confirm Order"):
-            order_id = place_order(st.session_state['user_id'], service, date, datetime.strptime(time.split()[0], "%H:%M").time(), 
-                                   st.session_state.get('verified_address', location), delivery_notes)
+            order_id = place_order(
+                st.session_state['user_id'], service, date,
+                datetime.strptime(time.split()[0], "%H:%M").time(),
+                st.session_state.get('verified_address', location), delivery_notes
+            )
             if order_id:
                 st.success("Order confirmed! Please proceed to place your order with the merchant.")
                 
@@ -620,6 +626,7 @@ display_new_order()
                             st.error("Please upload a screenshot to complete your order.")
             else:
                 st.error("Unable to place order. The selected time slot may not be available.")
+
 
 def display_butler_bot():
     st.subheader("Butler Bot")
