@@ -445,8 +445,6 @@ def display_menu():
 
 @handle_error
 @log_action("display_new_order")
-import folium
-from geopy.geocoders import Nominatim
 
 def display_new_order():
     st.subheader("Place a New Order")
