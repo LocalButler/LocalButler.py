@@ -451,137 +451,154 @@ def display_new_order():
     service_options = ["Grocery Delivery", "Meal Delivery", "Laundry Service"]
     service = st.selectbox("Select a service:", service_options)
     
+    # Add dropdown for preferred store/restaurant based on service
     if service == "Grocery Delivery":
         preferred_store = st.selectbox("Preferred grocery store:", list(GROCERY_STORES.keys()))
-        pickup_address = GROCERY_STORES[preferred_store]["address"]
     elif service == "Meal Delivery":
         preferred_restaurant = st.selectbox("Preferred restaurant:", list(RESTAURANTS.keys()))
-        pickup_address = RESTAURANTS[preferred_restaurant]["address"]
     elif service == "Laundry Service":
         laundry_type = st.radio("Service type", ["Wash & Fold", "Dry Cleaning"])
-        pickup_address = "Laundry Service Location"  # You might want to add this to your data structure
     
     date = st.date_input("Select date")
     time_options = [f"{h:02d}:{m:02d} {'AM' if h < 12 else 'PM'}" for h in range(7, 22) for m in (0, 15, 30, 45)]
     time = st.selectbox("Select time:", time_options)
     
     location = st.text_input("Enter your address")
+    if location:
+        geolocator = Nominatim(user_agent="local_butler_app")
+        try:
+            location_data = geolocator.geocode(location)
+            if location_data:
+                m = folium.Map(location=[location_data.latitude, location_data.longitude], zoom_start=15)
+                folium.Marker([location_data.latitude, location_data.longitude]).add_to(m)
+                st_folium(m, width=700, height=400)
+                full_address = location_data.address
+                st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
+            else:
+                st.warning("Location not found. Please enter a valid address.")
+        except Exception as e:
+            st.error(f"Error occurred while geocoding: {str(e)}")
+    
     delivery_notes = st.text_area("Delivery Notes (optional)")
     
     if st.button("Review Order"):
-        geolocator = Nominatim(user_agent="local_butler_app")
-        try:
-            delivery_location = geolocator.geocode(location)
-            pickup_location = geolocator.geocode(pickup_address)
-            
-            if delivery_location and pickup_location:
-                m = folium.Map(location=[(delivery_location.latitude + pickup_location.latitude) / 2, 
-                                         (delivery_location.longitude + pickup_location.longitude) / 2], 
-                               zoom_start=12)
+        confirm_order = st.empty()
+        with st.expander("Order Details", expanded=True):
+            st.write(f"Service: {service}")
+            if service == "Grocery Delivery":
+                st.write(f"Preferred Store: {preferred_store}")
+            elif service == "Meal Delivery":
+                st.write(f"Preferred Restaurant: {preferred_restaurant}")
+            elif service == "Laundry Service":
+                st.write(f"Service Type: {laundry_type}")
+            st.write(f"Date: {date}")
+            st.write(f"Time: {time}")
+            st.write(f"Address: {st.session_state.get('verified_address', location)}")
+            st.write(f"Delivery Notes: {delivery_notes}")
+        
+        if confirm_order.button("Confirm Order"):
+            order_id = place_order(st.session_state['user_id'], service, date, datetime.strptime(time.split()[0], "%H:%M").time(), 
+                                   st.session_state.get('verified_address', location), delivery_notes)
+            if order_id:
+                st.success("Order confirmed! Please proceed to place your order with the merchant.")
                 
-                folium.Marker([delivery_location.latitude, delivery_location.longitude], 
-                              popup="Delivery Location", 
-                              icon=folium.Icon(color='red', icon='home')).add_to(m)
-                
-                folium.Marker([pickup_location.latitude, pickup_location.longitude], 
-                              popup="Pickup Location", 
-                              icon=folium.Icon(color='green', icon='shopping-cart')).add_to(m)
-                
-                folium.PolyLine(locations=[[delivery_location.latitude, delivery_location.longitude], 
-                                           [pickup_location.latitude, pickup_location.longitude]], 
-                                color="blue", weight=2.5, opacity=1).add_to(m)
-                
-                st_folium(m, width=700, height=400)
-                
-                with st.expander("Order Details", expanded=True):
-                    st.write(f"Service: {service}")
-                    if service == "Grocery Delivery":
-                        st.write(f"Preferred Store: {preferred_store}")
-                    elif service == "Meal Delivery":
-                        st.write(f"Preferred Restaurant: {preferred_restaurant}")
-                    elif service == "Laundry Service":
-                        st.write(f"Service Type: {laundry_type}")
-                    st.write(f"Date: {date}")
-                    st.write(f"Time: {time}")
-                    st.write(f"Delivery Address: {location}")
-                    st.write(f"Pickup Address: {pickup_address}")
-                    st.write(f"Delivery Notes: {delivery_notes}")
-                
-                if st.button("Confirm Order"):
-                    # Store order details in session state for the final confirmation page
-                    st.session_state['pending_order'] = {
-                        'service': service,
-                        'preferred_store': preferred_store if service == "Grocery Delivery" else None,
-                        'preferred_restaurant': preferred_restaurant if service == "Meal Delivery" else None,
-                        'laundry_type': laundry_type if service == "Laundry Service" else None,
-                        'date': date,
-                        'time': time,
-                        'delivery_address': location,
-                        'pickup_address': pickup_address,
-                        'delivery_notes': delivery_notes,
-                        'delivery_location': (delivery_location.latitude, delivery_location.longitude),
-                        'pickup_location': (pickup_location.latitude, pickup_location.longitude)
-                    }
-                    st.experimental_rerun()  # This will trigger a rerun and show the final confirmation page
-            else:
-                st.error("Unable to geocode addresses. Please check the entered addresses.")
-        except Exception as e:
-            st.error(f"Error occurred while processing addresses: {str(e)}")
-    
-    # Final Confirmation Page
-    if 'pending_order' in st.session_state:
-        st.subheader("Final Order Confirmation")
-        
-        # Display map
-        m = folium.Map(location=[(st.session_state['pending_order']['delivery_location'][0] + st.session_state['pending_order']['pickup_location'][0]) / 2, 
-                                 (st.session_state['pending_order']['delivery_location'][1] + st.session_state['pending_order']['pickup_location'][1]) / 2], 
-                       zoom_start=12)
-        
-        folium.Marker(st.session_state['pending_order']['delivery_location'], 
-                      popup="Delivery Location", 
-                      icon=folium.Icon(color='red', icon='home')).add_to(m)
-        
-        folium.Marker(st.session_state['pending_order']['pickup_location'], 
-                      popup="Pickup Location", 
-                      icon=folium.Icon(color='green', icon='shopping-cart')).add_to(m)
-        
-        folium.PolyLine(locations=[st.session_state['pending_order']['delivery_location'], 
-                                   st.session_state['pending_order']['pickup_location']], 
-                        color="blue", weight=2.5, opacity=1).add_to(m)
-        
-        st_folium(m, width=700, height=400)
-        
-        # Display order details
-        st.write("Order Details:")
-        for key, value in st.session_state['pending_order'].items():
-            if key not in ['delivery_location', 'pickup_location'] and value is not None:
-                st.write(f"{key.replace('_', ' ').title()}: {value}")
-        
-        # Order proof
-        order_proof = st.radio("How would you like to confirm your merchant order?", ["Enter Order Number", "Upload Screenshot"])
-        if order_proof == "Enter Order Number":
-            order_number = st.text_input("Enter your order number from the merchant:")
-        else:
-            order_screenshot = st.file_uploader("Upload a screenshot of your order:", type=["png", "jpg", "jpeg"])
-        
-        if st.button("Submit Final Confirmation"):
-            if (order_proof == "Enter Order Number" and order_number) or (order_proof == "Upload Screenshot" and order_screenshot):
-                # Here you would update the order in your database with the proof
-                order_id = place_order(st.session_state['user_id'], 
-                                       st.session_state['pending_order']['service'],
-                                       st.session_state['pending_order']['date'],
-                                       datetime.strptime(st.session_state['pending_order']['time'].split()[0], "%H:%M").time(),
-                                       st.session_state['pending_order']['delivery_address'],
-                                       st.session_state['pending_order']['delivery_notes'])
-                if order_id:
-                    st.success("Order has been successfully placed and verified!")
-                    st.info("You will now be redirected to your orders page.")
-                    # Here you would implement the redirection to the user's orders page
-                    del st.session_state['pending_order']  # Clear the pending order from session state
+                if service == "Grocery Delivery":
+                    merchant_link = GROCERY_STORES[preferred_store]["url"]
+                    instructions = GROCERY_STORES[preferred_store]["instructions"]
+                elif service == "Meal Delivery":
+                    merchant_link = RESTAURANTS[preferred_restaurant]["url"]
+                    instructions = RESTAURANTS[preferred_restaurant]["instructions"]
                 else:
-                    st.error("Unable to place order. Please try again.")
+                    merchant_link = "#"  # Placeholder for laundry service
+                    instructions = ["Please follow the laundry service provider's instructions."]
+                
+                st.markdown(f"[Click here to place your order with the merchant]({merchant_link})")
+                st.info("Remember to apply any coupons, rewards, or discount codes directly with the merchant.")
+                
+                st.subheader("Instructions:")
+                for instruction in instructions:
+                    st.write(f"- {instruction}")
+                
+                st.write("After placing your order with the merchant, please return here to complete your Local Butler order.")
+                
+                order_proof = st.radio("How would you like to confirm your merchant order?", ["Enter Order Number", "Upload Screenshot"])
+                if order_proof == "Enter Order Number":
+                    order_number = st.text_input("Enter your order number from the merchant:")
+                else:
+                    order_screenshot = st.file_uploader("Upload a screenshot of your order:", type=["png", "jpg", "jpeg"])
+                
+                if st.button("Submit Order Proof"):
+                    if (order_proof == "Enter Order Number" and order_number) or (order_proof == "Upload Screenshot" and order_screenshot):
+                        # Here you would update the order in your database with the proof
+                        st.success("Order has been successfully placed and verified!")
+                        st.info("You will now be redirected to your orders page.")
+                        # Here you would implement the redirection to the user's orders page
+                    else:
+                        st.error("Please provide the order number or upload a screenshot to complete your order.")
             else:
-                st.error("Please provide the order number or upload a screenshot to complete your order.")
+                st.error("Unable to place order. The selected time slot may not be available.")
+
+def display_butler_bot():
+    st.subheader("Butler Bot")
+    iframe_html = """
+    <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
+    """
+    st.markdown(iframe_html, unsafe_allow_html=True)
+
+def display_about_us():
+    st.subheader("About Us")
+    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade, Maryland 20755. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
+    st.subheader("How It Works")
+    st.write("1. Choose a service category from the menu.")
+    st.write("2. Select your desired service.")
+    st.write("3. Follow the prompts to complete your order.")
+    st.write("4. Sit back and relax while we take care of the rest!")
+
+def display_login():
+    if not st.session_state['logged_in']:
+        username = st.text_input("Username")
+        password = st.text_input("Password", type='password')
+        if st.button("Login"):
+            success, message, user_type, user_id = authenticate_user(username, password)
+            if success:
+                st.session_state['logged_in'] = True
+                st.session_state['username'] = username
+                st.session_state['user_type'] = user_type
+                st.session_state['user_id'] = user_id
+                st.success(message)
+            else:
+                st.error(message)
+    else:
+        st.warning("You are already logged in.")
+
+@handle_error
+@log_action("register")
+def display_register():
+    st.subheader("Register")
+    new_username = st.text_input("Username")
+    new_password = st.text_input("Password", type='password')
+    confirm_password = st.text_input("Confirm Password", type='password')
+    user_type = st.selectbox("User Type", ["Consumer", "Driver", "Merchant", "Partner"])
+    
+    if st.button("Register"):
+        if not new_username or not new_password or not confirm_password:
+            st.error("Please fill in all fields.")
+        elif new_password != confirm_password:
+            st.error("Passwords do not match. Please try again.")
+        elif len(new_password) < 8:
+            st.error("Password must be at least 8 characters long.")
+        else:
+            with Session() as session:
+                existing_user = session.query(UserModel).filter_by(username=new_username).first()
+                if existing_user:
+                    st.error("Username already exists. Please choose a different username.")
+                else:
+                    hashed_password = hash_password(new_password)
+                    new_user = UserModel(username=new_username, password=hashed_password, user_type=user_type)
+                    session.add(new_user)
+                    session.commit()
+                    st.success("Registration successful! You can now log in.")
+
 def logout():
     if st.session_state['logged_in']:
         if st.button("Logout"):
