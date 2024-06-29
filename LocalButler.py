@@ -533,31 +533,32 @@ def display_new_order():
     if map_click_data and 'last_clicked' in map_click_data:
         st.session_state['map_data'] = map_click_data['last_clicked']
 
-    if location or ('map_data' in st.session_state and st.session_state['map_data']):
-        try:
-            if location:
-                # Geocode the entered address
-                location_data = geolocator.geocode(location)
-                if location_data:
-                    lat, lon = location_data.latitude, location_data.longitude
-                else:
-                    st.warning("Location not found. Please enter a valid address or click on the map.")
-                    return
+    if location or (map_data and map_data.get('last_clicked')):
+    try:
+        if location:
+            # Geocode the entered address
+            location_data = geolocator.geocode(location)
+            if location_data:
+                lat, lon = location_data.latitude, location_data.longitude
             else:
-                # Use the coordinates from the map click
-                lon, lat = st.session_state['map_data']['lng'], st.session_state['map_data']['lat']
-                location_data = geolocator.reverse(f"{lat}, {lon}")
+                st.warning("Location not found. Please enter a valid address or click on the map.")
+                return
+        else:
+            # Use the coordinates from the map click
+            lon, lat = map_data['last_clicked']['lng'], map_data['last_clicked']['lat']
+            location_data = geolocator.reverse(f"{lat}, {lon}")
 
-            # Update the map with the selected location
-            m = create_map(lat, lon)
-            folium.Marker([lat, lon]).add_to(m)
-            st_folium(m, width=700, height=400)
+        # Update the map with the selected location
+        m = create_map(lat, lon)
+        folium.Marker([lat, lon]).add_to(m)
+        st_folium(m, width=700, height=400)
 
-            # Update the address field
-            full_address = location_data.address if location_data else f"Latitude: {lat}, Longitude: {lon}"
-            st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
-        except Exception as e:
-            st.error(f"Error occurred while processing location: {str(e)}")
+        # Update the address field
+        full_address = location_data.address if location_data else f"Latitude: {lat}, Longitude: {lon}"
+        st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
+    except Exception as e:
+        st.error(f"Error occurred while processing location: {str(e)}")
+
 
     delivery_notes = st.text_area("Delivery Notes (optional)")
     
