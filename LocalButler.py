@@ -1,7 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Date, Time, Boolean, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, Session
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
@@ -17,6 +16,8 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 import time
 from streamlit_folium import folium_static
+from sqlalchemy.orm import declarative_base
+Base = declarative_base()
 
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
