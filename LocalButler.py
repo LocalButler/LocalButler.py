@@ -564,7 +564,7 @@ def process_location(location):
 
         # Update the map with the selected location
         m = display_map(lat, lon)
-        folium.Marker([lat, lon]).add_to(m)
+        m.add_child(folium.Marker([lat, lon]))
         st_folium(m, width=700, height=400)
 
         # Update the address field
