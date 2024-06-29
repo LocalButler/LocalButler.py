@@ -230,9 +230,8 @@ GROCERY_STORES = {
             "Select store pick-up and specify the date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2641 Brandermill Blvd, Gambrills, MD 21054",
-        "phone": "(410) 721-7440",
-        "hours": "Open daily 6am-11pm"
+        "address": "2294 Blue Water Blvd, Odenton, MD 21113",
+        "phone": "(410) 672-1877"
     },
     "SafeWay": {
         "url": "https://www.safeway.com/",
@@ -242,9 +241,8 @@ GROCERY_STORES = {
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
         "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png",
-        "address": "2624 Chapel Lake Dr, Gambrills, MD 21054",
-        "phone": "(410) 721-0881",
-        "hours": "Open daily 6am-11pm"
+        "address": "7643 Arundel Mills Blvd, Hanover, MD 21076",
+        "phone": "(410) 904-7222"
     },
     "Commissary": {
         "url": "https://shop.commissaries.com/",
@@ -266,9 +264,8 @@ GROCERY_STORES = {
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
         "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg",
-        "address": "1077 MD-3 North, Gambrills, MD 21054",
-        "phone": "(410) 721-5830",
-        "hours": "Open daily 7am-10pm"
+        "address": "2655 Annapolis Rd, Hanover, MD 21076",
+        "phone": "(410) 519-8740"
     }
 }
 
@@ -306,8 +303,7 @@ RESTAURANTS = {
             "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
         ],
         "address": "8488 Baltimore Annapolis Blvd, Pasadena, MD 21122",
-        "phone": "(410) 439-8669",
-        "hours": "Mon-Sat 6am-6pm, Sun 7am-5pm"
+        "phone": "(410) 439-8669"
     },
     "The All American Steakhouse": {
         "url": "https://order.theallamericansteakhouse.com/menu/odenton",
@@ -316,9 +312,8 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2367 Brandermill Blvd, Gambrills, MD 21054",
-        "phone": "(410) 674-8350",
-        "hours": "Mon-Thur 11am-10pm, Fri-Sat 11am-11pm, Sun 11am-9pm"
+        "address": "1502 Annapolis Rd, Odenton, MD 21113",
+        "phone": "(410) 305-0505"
     },
     "Jersey Mike's Subs": {
         "url": "https://www.jerseymikes.com/menu",
@@ -327,9 +322,8 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2637 Brandermill Blvd, Gambrills, MD 21054",
-        "phone": "(410) 721-5550",
-        "hours": "Daily 10am-9pm"
+        "address": "2288 Blue Water Blvd Suite 600-A, Odenton, MD 21113",
+        "phone": "(410) 695-3430"
     },
     "Bruster's Real Ice Cream": {
         "url": "https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage",
@@ -339,8 +333,7 @@ RESTAURANTS = {
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
         "address": "1202 Annapolis Rd, Odenton, MD 21113",
-        "phone": "(410) 672-0020",
-       "hours": "Sun-Thur 12pm-9pm, Fri-Sat 12pm-10pm"
+        "phone": "(410) 672-0020"
     },
     "Luigino's": {
         "url": "https://order.yourmenu.com/luiginos",
@@ -349,9 +342,8 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2716 Brandermill Blvd, Gambrills, MD 21054",
-        "phone": "(410) 451-6010",
-        "hours": "Tue-Thur 11am-9pm, Fri-Sat 11am-10pm, Sun 12pm-9pm, Mon Closed"
+        "address": "2288 Blue Water Blvd Suite 220, Odenton, MD 21113",
+        "phone": "(410) 674-6000"
     },
     "PHO 5UP ODENTON": {
         "url": "https://www.clover.com/online-ordering/pho-5up-odenton",
@@ -360,9 +352,8 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "8777 Piney Orchard Pkwy, Odenton, MD 21113",
-        "phone": "(443) 713-1293",
-        "hours": "Daily 11am-9pm"
+        "address": "2288 Blue Water Blvd #260, Odenton, MD 21113",
+        "phone": "(410) 874-7385"
     },
     "Dunkin": {
         "url": "https://www.dunkindonuts.com/en/mobile-app",
@@ -371,9 +362,8 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2613 Brandermill Blvd, Gambrills, MD 21054",
-        "phone": "(410) 721-2524",
-        "hours": "Daily 5am-9pm"
+        "address": "1614 Annapolis Rd, Odenton, MD 21113",
+        "phone": "(410) 674-3800"
     },
     "Baskin-Robbins": {
         "url": "https://order.baskinrobbins.com/categories?storeId=BR-339568",
@@ -382,9 +372,8 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2617 Brandermill Blvd, Gambrills, MD 21054",
-        "phone": "(410) 721-5661",
-        "hours": "Sun-Thur 11am-10pm, Fri-Sat 11am-11pm"
+        "address": "1614 Annapolis Rd, Odenton, MD 21113",
+        "phone": "(410) 674-3800"
     }
 }
 
