@@ -230,7 +230,7 @@ GROCERY_STORES = {
             "Select store pick-up and specify the date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2294 Blue Water Blvd, Odenton, MD 21113",
+        "address": "2288, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
         "phone": "(410) 672-1877"
     },
     "SafeWay": {
@@ -330,7 +330,7 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2288 Blue Water Blvd Ste A, Odenton, MD 21113",
+        "address": "2294 Blue Water Blvd, Odenton, MD 21113",
         "phone": "(410) 874-7135"
     },
     "Luigino's": {
@@ -340,7 +340,7 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2288, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
+        "address": "2289, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
         "phone": "(410) 674-6000"
     },
     "PHO 5UP ODENTON": {
