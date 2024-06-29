@@ -496,8 +496,8 @@ def display_menu():
 def create_map(lat, lon):
     m = folium.Map(location=[lat, lon], zoom_start=13)
     m.add_child(folium.LatLngPopup())
+    m.add_child(folium.ClickForMarker(popup="Selected Location"))
     return m
-
 
 @handle_error
 @log_action("display_new_order")
@@ -549,7 +549,7 @@ def display_new_order():
                 location_data = geolocator.reverse(f"{lat}, {lon}")
 
             # Update the map with the selected location
-            m = create_map(lat, lon)
+            m = folium.Map(location=[lat, lon], zoom_start=15)
             folium.Marker([lat, lon]).add_to(m)
             st_folium(m, width=700, height=400)
 
