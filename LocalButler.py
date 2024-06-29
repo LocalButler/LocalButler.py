@@ -462,13 +462,13 @@ def main():
         else:
             st.warning("Please log in to place an order.")
     elif choice == "Butler Bot":
-        display_butler_bot()
+        _butler_bot()
     elif choice == "About Us":
-        display_about_us()
+        _about_us()
     elif choice == "Login":
-        display_login()
+        _login()
     elif choice == "Register":
-        display_register()
+        _register()
     elif choice == "Logout":
         logout()
     elif choice == "Driver Dashboard":
@@ -483,21 +483,22 @@ def main():
         st.subheader("Cancel Booking")
         # Implement cancel booking functionality here
 
-def display_menu():
+def _menu():
     st.subheader("Menu")
     category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
     if category == "Grocery Services":
         grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
-        display_service(Service(name=grocery_store, **GROCERY_STORES[grocery_store]))
+        _service(Service(name=grocery_store, **GROCERY_STORES[grocery_store]))
     elif category == "Meal Delivery Services":
         restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
-        display_service(Service(name=restaurant, **RESTAURANTS[restaurant]))
+        _service(Service(name=restaurant, **RESTAURANTS[restaurant]))
 
+# Helper function to create map with click event
 def create_map(lat, lon):
     m = folium.Map(location=[lat, lon], zoom_start=13)
     m.add_child(folium.LatLngPopup())
+    m.add_child(folium.ClickForMarker(popup="Selected Location"))
     return m
-
 
 @handle_error
 @log_action("display_new_order")
@@ -524,55 +525,40 @@ def display_new_order():
     time_options = [f"{h:02d}:{m:02d} {'AM' if h < 12 else 'PM'}" for h in range(7, 22) for m in (0, 15, 30, 45)]
     time = st.selectbox("Select time:", time_options)
     
-    location = st.text_input("Enter your address or click on the map")
+    location = st.text_input("Enter your address")
 
     # Display the map
     map_click_data = st_folium(m, width=700, height=400)
 
-# Update map_data based on map click
-map_click_data = st.session_state.get('map_click_data', None)
-if map_click_data and 'last_clicked' in map_click_data:
-    st.session_state['map_data'] = map_click_data['last_clicked']
+    # Update map_data based on map click
+    if map_click_data and 'last_clicked' in map_click_data:
+        st.session_state['map_data'] = map_click_data['last_clicked']
 
-def geocode_address(address):
-    # Implement geocoding logic here
-    pass
-
-def reverse_geocode(lat, lon):
-    # Implement reverse geocoding logic here
-    pass
-
-def display_map(lat, lon):
-    # Implement map display logic here
-    pass
-
-def process_location(location):
-    try:
-        map_data = st.session_state.get('map_data', None)
-        if location:
-            # Geocode the entered address
-            location_data = geocode_address(location)
-            if location_data:
-                lat, lon = location_data.latitude, location_data.longitude
+    if location or ('map_data' in st.session_state and st.session_state['map_data']):
+        try:
+            if location:
+                # Geocode the entered address
+                location_data = geolocator.geocode(location)
+                if location_data:
+                    lat, lon = location_data.latitude, location_data.longitude
+                else:
+                    st.warning("Location not found. Please enter a valid address or click on the map.")
+                    return
             else:
-                st.warning("Location not found. Please enter a valid address or click on the map.")
-                return
-        else:
-            # Use the coordinates from the map click
-            lon, lat = map_data['last_clicked']['lng'], map_data['last_clicked']['lat']
-            location_data = reverse_geocode(lat, lon)
+                # Use the coordinates from the map click
+                lon, lat = st.session_state['map_data']['lng'], st.session_state['map_data']['lat']
+                location_data = geolocator.reverse(f"{lat}, {lon}")
 
-        # Update the map with the selected location
-        m = display_map(lat, lon)
-        m.add_child(folium.Marker([lat, lon]))
-        st_folium(m, width=700, height=400)
+            # Update the map with the selected location
+            m = folium.Map(location=[lat, lon], zoom_start=15)
+            folium.Marker([lat, lon]).add_to(m)
+            st_folium(m, width=700, height=400)
 
-        # Update the address field
-        full_address = location_data.address if location_data else f"Latitude: {lat}, Longitude: {lon}"
-        st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
-    except Exception as e:
-        st.error(f"Error occurred while processing location: {str(e)}")
-
+            # Update the address field
+            full_address = location_data.address if location_data else f"Latitude: {lat}, Longitude: {lon}"
+            st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
+        except Exception as e:
+            st.error(f"Error occurred while processing location: {str(e)}")
 
     delivery_notes = st.text_area("Delivery Notes (optional)")
     
@@ -641,7 +627,6 @@ def process_location(location):
                             st.error("Please upload a screenshot to complete your order.")
             else:
                 st.error("Unable to place order. The selected time slot may not be available.")
-
 
 def display_butler_bot():
     st.subheader("Butler Bot")
