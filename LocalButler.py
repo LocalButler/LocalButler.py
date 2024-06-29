@@ -14,6 +14,9 @@ import folium
 from streamlit_folium import st_folium
 import geopy
 from geopy.geocoders import Nominatim
+from streamlit_leaflet import leaflet_map
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+import time
 
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
@@ -719,21 +722,24 @@ def create_map(businesses_to_show):
 
     return m
 
-# Create maps
-grocery_map = create_map(GROCERY_STORES)
-restaurant_map = create_map(RESTAURANTS)
-all_businesses = {**GROCERY_STORES, **RESTAURANTS}
-combined_map = create_map(all_businesses)
-
-# Display maps in your Streamlit app
-st.subheader("Grocery Stores Map")
-st.folium_chart(grocery_map)
-
-st.subheader("Restaurants Map")
-st.folium_chart(restaurant_map)
-
-st.subheader("All Businesses Map")
-st.folium_chart(combined_map)
+def create_map(businesses_to_show):
+    return {
+        "center": [39.1054, -76.7285],  # Centered on Fort Meade area
+        "zoom": 12,
+        "markers": [
+            {
+                "position": [39.1054, -76.7285],  # Default position (Fort Meade)
+                "tooltip": name,
+                "popup": f"""
+                <b>{name}</b><br>
+                Address: {info['address']}<br>
+                Phone: {info['phone']}<br>
+                Hours: {info['hours']}
+                """
+            }
+            for name, info in businesses_to_show.items()
+        ]
+    }
 
 if __name__ == "__main__":
     main()
