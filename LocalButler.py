@@ -498,10 +498,10 @@ def display_menu():
 def display_new_order():
     st.subheader("Enter your address or click on the map")
 
-    # Initialize geolocator
+   # Initialize map centered on Fort Meade
     geolocator = Nominatim(user_agent="local_butler_app")
     fort_meade = geolocator.geocode("Fort Meade, MD")
-    m = create_map(fort_meade.latitude, fort_meade.longitude)
+    m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
     
     service_options = ["Grocery Delivery", "Meal Delivery", "Laundry Service"]
     service = st.selectbox("Select a service:", service_options)
@@ -520,14 +520,7 @@ def display_new_order():
     
     location = st.text_input("Enter your address")
 
-    # Display the map
-    map_click_data = st_folium(m, width=700, height=400)
-
-    # Update map_data based on map click
-    if map_click_data and 'last_clicked' in map_click_data:
-        st.session_state['map_data'] = map_click_data['last_clicked']
-
-    if location or ('map_data' in st.session_state and st.session_state['map_data']):
+    if location or (map_data and map_data.get('last_clicked')):
         try:
             if location:
                 # Geocode the entered address
@@ -539,7 +532,7 @@ def display_new_order():
                     return
             else:
                 # Use the coordinates from the map click
-                lon, lat = st.session_state['map_data']['lng'], st.session_state['map_data']['lat']
+                lon, lat = map_data['last_clicked']['lng'], map_data['last_clicked']['lat']
                 location_data = geolocator.reverse(f"{lat}, {lon}")
 
             # Update the map with the selected location
@@ -552,9 +545,6 @@ def display_new_order():
             st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
         except Exception as e:
             st.error(f"Error occurred while processing location: {str(e)}")
-
-# Call the function to display the new order form
-display_new_order()
     
     delivery_notes = st.text_area("Delivery Notes (optional)")
     
