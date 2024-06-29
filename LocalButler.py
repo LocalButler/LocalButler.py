@@ -533,7 +533,7 @@ def display_new_order():
     if map_click_data and 'last_clicked' in map_click_data:
         st.session_state['map_data'] = map_click_data['last_clicked']
 
-    if location or (map_data and map_data.get('last_clicked')):
+     if location or (map_data and map_data.get('last_clicked')):
     try:
         if location:
             # Geocode the entered address
