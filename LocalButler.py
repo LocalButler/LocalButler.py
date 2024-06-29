@@ -350,7 +350,7 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2288 Blue Water Blvd #260, Odenton, MD 21113",
+        "address": "2288 Blue Water Blvd , Odenton, MD 21113",
         "phone": "(410) 874-7385"
     },
     "Dunkin": {
