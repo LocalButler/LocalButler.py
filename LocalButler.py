@@ -482,68 +482,67 @@ def display_new_order():
     delivery_notes = st.text_area("Delivery Notes (optional)")
     
     if st.button("Review Order"):
-        confirm_order = st.empty()
-        with st.expander("Order Details", expanded=True):
-            st.write(f"Service: {service}")
+    with st.expander("Order Details", expanded=True):
+        st.write(f"Service: {service}")
+        if service == "Grocery Delivery":
+            st.write(f"Preferred Store: {preferred_store}")
+        elif service == "Meal Delivery":
+            st.write(f"Preferred Restaurant: {preferred_restaurant}")
+        elif service == "Laundry Service":
+            st.write(f"Service Type: {laundry_type}")
+        st.write(f"Date: {date}")
+        st.write(f"Time: {time}")
+        st.write(f"Address: {st.session_state.get('verified_address', location)}")
+        st.write(f"Delivery Notes: {delivery_notes}")
+    
+    if st.button("Confirm Order"):
+        order_id = place_order(st.session_state['user_id'], service, date, datetime.strptime(time.split()[0], "%H:%M").time(), 
+                               st.session_state.get('verified_address', location), delivery_notes)
+        if order_id:
+            st.success("Order confirmed! Please proceed to place your order with the merchant.")
+            
             if service == "Grocery Delivery":
-                st.write(f"Preferred Store: {preferred_store}")
+                merchant_link = GROCERY_STORES[preferred_store]["url"]
+                instructions = GROCERY_STORES[preferred_store]["instructions"]
             elif service == "Meal Delivery":
-                st.write(f"Preferred Restaurant: {preferred_restaurant}")
-            elif service == "Laundry Service":
-                st.write(f"Service Type: {laundry_type}")
-            st.write(f"Date: {date}")
-            st.write(f"Time: {time}")
-            st.write(f"Address: {st.session_state.get('verified_address', location)}")
-            st.write(f"Delivery Notes: {delivery_notes}")
-        
-        if confirm_order.button("Confirm Order"):
-            order_id = place_order(st.session_state['user_id'], service, date, datetime.strptime(time.split()[0], "%H:%M").time(), 
-                                   st.session_state.get('verified_address', location), delivery_notes)
-            if order_id:
-                st.success("Order confirmed! Please proceed to place your order with the merchant.")
-                
-                if service == "Grocery Delivery":
-                    merchant_link = GROCERY_STORES[preferred_store]["url"]
-                    instructions = GROCERY_STORES[preferred_store]["instructions"]
-                elif service == "Meal Delivery":
-                    merchant_link = RESTAURANTS[preferred_restaurant]["url"]
-                    instructions = RESTAURANTS[preferred_restaurant]["instructions"]
-                else:
-                    merchant_link = "#"  # Placeholder for laundry service
-                    instructions = ["Please follow the laundry service provider's instructions."]
-                
-                st.markdown(f"[Click here to place your order with the merchant]({merchant_link})")
-                st.info("Remember to apply any coupons, rewards, or discount codes directly with the merchant.")
-                
-                st.subheader("Instructions:")
-                for instruction in instructions:
-                    st.write(f"- {instruction}")
-                
-                st.write("After placing your order with the merchant, please return here to complete your Local Butler order.")
-                
-                order_proof = st.radio("How would you like to confirm your merchant order?", ["Enter Order Number", "Upload Screenshot"])
-                if order_proof == "Enter Order Number":
-                    order_number = st.text_input("Enter your order number from the merchant:")
-                    if st.button("Submit Order Proof"):
-                        if order_number:
-                            # Here you would update the order in your database with the proof
-                            st.success("Order has been successfully placed and verified!")
-                            st.info("You will now be redirected to your orders page.")
-                            # Here you would implement the redirection to the user's orders page
-                        else:
-                            st.error("Please provide the order number to complete your order.")
-                else:
-                    order_screenshot = st.file_uploader("Upload a screenshot of your order:", type=["png", "jpg", "jpeg"])
-                    if st.button("Submit Order Proof"):
-                        if order_screenshot:
-                            # Here you would update the order in your database with the proof
-                            st.success("Order has been successfully placed and verified!")
-                            st.info("You will now be redirected to your orders page.")
-                            # Here you would implement the redirection to the user's orders page
-                        else:
-                            st.error("Please upload a screenshot to complete your order.")
+                merchant_link = RESTAURANTS[preferred_restaurant]["url"]
+                instructions = RESTAURANTS[preferred_restaurant]["instructions"]
             else:
-                st.error("Unable to place order. The selected time slot may not be available.")
+                merchant_link = "#"  # Placeholder for laundry service
+                instructions = ["Please follow the laundry service provider's instructions."]
+            
+            st.markdown(f"[Click here to place your order with the merchant]({merchant_link})")
+            st.info("Remember to apply any coupons, rewards, or discount codes directly with the merchant.")
+            
+            st.subheader("Instructions:")
+            for instruction in instructions:
+                st.write(f"- {instruction}")
+            
+            st.write("After placing your order with the merchant, please return here to complete your Local Butler order.")
+            
+            order_proof = st.radio("How would you like to confirm your merchant order?", ["Enter Order Number", "Upload Screenshot"])
+            if order_proof == "Enter Order Number":
+                order_number = st.text_input("Enter your order number from the merchant:")
+                if st.button("Submit Order Proof"):
+                    if order_number:
+                        # Here you would update the order in your database with the proof
+                        st.success("Order has been successfully placed and verified!")
+                        st.info("You will now be redirected to your orders page.")
+                        # Here you would implement the redirection to the user's orders page
+                    else:
+                        st.error("Please provide the order number to complete your order.")
+            else:
+                order_screenshot = st.file_uploader("Upload a screenshot of your order:", type=["png", "jpg", "jpeg"])
+                if st.button("Submit Order Proof"):
+                    if order_screenshot:
+                        # Here you would update the order in your database with the proof
+                        st.success("Order has been successfully placed and verified!")
+                        st.info("You will now be redirected to your orders page.")
+                        # Here you would implement the redirection to the user's orders page
+                    else:
+                        st.error("Please upload a screenshot to complete your order.")
+        else:
+            st.error("Unable to place order. The selected time slot may not be available.")
 
 def display_butler_bot():
     st.subheader("Butler Bot")
