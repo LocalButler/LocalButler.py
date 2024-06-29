@@ -335,7 +335,7 @@ def display_butler_bot():
     iframe_html = """
     <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
     """
-    st.components.html(iframe_html, height=680)
+    st.markdown(iframe_html, unsafe_allow_html=True)
 
 def display_about_us():
     st.subheader("About Us")
