@@ -300,7 +300,7 @@ RESTAURANTS = {
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
             "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
         ],
-        "address": "1110 Town Center Blvd, Odenton, MD",
+        "address": "1111 Town Center Blvd, Odenton, MD",
         "phone": "(410) 439-8669"
     },
     "The All American Steakhouse": {
