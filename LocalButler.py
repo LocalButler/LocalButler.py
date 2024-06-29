@@ -582,7 +582,6 @@ def display_new_order():
                     st.error("Unable to place order. Please try again.")
             else:
                 st.error("Please provide the order number or upload a screenshot to complete your order.")
-
 def logout():
     if st.session_state['logged_in']:
         if st.button("Logout"):
