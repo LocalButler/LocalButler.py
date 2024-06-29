@@ -370,7 +370,7 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "1615 Annapolis Rd, Odenton, MD 21113",
+        "address": "1614 Annapolis Rd, Odenton, MD 21113",
         "phone": "(410) 674-3800"
     }
 }
