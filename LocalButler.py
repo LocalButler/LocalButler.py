@@ -464,6 +464,12 @@ def main():
         st.write("Please navigate through the sidebar to explore our app.")
     elif choice == "Menu":
         display_menu()
+        
+        # Create and display the combined map only in the Menu section
+        all_businesses = {**GROCERY_STORES, **RESTAURANTS}
+        combined_map = create_map(all_businesses)
+        st.subheader("All Businesses Map")
+        folium_static(combined_map)
     elif choice == "Order":
         if st.session_state['logged_in']:
             display_new_order()
@@ -490,23 +496,6 @@ def main():
     elif choice == "Cancel Booking":
         st.subheader("Cancel Booking")
         # Implement cancel booking functionality here
-
-
-    # Create maps
-    grocery_map = create_map(GROCERY_STORES)
-    restaurant_map = create_map(RESTAURANTS)
-    all_businesses = {**GROCERY_STORES, **RESTAURANTS}
-    combined_map = create_map(all_businesses)
-
-    # Display maps in your Streamlit app
-    st.subheader("Grocery Stores Map")
-    folium_static(grocery_map)
-
-    st.subheader("Restaurants Map")
-    folium_static(restaurant_map)
-
-    st.subheader("All Businesses Map")
-    folium_static(combined_map)
 
 def display_menu():
     st.subheader("Menu")
