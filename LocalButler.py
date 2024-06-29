@@ -16,6 +16,7 @@ import geopy
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 import time
+from streamlit_folium import folium_static
 
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
@@ -386,26 +387,45 @@ RESTAURANTS = {
     }
 }
 
+# Create a cache for geocoding results
+geocoding_cache = {}
+
+def geocode_with_retry(address, max_retries=3):
+    if address in geocoding_cache:
+        return geocoding_cache[address]
+    
+    geolocator = Nominatim(user_agent="local_butler_app")
+    for attempt in range(max_retries):
+        try:
+            time.sleep(1)  # Add a delay to respect rate limits
+            location = geolocator.geocode(address)
+            if location:
+                geocoding_cache[address] = location
+                return location
+        except (GeocoderTimedOut, GeocoderServiceError):
+            if attempt == max_retries - 1:
+                st.warning(f"Could not geocode address: {address}")
+                return None
+            time.sleep(2)  # Wait for 2 seconds before retrying
+    return None
+
 def create_map(businesses_to_show):
     m = folium.Map(location=[39.1054, -76.7285], zoom_start=12)
     
     for name, info in businesses_to_show.items():
-        try:
-            location = geocode_with_retry(info['address'])
-            if location:
-                folium.Marker(
-                    [location.latitude, location.longitude],
-                    popup=f"""
-                    <b>{name}</b><br>
-                    Address: {info['address']}<br>
-                    Phone: {info['phone']}<br>
-                    Hours: {info['hours']}
-                    """
-                ).add_to(m)
-            else:
-                st.warning(f"Could not locate {name}")
-        except Exception as e:
-            st.warning(f"Error locating {name}: {str(e)}")
+        location = geocode_with_retry(info['address'])
+        if location:
+            folium.Marker(
+                [location.latitude, location.longitude],
+                popup=f"""
+                <b>{name}</b><br>
+                Address: {info['address']}<br>
+                Phone: {info['phone']}<br>
+                Hours: {info['hours']}
+                """
+            ).add_to(m)
+        else:
+            st.warning(f"Could not locate {name}")
     
     return m
 
