@@ -58,7 +58,7 @@ class ScheduleModel(Base):
     available = Column(Boolean)
 
 # Initialize database connection
-@st.cache_resource
+@st.cache(allow_output_mutation=True)
 def init_db():
     engine = create_engine(st.secrets["db_connection_string"])
     Base.metadata.create_all(engine)
