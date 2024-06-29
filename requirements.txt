@@ -1,6 +1,5 @@
 bcrypt
 pandas
-streamlit-folium
 geopy
 sqlalchemy 
 argon2-cffi 
@@ -8,3 +7,4 @@ streamlit
 pyyaml
 folium
 streamlit-folium
+streamlit_sqlalchemy
