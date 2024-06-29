@@ -496,7 +496,12 @@ def display_menu():
 @handle_error
 @log_action("display_new_order")
 def display_new_order():
-    st.subheader("Place a New Order")
+    st.subheader("Enter your address or click on the map")
+
+   # Initialize map centered on Fort Meade
+    geolocator = Nominatim(user_agent="local_butler_app")
+    fort_meade = geolocator.geocode("Fort Meade, MD")
+    m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
     
     service_options = ["Grocery Delivery", "Meal Delivery", "Laundry Service"]
     service = st.selectbox("Select a service:", service_options)
@@ -514,20 +519,32 @@ def display_new_order():
     time = st.selectbox("Select time:", time_options)
     
     location = st.text_input("Enter your address")
-    if location:
-        geolocator = Nominatim(user_agent="local_butler_app")
+
+    if location or (map_data and map_data.get('last_clicked')):
         try:
-            location_data = geolocator.geocode(location)
-            if location_data:
-                m = folium.Map(location=[location_data.latitude, location_data.longitude], zoom_start=15)
-                folium.Marker([location_data.latitude, location_data.longitude]).add_to(m)
-                st_folium(m, width=700, height=400)
-                full_address = location_data.address
-                st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
+            if location:
+                # Geocode the entered address
+                location_data = geolocator.geocode(location)
+                if location_data:
+                    lat, lon = location_data.latitude, location_data.longitude
+                else:
+                    st.warning("Location not found. Please enter a valid address or click on the map.")
+                    return
             else:
-                st.warning("Location not found. Please enter a valid address.")
+                # Use the coordinates from the map click
+                lon, lat = map_data['last_clicked']['lng'], map_data['last_clicked']['lat']
+                location_data = geolocator.reverse(f"{lat}, {lon}")
+
+            # Update the map with the selected location
+            m = folium.Map(location=[lat, lon], zoom_start=15)
+            folium.Marker([lat, lon]).add_to(m)
+            st_folium(m, width=700, height=400)
+
+            # Update the address field
+            full_address = location_data.address if location_data else f"Latitude: {lat}, Longitude: {lon}"
+            st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
         except Exception as e:
-            st.error(f"Error occurred while geocoding: {str(e)}")
+            st.error(f"Error occurred while processing location: {str(e)}")
     
     delivery_notes = st.text_area("Delivery Notes (optional)")
     
