@@ -462,13 +462,13 @@ def main():
         else:
             st.warning("Please log in to place an order.")
     elif choice == "Butler Bot":
-        _butler_bot()
+        display_butler_bot()
     elif choice == "About Us":
-        _about_us()
+        display_about_us()
     elif choice == "Login":
-        _login()
+        display_login()
     elif choice == "Register":
-        _register()
+        display_register()
     elif choice == "Logout":
         logout()
     elif choice == "Driver Dashboard":
@@ -483,22 +483,21 @@ def main():
         st.subheader("Cancel Booking")
         # Implement cancel booking functionality here
 
-def _menu():
+def display_menu():
     st.subheader("Menu")
     category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
     if category == "Grocery Services":
         grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
-        _service(Service(name=grocery_store, **GROCERY_STORES[grocery_store]))
+        display_service(Service(name=grocery_store, **GROCERY_STORES[grocery_store]))
     elif category == "Meal Delivery Services":
         restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
-        _service(Service(name=restaurant, **RESTAURANTS[restaurant]))
+        display_service(Service(name=restaurant, **RESTAURANTS[restaurant]))
 
-# Helper function to create map with click event
 def create_map(lat, lon):
     m = folium.Map(location=[lat, lon], zoom_start=13)
     m.add_child(folium.LatLngPopup())
-    m.add_child(folium.ClickForMarker(popup="Selected Location"))
     return m
+
 
 @handle_error
 @log_action("display_new_order")
@@ -525,7 +524,7 @@ def display_new_order():
     time_options = [f"{h:02d}:{m:02d} {'AM' if h < 12 else 'PM'}" for h in range(7, 22) for m in (0, 15, 30, 45)]
     time = st.selectbox("Select time:", time_options)
     
-    location = st.text_input("Enter your address")
+    location = st.text_input("Enter your address or click on the map")
 
     # Display the map
     map_click_data = st_folium(m, width=700, height=400)
@@ -550,7 +549,7 @@ def display_new_order():
                 location_data = geolocator.reverse(f"{lat}, {lon}")
 
             # Update the map with the selected location
-            m = folium.Map(location=[lat, lon], zoom_start=15)
+            m = create_map(lat, lon)
             folium.Marker([lat, lon]).add_to(m)
             st_folium(m, width=700, height=400)
 
@@ -627,6 +626,8 @@ def display_new_order():
                             st.error("Please upload a screenshot to complete your order.")
             else:
                 st.error("Unable to place order. The selected time slot may not be available.")
+
+
 def display_butler_bot():
     st.subheader("Butler Bot")
     iframe_html = """
