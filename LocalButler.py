@@ -14,10 +14,6 @@ import folium
 from streamlit_folium import st_folium
 import geopy
 from geopy.geocoders import Nominatim
-from sqlalchemy import create_engine, Column, Integer, String, MetaData
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from streamlit_sqlalchemy import StreamlitAlchemyMixin
 
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
@@ -50,6 +46,7 @@ class OrderModel(Base):
     time = Column(Time)
     location = Column(String)
     status = Column(String)
+    delivery_notes = Column(String)
     user = relationship("UserModel", back_populates="orders", foreign_keys=[user_id])
     driver = relationship("UserModel", foreign_keys=[driver_id])
 
@@ -90,6 +87,7 @@ class Order:
     location: str
     status: str
     driver_id: int
+    delivery_notes: str
 
 @dataclass
 class Service:
@@ -99,6 +97,9 @@ class Service:
     video_url: str = None
     video_title: str = None
     image_url: str = None
+    address: str = None
+    phone: str = None
+    hours: str = None
 
 # Security
 ph = argon2.PasswordHasher()
@@ -144,6 +145,8 @@ def create_form(fields):
             values[field] = st.date_input(field.capitalize())
         elif field_type == 'time':
             values[field] = st.time_input(field.capitalize())
+        elif field_type == 'select':
+            values[field] = st.selectbox(field.capitalize(), field_type[1])
     return values
 
 def display_service(service: Service):
@@ -155,6 +158,12 @@ def display_service(service: Service):
     st.write("Instructions for placing your order:")
     for instruction in service.instructions:
         st.write(f"- {instruction}")
+    if service.address:
+        st.write(f"Address: {service.address}")
+    if service.phone:
+        st.write(f"Phone: {service.phone}")
+    if service.hours:
+        st.write(f"Hours: {service.hours}")
 
 # Authentication
 @handle_error
@@ -179,11 +188,11 @@ def authenticate_user(username: str, password: str) -> tuple:
 # Order placement
 @handle_error
 @log_action("place_order")
-def place_order(user_id: int, service: str, date: datetime.date, time: time, location: str) -> int:
+def place_order(user_id: int, service: str, date: datetime.date, time: time, location: str, delivery_notes: str) -> int:
     with Session() as session:
         schedule = session.query(ScheduleModel).filter_by(date=date, time=time).first()
         if schedule and schedule.available:
-            order = OrderModel(user_id=user_id, service=service, date=date, time=time, location=location, status="Pending")
+            order = OrderModel(user_id=user_id, service=service, date=date, time=time, location=location, status="Pending", delivery_notes=delivery_notes)
             session.add(order)
             schedule.available = False
             session.commit()
@@ -216,9 +225,47 @@ GROCERY_STORES = {
             "Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.",
             "Select store pick-up and specify the date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ]
+        ],
+        "address": "2641 Brandermill Blvd, Gambrills, MD 21054",
+        "phone": "(410) 721-7440",
+        "hours": "Open daily 6am-11pm"
     },
-    # ... (other grocery stores)
+    "SafeWay": {
+        "url": "https://www.safeway.com/",
+        "instructions": [
+            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png",
+        "address": "2624 Chapel Lake Dr, Gambrills, MD 21054",
+        "phone": "(410) 721-0881",
+        "hours": "Open daily 6am-11pm"
+    },
+    "Commissary": {
+        "url": "https://shop.commissaries.com/",
+        "instructions": [
+            "Place your order directly with the Commissary using your own account.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/comissaries.jpg",
+        "address": "2789 MacArthur Rd, Fort Meade, MD 20755",
+        "phone": "(301) 677-3060",
+        "hours": "Mon-Sat 9am-7pm, Sun 10am-6pm"
+    },
+    "Food Lion": {
+        "url": "https://shop.foodlion.com/?shopping_context=pickup&store=2517",
+        "instructions": [
+            "Place your order directly with Food Lion using your own account.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg",
+        "address": "1077 MD-3 North, Gambrills, MD 21054",
+        "phone": "(410) 721-5830",
+        "hours": "Open daily 7am-10pm"
+    }
 }
 
 RESTAURANTS = {
@@ -229,9 +276,112 @@ RESTAURANTS = {
             "Select pick-up and specify the date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/TheHideAway.jpg"
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/TheHideAway.jpg",
+        "address": "1439 Odenton Rd, Odenton, MD 21113",
+        "phone": "(410) 874-7213",
+        "hours": "Mon-Sat 11am-9pm, Sun 11am-8pm"
     },
-    # ... (other restaurants)
+    "Ruth's Chris Steak House": {
+        "url": "https://order.ruthschris.com/",
+        "instructions": [
+            "Place your order directly with Ruth's Chris Steak House using their website or app.",
+            "Select pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "1110 Town Center Blvd, Odenton, MD 21113",
+        "phone": "(410) 451-9600",
+        "hours": "Mon-Thur 4pm-10pm, Fri-Sat 4pm-11pm, Sun 4pm-9pm"
+    },
+    "Baltimore Coffee & Tea Company": {
+        "url": "https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf",
+        "instructions": [
+            "Review the menu and decide on your order.",
+            "Call Baltimore Coffee & Tea Company to place your order.",
+            "Specify that you'll be using Local Butler for pick-up and delivery.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
+            "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
+        ],
+        "address": "8488 Baltimore Annapolis Blvd, Pasadena, MD 21122",
+        "phone": "(410) 439-8669",
+        "hours": "Mon-Sat 6am-6pm, Sun 7am-5pm"
+    },
+    "The All American Steakhouse": {
+        "url": "https://order.theallamericansteakhouse.com/menu/odenton",
+        "instructions": [
+            "Place your order directly with The All American Steakhouse by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2367 Brandermill Blvd, Gambrills, MD 21054",
+        "phone": "(410) 674-8350",
+        "hours": "Mon-Thur 11am-10pm, Fri-Sat 11am-11pm, Sun 11am-9pm"
+    },
+    "Jersey Mike's Subs": {
+        "url": "https://www.jerseymikes.com/menu",
+        "instructions": [
+            "Place your order directly with Jersey Mike's Subs using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2637 Brandermill Blvd, Gambrills, MD 21054",
+        "phone": "(410) 721-5550",
+        "hours": "Daily 10am-9pm"
+    },
+    "Bruster's Real Ice Cream": {
+        "url": "https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage",
+        "instructions": [
+            "Place your order directly with Bruster's Real Ice Cream using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "1202 Annapolis Rd, Odenton, MD 21113",
+        "phone": "(410) 672-0020",
+       "hours": "Sun-Thur 12pm-9pm, Fri-Sat 12pm-10pm"
+    },
+    "Luigino's": {
+        "url": "https://order.yourmenu.com/luiginos",
+        "instructions": [
+            "Place your order directly with Luigino's by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2716 Brandermill Blvd, Gambrills, MD 21054",
+        "phone": "(410) 451-6010",
+        "hours": "Tue-Thur 11am-9pm, Fri-Sat 11am-10pm, Sun 12pm-9pm, Mon Closed"
+    },
+    "PHO 5UP ODENTON": {
+        "url": "https://www.clover.com/online-ordering/pho-5up-odenton",
+        "instructions": [
+            "Place your order directly with PHO 5UP ODENTON by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "8777 Piney Orchard Pkwy, Odenton, MD 21113",
+        "phone": "(443) 713-1293",
+        "hours": "Daily 11am-9pm"
+    },
+    "Dunkin": {
+        "url": "https://www.dunkindonuts.com/en/mobile-app",
+        "instructions": [
+            "Place your order directly with Dunkin' by using their APP.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2613 Brandermill Blvd, Gambrills, MD 21054",
+        "phone": "(410) 721-2524",
+        "hours": "Daily 5am-9pm"
+    },
+    "Baskin-Robbins": {
+        "url": "https://order.baskinrobbins.com/categories?storeId=BR-339568",
+        "instructions": [
+            "Place your order directly with Baskin-Robbins by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2617 Brandermill Blvd, Gambrills, MD 21054",
+        "phone": "(410) 721-5661",
+        "hours": "Sun-Thur 11am-10pm, Fri-Sat 11am-11pm"
+    }
 }
 
 # Main application logic
@@ -298,37 +448,76 @@ def display_menu():
 def display_new_order():
     st.subheader("Place a New Order")
     
-    form_fields = {
-        'service': 'text',
-        'date': 'date',
-        'time': 'time',
-        'location': 'text'
-    }
-    values = create_form(form_fields)
+    service_options = ["Grocery Delivery", "Meal Delivery", "Laundry Service"]
+    service = st.selectbox("Select a service:", service_options)
     
-    if values['location']:
+    date = st.date_input("Select date")
+    time_options = [f"{h:02d}:{m:02d}" for h in range(7, 22) for m in (0, 15, 30, 45)]
+    time = st.selectbox("Select time:", time_options)
+    
+    location = st.text_input("Enter your address")
+    if location:
         geolocator = Nominatim(user_agent="local_butler_app")
         try:
-            location_data = geolocator.geocode(values['location'])
+            location_data = geolocator.geocode(location)
             if location_data:
                 m = folium.Map(location=[location_data.latitude, location_data.longitude], zoom_start=15)
                 folium.Marker([location_data.latitude, location_data.longitude]).add_to(m)
                 st_folium(m, width=700, height=400)
+                full_address = location_data.address
+                st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
             else:
                 st.warning("Location not found. Please enter a valid address.")
         except Exception as e:
             st.error(f"Error occurred while geocoding: {str(e)}")
     
-    if st.button("Place Order"):
-        if all(values.values()):
-            order_id = place_order(st.session_state['user_id'], **values)
+    delivery_notes = st.text_area("Delivery Notes (optional)")
+    
+    if service == "Grocery Delivery":
+        st.text_input("Preferred grocery store")
+    elif service == "Meal Delivery":
+        st.text_input("Preferred restaurant")
+    elif service == "Laundry Service":
+        st.radio("Service type", ["Wash & Fold", "Dry Cleaning"])
+    
+    if st.button("Review Order"):
+        confirm_order = st.empty()
+        with st.expander("Order Details", expanded=True):
+            st.write(f"Service: {service}")
+            st.write(f"Date: {date}")
+            st.write(f"Time: {time}")
+            st.write(f"Address: {st.session_state.get('verified_address', location)}")
+            st.write(f"Delivery Notes: {delivery_notes}")
+        
+        if confirm_order.button("Confirm Order"):
+            order_id = place_order(st.session_state['user_id'], service, date, datetime.strptime(time, "%H:%M").time(), 
+                                   st.session_state.get('verified_address', location), delivery_notes)
             if order_id:
-                st.success(f"Order placed successfully! Your order ID is {order_id}")
-                send_email("New Order Placed", f"A new order (ID: {order_id}) has been placed for {values['service']} on {values['date']} at {values['time']} to be delivered to {values['location']}.")
+                st.success("Order confirmed! Please proceed to place your order with the merchant.")
+                
+                if service == "Grocery Delivery":
+                    merchant_link = GROCERY_STORES["Weis Markets"]["url"]  # You might want to make this dynamic based on user's choice
+                elif service == "Meal Delivery":
+                    merchant_link = RESTAURANTS["The Hideaway"]["url"]  # You might want to make this dynamic based on user's choice
+                else:
+                    merchant_link = "#"  # Placeholder for laundry service
+                
+                st.markdown(f"[Click here to place your order with the merchant]({merchant_link})")
+                st.info("Remember to apply any coupons, rewards, or discount codes directly with the merchant.")
+                
+                order_proof = st.radio("How would you like to confirm your merchant order?", ["Enter Order Number", "Upload Screenshot"])
+                if order_proof == "Enter Order Number":
+                    order_number = st.text_input("Enter your order number from the merchant:")
+                else:
+                    order_screenshot = st.file_uploader("Upload a screenshot of your order:", type=["png", "jpg", "jpeg"])
+                
+                if st.button("Submit Order Proof"):
+                    # Here you would update the order in your database with the proof
+                    st.success("Order has been successfully placed!")
+                    st.info("You will now be redirected to your orders page.")
+                    # Here you would implement the redirection to the user's orders page
             else:
                 st.error("Unable to place order. The selected time slot may not be available.")
-        else:
-            st.error("Please fill in all fields.")
 
 def display_butler_bot():
     st.subheader("Butler Bot")
@@ -455,7 +644,7 @@ def driver_dashboard():
                 session.commit()
                 st.success("Availability set successfully!")
     
-    with tab4:
+with tab4:
         st.subheader("Earnings")
         with Session() as session:
             completed_orders = session.query(OrderModel).filter_by(driver_id=st.session_state['user_id'], status="Completed").all()
