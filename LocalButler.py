@@ -14,7 +14,6 @@ import folium
 from streamlit_folium import st_folium
 import geopy
 from geopy.geocoders import Nominatim
-from streamlit_leaflet import leaflet_map
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 import time
 
