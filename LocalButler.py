@@ -445,7 +445,6 @@ def display_menu():
 
 @handle_error
 @log_action("display_new_order")
-
 def display_new_order():
     st.subheader("Place a New Order")
     
@@ -492,7 +491,7 @@ def display_new_order():
                                            [pickup_location.latitude, pickup_location.longitude]], 
                                 color="blue", weight=2.5, opacity=1).add_to(m)
                 
-                st_folium(m)
+                st_folium(m, width=700, height=400)
                 
                 with st.expander("Order Details", expanded=True):
                     st.write(f"Service: {service}")
