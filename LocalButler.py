@@ -627,7 +627,6 @@ def display_new_order():
                             st.error("Please upload a screenshot to complete your order.")
             else:
                 st.error("Unable to place order. The selected time slot may not be available.")
-
 def display_butler_bot():
     st.subheader("Butler Bot")
     iframe_html = """
