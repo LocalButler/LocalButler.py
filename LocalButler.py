@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 import argon2
 import logging
+import yaml
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
