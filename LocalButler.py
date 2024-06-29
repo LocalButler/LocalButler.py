@@ -411,7 +411,6 @@ def create_map(businesses_to_show):
                 <b>{name}</b><br>
                 Address: {info['address']}<br>
                 Phone: {info['phone']}<br>
-                Hours: {info['hours']}
                 """
             ).add_to(m)
         else:
