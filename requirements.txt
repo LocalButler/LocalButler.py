@@ -8,4 +8,4 @@ pyyaml
 folium
 streamlit-folium
 streamlit_sqlalchemy
- streamlit-leaflet
+streamlit-leaflet
