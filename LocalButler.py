@@ -524,7 +524,7 @@ def display_new_order():
     time_options = [f"{h:02d}:{m:02d} {'AM' if h < 12 else 'PM'}" for h in range(7, 22) for m in (0, 15, 30, 45)]
     time = st.selectbox("Select time:", time_options)
     
-    location = st.text_input("Enter your address")
+    location = st.text_input("Enter your address or click on the map")
 
     # Display the map
     map_click_data = st_folium(m, width=700, height=400)
