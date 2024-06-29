@@ -199,46 +199,6 @@ def place_order(user_id: int, service: str, date: datetime.date, time: time, loc
             return order.id
         return None
 
-def create_map(businesses_to_show):
-    geolocator = Nominatim(user_agent="local_butler_app")
-    m = folium.Map(location=[39.1054, -76.7285], zoom_start=12)  # Centered on Fort Meade area
-
-    for name, info in businesses_to_show.items():
-        try:
-            location = geolocator.geocode(info['address'])
-            if location:
-                popup_html = f"""
-                <b>{name}</b><br>
-                Address: {info['address']}<br>
-                Phone: {info['phone']}<br>
-                Hours: {info['hours']}
-                """
-                folium.Marker(
-                    [location.latitude, location.longitude],
-                    popup=folium.Popup(popup_html, max_width=300),
-                    tooltip=name
-                ).add_to(m)
-        except Exception as e:
-            st.warning(f"Could not locate {name}: {str(e)}")
-
-    return m
-
-# Create maps
-grocery_map = create_map(GROCERY_STORES)
-restaurant_map = create_map(RESTAURANTS)
-all_businesses = {**GROCERY_STORES, **RESTAURANTS}
-combined_map = create_map(all_businesses)
-
-# Display maps in your Streamlit app
-st.subheader("Grocery Stores Map")
-st.folium_chart(grocery_map)
-
-st.subheader("Restaurants Map")
-st.folium_chart(restaurant_map)
-
-st.subheader("All Businesses Map")
-st.folium_chart(combined_map)
-
 # Email sending
 def send_email(subject: str, body: str):
     sender_email = st.secrets["email"]["sender"]
@@ -733,6 +693,47 @@ def driver_dashboard():
         st_folium(m, height=400, width=700)
     else:
         st.info("Please enable location to view the map.")
+
+
+def create_map(businesses_to_show):
+    geolocator = Nominatim(user_agent="local_butler_app")
+    m = folium.Map(location=[39.1054, -76.7285], zoom_start=12)  # Centered on Fort Meade area
+
+    for name, info in businesses_to_show.items():
+        try:
+            location = geolocator.geocode(info['address'])
+            if location:
+                popup_html = f"""
+                <b>{name}</b><br>
+                Address: {info['address']}<br>
+                Phone: {info['phone']}<br>
+                Hours: {info['hours']}
+                """
+                folium.Marker(
+                    [location.latitude, location.longitude],
+                    popup=folium.Popup(popup_html, max_width=300),
+                    tooltip=name
+                ).add_to(m)
+        except Exception as e:
+            st.warning(f"Could not locate {name}: {str(e)}")
+
+    return m
+
+# Create maps
+grocery_map = create_map(GROCERY_STORES)
+restaurant_map = create_map(RESTAURANTS)
+all_businesses = {**GROCERY_STORES, **RESTAURANTS}
+combined_map = create_map(all_businesses)
+
+# Display maps in your Streamlit app
+st.subheader("Grocery Stores Map")
+st.folium_chart(grocery_map)
+
+st.subheader("Restaurants Map")
+st.folium_chart(restaurant_map)
+
+st.subheader("All Businesses Map")
+st.folium_chart(combined_map)
 
 if __name__ == "__main__":
     main()
