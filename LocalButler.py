@@ -340,7 +340,7 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2288 Blue Water Blvd Suite 220, Odenton, MD 21113",
+        "address": "2288, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
         "phone": "(410) 674-6000"
     },
     "PHO 5UP ODENTON": {
