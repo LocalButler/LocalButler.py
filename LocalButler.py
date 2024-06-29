@@ -15,6 +15,47 @@ import folium
 from streamlit_folium import st_folium
 import geopy
 from geopy.geocoders import Nominatim
+from sqlalchemy import create_engine, Column, Integer, String, MetaData
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from streamlit_sqlalchemy import StreamlitAlchemyMixin
+
+Base = declarative_base()
+
+class ExampleModel(Base, StreamlitAlchemyMixin):
+    __tablename__ = "example"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    description = Column(String)
+    is_active = Column(Boolean, default=True)
+
+    # Customize the form fields with non-defaults
+    __st_input_meta__ = {
+        'name': st.text_input,
+        'description': st.text_area,
+        'is_active': lambda *a, **kw: st.checkbox(*a, **kw, value=False),
+    }
+
+    # Customize display of the instances in the selectbox
+    __st_repr__ = lambda self: f'{self.name} ({self.is_active})'
+
+    # Customize the order of the instances in the selectbox
+    __st_order_by__ = lambda self: self.name
+
+# Initialize the database connection
+if 'db_engine' not in st.session_state:
+    st.session_state.db_engine = create_engine('sqlite:///example.db')
+    Base.metadata.create_all(st.session_state.db_engine)
+    st.session_state.Session = sessionmaker(bind=st.session_state.db_engine)
+    StreamlitAlchemyMixin.st_initialize(connection=st.session_state.db_engine)
+
+
+Base = declarative_base()
+
+class ExampleModel(Base, StreamlitAlchemyMixin):
+    __tablename__ = "example"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
 
 # Set page config at the very beginning
 st.set_page_config(page_title="Local Butler")
