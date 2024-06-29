@@ -264,7 +264,7 @@ GROCERY_STORES = {
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
         "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg",
-        "address": "2655 Annapolis Rd, Hanover, MD 21076",
+        "address": "Food Lion, Annapolis Road, Ridgefield, Anne Arundel County, Maryland, 20755, United States",
         "phone": "(410) 519-8740"
     }
 }
@@ -300,7 +300,7 @@ RESTAURANTS = {
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
             "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
         ],
-        "address": "1111 Town Center Blvd, Odenton, MD",
+        "address": "1109 Town Center Blvd, Odenton, MD",
         "phone": "(410) 439-8669"
     },
     "The All American Steakhouse": {
@@ -320,7 +320,7 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2288 Blue Water Blvd Suite 600-A, Odenton, MD 21113",
+        "address": "2290 Blue Water Blvd Suite, Odenton, MD 21113",
         "phone": "(410) 695-3430"
     },
     "Bruster's Real Ice Cream": {
@@ -370,7 +370,7 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "1614 Annapolis Rd, Odenton, MD 21113",
+        "address": "1615 Annapolis Rd, Odenton, MD 21113",
         "phone": "(410) 674-3800"
     }
 }
