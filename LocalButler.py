@@ -387,6 +387,46 @@ RESTAURANTS = {
     }
 }
 
+def create_map(businesses_to_show):
+    geolocator = Nominatim(user_agent="local_butler_app")
+    markers = []
+
+    for name, info in businesses_to_show.items():
+        try:
+            location = geocode_with_retry(geolocator, info['address'])
+            if location:
+                markers.append({
+                    "position": [location.latitude, location.longitude],
+                    "tooltip": name,
+                    "popup": f"""
+                    <b>{name}</b><br>
+                    Address: {info['address']}<br>
+                    Phone: {info['phone']}<br>
+                    Hours: {info['hours']}
+                    """
+                })
+            else:
+                st.warning(f"Could not locate {name}")
+        except Exception as e:
+            st.warning(f"Error locating {name}: {str(e)}")
+
+    return {
+        "center": [39.1054, -76.7285],  # Centered on Fort Meade area
+        "zoom": 12,
+        "markers": markers
+    }
+
+# Place the new function here
+def geocode_with_retry(geolocator, address, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return geolocator.geocode(address)
+        except (GeocoderTimedOut, GeocoderServiceError):
+            if attempt == max_retries - 1:
+                raise
+            time.sleep(1)  # Wait for 1 second before retrying
+
+
 # Main application logic
 @handle_error
 @log_action("main")
@@ -435,6 +475,24 @@ def main():
     elif choice == "Cancel Booking":
         st.subheader("Cancel Booking")
         # Implement cancel booking functionality here
+
+
+    # Create maps
+    grocery_map = create_map(GROCERY_STORES)
+    restaurant_map = create_map(RESTAURANTS)
+    all_businesses = {**GROCERY_STORES, **RESTAURANTS}
+    combined_map = create_map(all_businesses)
+
+    # Display maps in your Streamlit app
+    st.subheader("Grocery Stores Map")
+    leaflet_map(grocery_map)
+
+    st.subheader("Restaurants Map")
+    leaflet_map(restaurant_map)
+
+    st.subheader("All Businesses Map")
+    leaflet_map(combined_map)
+
 
 def display_menu():
     st.subheader("Menu")
@@ -698,48 +756,6 @@ def driver_dashboard():
         st.info("Please enable location to view the map.")
 
 
-def create_map(businesses_to_show):
-    geolocator = Nominatim(user_agent="local_butler_app")
-    m = folium.Map(location=[39.1054, -76.7285], zoom_start=12)  # Centered on Fort Meade area
-
-    for name, info in businesses_to_show.items():
-        try:
-            location = geolocator.geocode(info['address'])
-            if location:
-                popup_html = f"""
-                <b>{name}</b><br>
-                Address: {info['address']}<br>
-                Phone: {info['phone']}<br>
-                Hours: {info['hours']}
-                """
-                folium.Marker(
-                    [location.latitude, location.longitude],
-                    popup=folium.Popup(popup_html, max_width=300),
-                    tooltip=name
-                ).add_to(m)
-        except Exception as e:
-            st.warning(f"Could not locate {name}: {str(e)}")
-
-    return m
-
-def create_map(businesses_to_show):
-    return {
-        "center": [39.1054, -76.7285],  # Centered on Fort Meade area
-        "zoom": 12,
-        "markers": [
-            {
-                "position": [39.1054, -76.7285],  # Default position (Fort Meade)
-                "tooltip": name,
-                "popup": f"""
-                <b>{name}</b><br>
-                Address: {info['address']}<br>
-                Phone: {info['phone']}<br>
-                Hours: {info['hours']}
-                """
-            }
-            for name, info in businesses_to_show.items()
-        ]
-    }
 
 if __name__ == "__main__":
     main()
