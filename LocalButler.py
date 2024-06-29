@@ -32,19 +32,19 @@ class UserModel(Base):
     user_type = Column(String)
     failed_attempts = Column(Integer, default=0)
     last_attempt = Column(DateTime)
-    orders = relationship("OrderModel", back_populates="user")
-
+    orders = relationship("OrderModel", back_populates="user", foreign_keys="OrderModel.user_id")
 class OrderModel(Base):
     __tablename__ = 'orders'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
+    driver_id = Column(Integer, ForeignKey('users.id'))
     service = Column(String)
     date = Column(Date)
     time = Column(Time)
     location = Column(String)
     status = Column(String)
-    driver_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship("UserModel", back_populates="orders")
+    user = relationship("UserModel", back_populates="orders", foreign_keys=[user_id])
+    driver = relationship("UserModel", foreign_keys=[driver_id])
 
 class ScheduleModel(Base):
     __tablename__ = 'schedule'
