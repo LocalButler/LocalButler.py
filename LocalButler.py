@@ -644,7 +644,7 @@ def driver_dashboard():
                 session.commit()
                 st.success("Availability set successfully!")
     
-with tab4:
+    with tab4:
         st.subheader("Earnings")
         with Session() as session:
             completed_orders = session.query(OrderModel).filter_by(driver_id=st.session_state['user_id'], status="Completed").all()
