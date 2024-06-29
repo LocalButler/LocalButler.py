@@ -530,6 +530,7 @@ def display_new_order():
     map_click_data = st_folium(m, width=700, height=400)
 
 # Update map_data based on map click
+map_click_data = st.session_state.get('map_click_data', None)
 if map_click_data and 'last_clicked' in map_click_data:
     st.session_state['map_data'] = map_click_data['last_clicked']
 
@@ -547,6 +548,7 @@ def display_map(lat, lon):
 
 def process_location(location):
     try:
+        map_data = st.session_state.get('map_data', None)
         if location:
             # Geocode the entered address
             location_data = geocode_address(location)
@@ -570,9 +572,6 @@ def process_location(location):
         st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
     except Exception as e:
         st.error(f"Error occurred while processing location: {str(e)}")
-
-if location or (map_data and map_data.get('last_clicked')):
-    process_location(location)
 
 
     delivery_notes = st.text_area("Delivery Notes (optional)")
