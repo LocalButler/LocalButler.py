@@ -524,17 +524,24 @@ def display_new_order():
                 order_proof = st.radio("How would you like to confirm your merchant order?", ["Enter Order Number", "Upload Screenshot"])
                 if order_proof == "Enter Order Number":
                     order_number = st.text_input("Enter your order number from the merchant:")
+                    if st.button("Submit Order Proof"):
+                        if order_number:
+                            # Here you would update the order in your database with the proof
+                            st.success("Order has been successfully placed and verified!")
+                            st.info("You will now be redirected to your orders page.")
+                            # Here you would implement the redirection to the user's orders page
+                        else:
+                            st.error("Please provide the order number to complete your order.")
                 else:
                     order_screenshot = st.file_uploader("Upload a screenshot of your order:", type=["png", "jpg", "jpeg"])
-                
-                if st.button("Submit Order Proof"):
-                    if (order_proof == "Enter Order Number" and order_number) or (order_proof == "Upload Screenshot" and order_screenshot):
-                        # Here you would update the order in your database with the proof
-                        st.success("Order has been successfully placed and verified!")
-                        st.info("You will now be redirected to your orders page.")
-                        # Here you would implement the redirection to the user's orders page
-                    else:
-                        st.error("Please provide the order number or upload a screenshot to complete your order.")
+                    if st.button("Submit Order Proof"):
+                        if order_screenshot:
+                            # Here you would update the order in your database with the proof
+                            st.success("Order has been successfully placed and verified!")
+                            st.info("You will now be redirected to your orders page.")
+                            # Here you would implement the redirection to the user's orders page
+                        else:
+                            st.error("Please upload a screenshot to complete your order.")
             else:
                 st.error("Unable to place order. The selected time slot may not be available.")
 
