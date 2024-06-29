@@ -533,11 +533,23 @@ def display_new_order():
 if map_click_data and 'last_clicked' in map_click_data:
     st.session_state['map_data'] = map_click_data['last_clicked']
 
-if location or (map_data and map_data.get('last_clicked')):
+def geocode_address(address):
+    # Implement geocoding logic here
+    pass
+
+def reverse_geocode(lat, lon):
+    # Implement reverse geocoding logic here
+    pass
+
+def display_map(lat, lon):
+    # Implement map display logic here
+    pass
+
+def process_location(location):
     try:
         if location:
             # Geocode the entered address
-            location_data = geolocator.geocode(location)
+            location_data = geocode_address(location)
             if location_data:
                 lat, lon = location_data.latitude, location_data.longitude
             else:
@@ -546,10 +558,10 @@ if location or (map_data and map_data.get('last_clicked')):
         else:
             # Use the coordinates from the map click
             lon, lat = map_data['last_clicked']['lng'], map_data['last_clicked']['lat']
-            location_data = geolocator.reverse(f"{lat}, {lon}")
+            location_data = reverse_geocode(lat, lon)
 
         # Update the map with the selected location
-        m = create_map(lat, lon)
+        m = display_map(lat, lon)
         folium.Marker([lat, lon]).add_to(m)
         st_folium(m, width=700, height=400)
 
@@ -558,6 +570,9 @@ if location or (map_data and map_data.get('last_clicked')):
         st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
     except Exception as e:
         st.error(f"Error occurred while processing location: {str(e)}")
+
+if location or (map_data and map_data.get('last_clicked')):
+    process_location(location)
 
 
     delivery_notes = st.text_area("Delivery Notes (optional)")
