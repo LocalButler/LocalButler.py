@@ -279,8 +279,7 @@ RESTAURANTS = {
         ],
         "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/TheHideAway.jpg",
         "address": "1439 Odenton Rd, Odenton, MD 21113",
-        "phone": "(410) 874-7213",
-        "hours": "Mon-Sat 11am-9pm, Sun 11am-8pm"
+        "phone": "(410) 874-7213"
     },
     "Ruth's Chris Steak House": {
         "url": "https://order.ruthschris.com/",
@@ -290,8 +289,7 @@ RESTAURANTS = {
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
         "address": "1110 Town Center Blvd, Odenton, MD 21113",
-        "phone": "(410) 451-9600",
-        "hours": "Mon-Thur 4pm-10pm, Fri-Sat 4pm-11pm, Sun 4pm-9pm"
+        "phone": "(410) 451-9600"
     },
     "Baltimore Coffee & Tea Company": {
         "url": "https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf",
@@ -332,8 +330,8 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "1202 Annapolis Rd, Odenton, MD 21113",
-        "phone": "(410) 672-0020"
+        "address": "2288 Blue Water Blvd Ste A, Odenton, MD 21113",
+        "phone": "(410) 874-7135"
     },
     "Luigino's": {
         "url": "https://order.yourmenu.com/luiginos",
