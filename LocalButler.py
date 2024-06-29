@@ -320,7 +320,7 @@ RESTAURANTS = {
             "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "address": "2290 Blue Water Blvd Suite, Odenton, MD 21113",
+        "address": "2290 Blue Water Blvd, Odenton, MD 21113",
         "phone": "(410) 695-3430"
     },
     "Bruster's Real Ice Cream": {
