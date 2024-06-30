@@ -1,767 +1,263 @@
 import streamlit as st
-import streamlit.components.v1 as components
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Date, Time, Boolean, ForeignKey
-from sqlalchemy.orm import sessionmaker, relationship, Session
-from dataclasses import dataclass
-from datetime import datetime, time, timedelta
-import argon2
-import logging
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import pandas as pd
+import numpy as np
 import folium
-from streamlit_folium import st_folium
-import geopy
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderServiceError
-import time
 from streamlit_folium import folium_static
-from sqlalchemy.orm import declarative_base
+from datetime import datetime, timedelta
+import random
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+
+# SQLAlchemy setup
 Base = declarative_base()
-
-# Set page config at the very beginning
-st.set_page_config(page_title="Local Butler")
-
-# Set up logging
-logging.basicConfig(level=logging.INFO, 
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# Database setup
-Base = declarative_base()
-
-class UserModel(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True)
-    password = Column(String)
-    user_type = Column(String)
-    failed_attempts = Column(Integer, default=0)
-    last_attempt = Column(DateTime)
-    orders = relationship("OrderModel", back_populates="user", foreign_keys="OrderModel.user_id")
-
-class OrderModel(Base):
-    __tablename__ = 'orders'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    driver_id = Column(Integer, ForeignKey('users.id'))
-    service = Column(String)
-    date = Column(Date)
-    time = Column(Time)
-    location = Column(String)
-    status = Column(String)
-    delivery_notes = Column(String)
-    user = relationship("UserModel", back_populates="orders", foreign_keys=[user_id])
-    driver = relationship("UserModel", foreign_keys=[driver_id])
-
-class ScheduleModel(Base):
-    __tablename__ = 'schedule'
-    id = Column(Integer, primary_key=True)
-    date = Column(Date)
-    time = Column(Time)
-    available = Column(Boolean)
-
-# Initialize database connection
-@st.cache(allow_output_mutation=True)
-def init_db():
-    engine = create_engine(st.secrets["db_connection_string"])
-    Base.metadata.create_all(engine)
-    return engine
-
-engine = init_db()
+engine = create_engine('sqlite:///delivery_app.db', echo=True)
 Session = sessionmaker(bind=engine)
 
-# Dataclasses
-@dataclass
-class User:
-    id: int
-    username: str
-    password: str
-    user_type: str
-    failed_attempts: int
-    last_attempt: datetime
+# Argon2 setup
+ph = PasswordHasher()
 
-@dataclass
-class Order:
-    id: int
-    user_id: int
-    service: str
-    date: datetime.date
-    time: time
-    location: str
-    status: str
-    driver_id: int
-    delivery_notes: str
+# SQLAlchemy models
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    address = Column(String)
+    latitude = Column(Float)
+    longitude = Column(Float)
 
-@dataclass
-class Service:
-    name: str
-    url: str
-    instructions: list
-    video_url: str = None
-    video_title: str = None
-    image_url: str = None
-    address: str = None
-    phone: str = None
-    hours: str = None
+class Merchant(Base):
+    __tablename__ = 'merchants'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    website = Column(String)
 
-# Security
-ph = argon2.PasswordHasher()
+class Order(Base):
+    __tablename__ = 'orders'
+    id = Column(String, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    merchant_id = Column(Integer, ForeignKey('merchants.id'))
+    service = Column(String)
+    date = Column(DateTime, nullable=False)
+    time = Column(String, nullable=False)
+    address = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    user = relationship("User")
+    merchant = relationship("Merchant")
 
-def hash_password(password: str) -> str:
-    return ph.hash(password)
+# Create tables
+Base.metadata.create_all(engine)
 
-def verify_password(hashed_password: str, password: str) -> bool:
-    try:
-        ph.verify(hashed_password, password)
-        return True
-    except argon2.exceptions.VerifyMismatchError:
-        return False
+# Helper functions
+def generate_order_id():
+    return f"ORD-{random.randint(10000, 99999)}"
 
-# Error handling
-def handle_error(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            logger.error(f"Error in {func.__name__}: {str(e)}")
-            st.error(f"An error occurred: {str(e)}")
-    return wrapper
-
-# Logging decorator
-def log_action(action: str):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            logger.info(f"User {st.session_state.get('username', 'Anonymous')} performed action: {action}")
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
-
-# UI Components
-def create_form(fields):
-    values = {}
-    for field, field_type in fields.items():
-        if field_type == 'text':
-            values[field] = st.text_input(field.capitalize())
-        elif field_type == 'password':
-            values[field] = st.text_input(field.capitalize(), type='password')
-        elif field_type == 'date':
-            values[field] = st.date_input(field.capitalize())
-        elif field_type == 'time':
-            values[field] = st.time_input(field.capitalize())
-        elif field_type == 'select':
-            values[field] = st.selectbox(field.capitalize(), field_type[1])
-    return values
-
-def display_service(service: Service):
-    st.write(f"ORDER NOW: [{service.name}]({service.url})")
-    if service.video_url:
-        st.video(service.video_url)
-    elif service.image_url:
-        st.image(service.image_url, caption=f"{service.name} App", use_column_width=True)
-    st.write("Instructions for placing your order:")
-    for instruction in service.instructions:
-        st.write(f"- {instruction}")
-    if service.address:
-        st.write(f"Address: {service.address}")
-    if service.phone:
-        st.write(f"Phone: {service.phone}")
-    if service.hours:
-        st.write(f"Hours: {service.hours}")
-
-# Authentication
-@handle_error
-def authenticate_user(username: str, password: str) -> tuple:
-    with Session() as session:
-        user = session.query(UserModel).filter_by(username=username).first()
-        if user:
-            if user.last_attempt and user.last_attempt + timedelta(minutes=15) > datetime.now() and user.failed_attempts >= 5:
-                return False, "Account locked. Try again later.", None, None
-            if verify_password(user.password, password):
-                user.failed_attempts = 0
-                user.last_attempt = None
-                session.commit()
-                return True, "Login successful", user.user_type, user.id
-            else:
-                user.failed_attempts += 1
-                user.last_attempt = datetime.now()
-                session.commit()
-                return False, "Invalid username or password", None, None
-        return False, "Invalid username or password", None, None
-
-# Order placement
-@handle_error
-@log_action("place_order")
-def place_order(user_id: int, service: str, date: datetime.date, time: time, location: str, delivery_notes: str) -> int:
-    with Session() as session:
-        schedule = session.query(ScheduleModel).filter_by(date=date, time=time).first()
-        if schedule and schedule.available:
-            order = OrderModel(user_id=user_id, service=service, date=date, time=time, location=location, status="Pending", delivery_notes=delivery_notes)
-            session.add(order)
-            schedule.available = False
-            session.commit()
-            return order.id
-        return None
-
-# Email sending
-def send_email(subject: str, body: str):
-    sender_email = st.secrets["email"]["sender"]
-    receiver_email = st.secrets["email"]["receiver"]
-    password = st.secrets["email"]["password"]
-
-    message = MIMEMultipart()
-    message["From"] = sender_email
-    message["To"] = receiver_email
-    message["Subject"] = subject
-    message.attach(MIMEText(body, "plain"))
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(sender_email, password)
-        server.sendmail(sender_email, receiver_email, message.as_string())
-
-# Service data
-GROCERY_STORES = {
-    "Weis Markets": {
-        "url": "https://www.weismarkets.com/",
-        "video_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/1ff75ee91b2717fabadb44ee645612d6e48e8ee3/Weis%20Promo%20Online%20ordering%20%E2%80%90.mp4",
-        "video_title": "Watch this video to learn how to order from Weis Markets:",
-        "instructions": [
-            "Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "2288, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
-        "phone": "(410) 672-1877"
-    },
-    "SafeWay": {
-        "url": "https://www.safeway.com/",
-        "instructions": [
-            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png",
-        "address": "7643 Arundel Mills Blvd, Hanover, MD 21076",
-        "phone": "(410) 904-7222"
-    },
-    "Commissary": {
-        "url": "https://shop.commissaries.com/",
-        "instructions": [
-            "Place your order directly with the Commissary using your own account.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/comissaries.jpg",
-        "address": "2789 MacArthur Rd, Fort Meade, MD 20755",
-        "phone": "(301) 677-3060",
-        "hours": "Mon-Sat 9am-7pm, Sun 10am-6pm"
-    },
-    "Food Lion": {
-        "url": "https://shop.foodlion.com/?shopping_context=pickup&store=2517",
-        "instructions": [
-            "Place your order directly with Food Lion using your own account.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg",
-        "address": "Food Lion, Annapolis Road, Ridgefield, Anne Arundel County, Maryland, 20755, United States",
-        "phone": "(410) 519-8740"
-    }
-}
-
-RESTAURANTS = {
-    "The Hideaway": {
-        "url": "https://order.toasttab.com/online/hideawayodenton",
-        "instructions": [
-            "Place your order directly with The Hideaway using their website or app.",
-            "Select pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/TheHideAway.jpg",
-        "address": "1439 Odenton Rd, Odenton, MD 21113",
-        "phone": "(410) 874-7213"
-    },
-    "Ruth's Chris Steak House": {
-        "url": "https://order.ruthschris.com/",
-        "instructions": [
-            "Place your order directly with Ruth's Chris Steak House using their website or app.",
-            "Select pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "1110 Town Center Blvd, Odenton, MD 21113",
-        "phone": "(410) 451-9600"
-    },
-    "Baltimore Coffee & Tea Company": {
-        "url": "https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf",
-        "instructions": [
-            "Review the menu and decide on your order.",
-            "Call Baltimore Coffee & Tea Company to place your order.",
-            "Specify that you'll be using Local Butler for pick-up and delivery.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
-            "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
-        ],
-        "address": "1109 Town Center Blvd, Odenton, MD",
-        "phone": "(410) 439-8669"
-    },
-    "The All American Steakhouse": {
-        "url": "https://order.theallamericansteakhouse.com/menu/odenton",
-        "instructions": [
-            "Place your order directly with The All American Steakhouse by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "1502 Annapolis Rd, Odenton, MD 21113",
-        "phone": "(410) 305-0505"
-    },
-    "Jersey Mike's Subs": {
-        "url": "https://www.jerseymikes.com/menu",
-        "instructions": [
-            "Place your order directly with Jersey Mike's Subs using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "2290 Blue Water Blvd, Odenton, MD 21113",
-        "phone": "(410) 695-3430"
-    },
-    "Bruster's Real Ice Cream": {
-        "url": "https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage",
-        "instructions": [
-            "Place your order directly with Bruster's Real Ice Cream using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "2294 Blue Water Blvd, Odenton, MD 21113",
-        "phone": "(410) 874-7135"
-    },
-    "Luigino's": {
-        "url": "https://order.yourmenu.com/luiginos",
-        "instructions": [
-            "Place your order directly with Luigino's by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "2289, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
-        "phone": "(410) 674-6000"
-    },
-    "PHO 5UP ODENTON": {
-        "url": "https://www.clover.com/online-ordering/pho-5up-odenton",
-        "instructions": [
-            "Place your order directly with PHO 5UP ODENTON by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "2288 Blue Water Blvd , Odenton, MD 21113",
-        "phone": "(410) 874-7385"
-    },
-    "Dunkin": {
-        "url": "https://www.dunkindonuts.com/en/mobile-app",
-        "instructions": [
-            "Place your order directly with Dunkin' by using their APP.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "1614 Annapolis Rd, Odenton, MD 21113",
-        "phone": "(410) 674-3800"
-    },
-    "Baskin-Robbins": {
-        "url": "https://order.baskinrobbins.com/categories?storeId=BR-339568",
-        "instructions": [
-            "Place your order directly with Baskin-Robbins by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "1614 Annapolis Rd, Odenton, MD 21113",
-        "phone": "(410) 674-3800"
-    }
-}
-
-# Create a cache for geocoding results
-geocoding_cache = {}
-
-def geocode_with_retry(address, max_retries=3):
-    if address in geocoding_cache:
-        return geocoding_cache[address]
+def create_map(merchants, user_location=None, route=None):
+    m = folium.Map(location=[40.7128, -74.0060], zoom_start=12)
+    for merchant in merchants:
+        folium.Marker(
+            location=[merchant.latitude, merchant.longitude],
+            popup=f"<a href='{merchant.website}' target='_blank'>{merchant.name}</a>",
+            tooltip=merchant.name,
+            icon=folium.Icon(color='red', icon='info-sign')
+        ).add_to(m)
     
-    geolocator = Nominatim(user_agent="local_butler_app")
-    for attempt in range(max_retries):
-        try:
-            time.sleep(1)  # Add a delay to respect rate limits
-            location = geolocator.geocode(address)
-            if location:
-                geocoding_cache[address] = location
-                return location
-        except (GeocoderTimedOut, GeocoderServiceError):
-            if attempt == max_retries - 1:
-                st.warning(f"Could not geocode address: {address}")
-                return None
-            time.sleep(2)  # Wait for 2 seconds before retrying
-    return None
-
-def create_map(businesses_to_show):
-    m = folium.Map(location=[39.1054, -76.7285], zoom_start=12)
+    if user_location:
+        folium.Marker(
+            location=user_location,
+            popup="Your Location",
+            tooltip="Your Location",
+            icon=folium.Icon(color='green', icon='home')
+        ).add_to(m)
     
-    for name, info in businesses_to_show.items():
-        location = geocode_with_retry(info['address'])
-        if location:
-            folium.Marker(
-                [location.latitude, location.longitude],
-                popup=f"""
-                <b>{name}</b><br>
-                Address: {info['address']}<br>
-                Phone: {info['phone']}<br>
-                """
-            ).add_to(m)
-        else:
-            st.warning(f"Could not locate {name}")
+    if route:
+        folium.PolyLine(route, color="blue", weight=2.5, opacity=1).add_to(m)
     
     return m
 
-def geocode_with_retry(address, max_retries=3):
-    geolocator = Nominatim(user_agent="local_butler_app")
-    for attempt in range(max_retries):
+def login_user(email, password):
+    session = Session()
+    user = session.query(User).filter_by(email=email).first()
+    if user:
         try:
-            time.sleep(1)  # Add a delay to respect rate limits
-            return geolocator.geocode(address)
-        except (GeocoderTimedOut, GeocoderServiceError):
-            if attempt == max_retries - 1:
-                raise
-            time.sleep(2)  # Wait for 2 seconds before retrying
+            ph.verify(user.password, password)
+            return user
+        except VerifyMismatchError:
+            return None
+    return None
 
-
-# Main application logic
-@handle_error
-@log_action("main")
+# Main app
 def main():
-    if 'logged_in' not in st.session_state:
-        st.session_state['logged_in'] = False
+    st.title("Delivery App")
 
-    menu = ["Home", "Menu", "Order", "Butler Bot", "About Us", "Login", "Register"]
-    if st.session_state.get('logged_in'):
-        menu.append("Logout")
-        if st.session_state.get('user_type') == 'Driver':
-            menu.append("Driver Dashboard")
+    # Initialize session state
+    if 'user' not in st.session_state:
+        st.session_state.user = None
+
+    # Authentication
+    if st.session_state.user is None:
+        auth_choice = st.sidebar.selectbox("Choose action", ["Login", "Register"])
+        if auth_choice == "Login":
+            login_page()
         else:
-            menu.extend(["Modify Booking", "Cancel Booking"])
-
-    choice = st.sidebar.selectbox("Menu", menu)
-
-    if choice == "Home":
-        st.subheader("Welcome to Local Butler!")
-        st.write("Please navigate through the sidebar to explore our app.")
-    elif choice == "Menu":
-        display_menu()
-        
-        # Create and display the combined map only in the Menu section
-        all_businesses = {**GROCERY_STORES, **RESTAURANTS}
-        combined_map = create_map(all_businesses)
-        st.subheader("All Businesses Map")
-        folium_static(combined_map)
-    elif choice == "Order":
-        if st.session_state['logged_in']:
-            display_new_order()
-        else:
-            st.warning("Please log in to place an order.")
-    elif choice == "Butler Bot":
-        display_butler_bot()
-    elif choice == "About Us":
-        display_about_us()
-    elif choice == "Login":
-        display_login()
-    elif choice == "Register":
-        display_register()
-    elif choice == "Logout":
-        logout()
-    elif choice == "Driver Dashboard":
-        if st.session_state.get('user_type') == 'Driver':
-            driver_dashboard()
-        else:
-            st.warning("Access denied. This page is only for drivers.")
-    elif choice == "Modify Booking":
-        st.subheader("Modify Booking")
-        # Implement modify booking functionality here
-    elif choice == "Cancel Booking":
-        st.subheader("Cancel Booking")
-        # Implement cancel booking functionality here
-
-def display_menu():
-    st.subheader("Menu")
-    category = st.selectbox("Select a service category:", ("Grocery Services", "Meal Delivery Services"))
-    if category == "Grocery Services":
-        grocery_store = st.selectbox("Choose a store:", list(GROCERY_STORES.keys()))
-        display_service(Service(name=grocery_store, **GROCERY_STORES[grocery_store]))
-    elif category == "Meal Delivery Services":
-        restaurant = st.selectbox("Choose a restaurant:", list(RESTAURANTS.keys()))
-        display_service(Service(name=restaurant, **RESTAURANTS[restaurant]))
-
-@handle_error
-@log_action("display_new_order")
-def display_new_order():
-    st.subheader("Enter your address or click on the map")
-
-   # Initialize map centered on Fort Meade
-    geolocator = Nominatim(user_agent="local_butler_app")
-    fort_meade = geolocator.geocode("Fort Meade, MD")
-    m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
-    
-    service_options = ["Grocery Delivery", "Meal Delivery", "Laundry Service"]
-    service = st.selectbox("Select a service:", service_options)
-    
-    # Add dropdown for preferred store/restaurant based on service
-    if service == "Grocery Delivery":
-        preferred_store = st.selectbox("Preferred grocery store:", list(GROCERY_STORES.keys()))
-    elif service == "Meal Delivery":
-        preferred_restaurant = st.selectbox("Preferred restaurant:", list(RESTAURANTS.keys()))
-    elif service == "Laundry Service":
-        laundry_type = st.radio("Service type", ["Wash & Fold", "Dry Cleaning"])
-    
-    date = st.date_input("Select date")
-    time_options = [f"{h:02d}:{m:02d} {'AM' if h < 12 else 'PM'}" for h in range(7, 22) for m in (0, 15, 30, 45)]
-    time = st.selectbox("Select time:", time_options)
-    
-    location = st.text_input("Enter your address")
-
-    if location or (map_data and map_data.get('last_clicked')):
-        try:
-            if location:
-                # Geocode the entered address
-                location_data = geolocator.geocode(location)
-                if location_data:
-                    lat, lon = location_data.latitude, location_data.longitude
-                else:
-                    st.warning("Location not found. Please enter a valid address or click on the map.")
-                    return
-            else:
-                # Use the coordinates from the map click
-                lon, lat = map_data['last_clicked']['lng'], map_data['last_clicked']['lat']
-                location_data = geolocator.reverse(f"{lat}, {lon}")
-
-            # Update the map with the selected location
-            m = folium.Map(location=[lat, lon], zoom_start=15)
-            folium.Marker([lat, lon]).add_to(m)
-            st_folium(m, width=700, height=400)
-
-            # Update the address field
-            full_address = location_data.address if location_data else f"Latitude: {lat}, Longitude: {lon}"
-            st.text_input("Verified address (you can edit if needed):", value=full_address, key="verified_address")
-        except Exception as e:
-            st.error(f"Error occurred while processing location: {str(e)}")
-    
-    delivery_notes = st.text_area("Delivery Notes (optional)")
-    
-    if st.button("Review Order"):
-        with st.expander("Order Details", expanded=True):
-            st.write(f"Service: {service}")
-            if service == "Grocery Delivery":
-                st.write(f"Preferred Store: {preferred_store}")
-            elif service == "Meal Delivery":
-                st.write(f"Preferred Restaurant: {preferred_restaurant}")
-            elif service == "Laundry Service":
-                st.write(f"Service Type: {laundry_type}")
-            st.write(f"Date: {date}")
-            st.write(f"Time: {time}")
-            st.write(f"Address: {st.session_state.get('verified_address', location)}")
-            st.write(f"Delivery Notes: {delivery_notes}")
-        
-        if st.button("Confirm Order"):
-            order_id = place_order(st.session_state['user_id'], service, date, datetime.strptime(time.split()[0], "%H:%M").time(), 
-                                   st.session_state.get('verified_address', location), delivery_notes)
-            if order_id:
-                st.success("Order confirmed! Please proceed to place your order with the merchant.")
-                
-                if service == "Grocery Delivery":
-                    merchant_link = GROCERY_STORES[preferred_store]["url"]
-                    instructions = GROCERY_STORES[preferred_store]["instructions"]
-                elif service == "Meal Delivery":
-                    merchant_link = RESTAURANTS[preferred_restaurant]["url"]
-                    instructions = RESTAURANTS[preferred_restaurant]["instructions"]
-                else:
-                    merchant_link = "#"  # Placeholder for laundry service
-                    instructions = ["Please follow the laundry service provider's instructions."]
-                
-                st.markdown(f"[Click here to place your order with the merchant]({merchant_link})")
-                st.info("Remember to apply any coupons, rewards, or discount codes directly with the merchant.")
-                
-                st.subheader("Instructions:")
-                for instruction in instructions:
-                    st.write(f"- {instruction}")
-                
-                st.write("After placing your order with the merchant, please return here to complete your Local Butler order.")
-                
-                order_proof = st.radio("How would you like to confirm your merchant order?", ["Enter Order Number", "Upload Screenshot"])
-                if order_proof == "Enter Order Number":
-                    order_number = st.text_input("Enter your order number from the merchant:")
-                    if st.button("Submit Order Proof"):
-                        if order_number:
-                            # Here you would update the order in your database with the proof
-                            st.success("Order has been successfully placed and verified!")
-                            st.info("You will now be redirected to your orders page.")
-                            # Here you would implement the redirection to the user's orders page
-                        else:
-                            st.error("Please provide the order number to complete your order.")
-                else:
-                    order_screenshot = st.file_uploader("Upload a screenshot of your order:", type=["png", "jpg", "jpeg"])
-                    if st.button("Submit Order Proof"):
-                        if order_screenshot:
-                            # Here you would update the order in your database with the proof
-                            st.success("Order has been successfully placed and verified!")
-                            st.info("You will now be redirected to your orders page.")
-                            # Here you would implement the redirection to the user's orders page
-                        else:
-                            st.error("Please upload a screenshot to complete your order.")
-            else:
-                st.error("Unable to place order. The selected time slot may not be available.")
-
-def display_butler_bot():
-    st.subheader("Butler Bot")
-    iframe_html = """
-    <iframe title="Pico embed" src="https://a.picoapps.xyz/shoulder-son?utm_medium=embed&utm_source=embed" width="98%" height="680px" style="background:white"></iframe>
-    """
-    st.markdown(iframe_html, unsafe_allow_html=True)
-
-def display_about_us():
-    st.subheader("About Us")
-    st.write("Local Butler is a dedicated concierge service aimed at providing convenience and peace of mind to residents of Fort Meade, Maryland 20755. Our mission is to simplify everyday tasks and errands, allowing our customers to focus on what matters most.")
-    st.subheader("How It Works")
-    st.write("1. Choose a service category from the menu.")
-    st.write("2. Select your desired service.")
-    st.write("3. Follow the prompts to complete your order.")
-    st.write("4. Sit back and relax while we take care of the rest!")
-
-def display_login():
-    if not st.session_state['logged_in']:
-        username = st.text_input("Username")
-        password = st.text_input("Password", type='password')
-        if st.button("Login"):
-            success, message, user_type, user_id = authenticate_user(username, password)
-            if success:
-                st.session_state['logged_in'] = True
-                st.session_state['username'] = username
-                st.session_state['user_type'] = user_type
-                st.session_state['user_id'] = user_id
-                st.success(message)
-            else:
-                st.error(message)
+            register_user()
     else:
-        st.warning("You are already logged in.")
+        # Sidebar menu
+        menu = ["Home", "Order Now", "My Orders", "Map"]
+        if st.session_state.user.type == 'driver':
+            menu.append("Driver Dashboard")
+        
+        choice = st.sidebar.selectbox("Menu", menu)
 
-@handle_error
-@log_action("register")
-def display_register():
+        if choice == "Home":
+            home_page()
+        elif choice == "Order Now":
+            place_order()
+        elif choice == "My Orders":
+            display_user_orders()
+        elif choice == "Map":
+            display_map()
+        elif choice == "Driver Dashboard":
+            if st.session_state.user.type == 'driver':
+                driver_dashboard()
+            else:
+                st.warning("Access denied. This page is for drivers only.")
+
+        if st.sidebar.button("Log Out"):
+            st.session_state.user = None
+            st.success("Logged out successfully.")
+
+def home_page():
+    st.write(f"Welcome to our Delivery App, {st.session_state.user.name}!")
+    session = Session()
+    merchants = session.query(Merchant).all()
+    st.write("Here are the available merchants:")
+    for merchant in merchants:
+        st.write(f"- {merchant.name} ({merchant.type})")
+    map = create_map(merchants)
+    folium_static(map)
+
+def place_order():
+    st.subheader("Place a New Order")
+
+    session = Session()
+    merchants = session.query(Merchant).all()
+    merchant = st.selectbox("Select Merchant", [m.name for m in merchants])
+    service = st.text_input("Service")
+    
+    date = st.date_input("Select Date", min_value=datetime.now().date())
+    time = st.selectbox("Select Time", 
+                        [f"{h:02d}:{m:02d} {'AM' if h<12 else 'PM'} EST" 
+                         for h in range(7, 22) for m in [0, 15, 30, 45]])
+    
+    address = st.text_input("Delivery Address", value=st.session_state.user.address)
+    
+    if st.button("Confirm Order"):
+        order_id = generate_order_id()
+        new_order = Order(
+            id=order_id,
+            user_id=st.session_state.user.id,
+            merchant_id=next(m.id for m in merchants if m.name == merchant),
+            service=service,
+            date=date,
+            time=time,
+            address=address,
+            status='Pending'
+        )
+        session.add(new_order)
+        session.commit()
+        st.success(f"Order placed successfully! Your order ID is {order_id}")
+
+def register_user():
     st.subheader("Register")
-    new_username = st.text_input("Username")
-    new_password = st.text_input("Password", type='password')
-    confirm_password = st.text_input("Confirm Password", type='password')
-    user_type = st.selectbox("User Type", ["Consumer", "Driver", "Merchant", "Partner"])
+    user_type = st.selectbox("Register as", ["Customer", "Driver", "Merchant", "Service Provider"])
+    name = st.text_input("Name")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    address = st.text_input("Address")
+    
+    if user_type == "Driver":
+        vehicle_type = st.text_input("Vehicle Type")
+    elif user_type == "Merchant":
+        business_name = st.text_input("Business Name")
+        business_type = st.text_input("Business Type")
     
     if st.button("Register"):
-        if not new_username or not new_password or not confirm_password:
-            st.error("Please fill in all fields.")
-        elif new_password != confirm_password:
-            st.error("Passwords do not match. Please try again.")
-        elif len(new_password) < 8:
-            st.error("Password must be at least 8 characters long.")
+        hashed_password = ph.hash(password)
+        new_user = User(
+            name=name,
+            email=email,
+            password=hashed_password,
+            type=user_type.lower(),
+            address=address
+        )
+        session = Session()
+        session.add(new_user)
+        session.commit()
+        st.success("Registered successfully!")
+
+def login_page():
+    st.subheader("Login")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    
+    if st.button("Login"):
+        user = login_user(email, password)
+        if user:
+            st.session_state.user = user
+            st.success("Logged in successfully!")
         else:
-            with Session() as session:
-                existing_user = session.query(UserModel).filter_by(username=new_username).first()
-                if existing_user:
-                    st.error("Username already exists. Please choose a different username.")
-                else:
-                    hashed_password = hash_password(new_password)
-                    new_user = UserModel(username=new_username, password=hashed_password, user_type=user_type)
-                    session.add(new_user)
-                    session.commit()
-                    st.success("Registration successful! You can now log in.")
+            st.error("Invalid email or password")
 
-def logout():
-    if st.session_state['logged_in']:
-        if st.button("Logout"):
-            st.session_state['logged_in'] = False
-            st.session_state['username'] = ''
-            st.session_state['user_type'] = ''
-            st.session_state['user_id'] = None
-            st.success("Logged out successfully!")
-    else:
-        st.warning("You are not logged in.")
+def display_user_orders():
+    st.subheader("My Orders")
+    session = Session()
+    user_orders = session.query(Order).filter_by(user_id=st.session_state.user.id).all()
+    
+    for order in user_orders:
+        st.write(f"Order ID: {order.id}")
+        st.write(f"Status: {order.status}")
+        if st.button(f"View Details for Order {order.id}"):
+            st.write(f"Service: {order.service}")
+            st.write(f"Date: {order.date}")
+            st.write(f"Time: {order.time}")
+            st.write(f"Address: {order.address}")
+            merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+            user_location = (st.session_state.user.latitude, st.session_state.user.longitude)
+            route = [[merchant.latitude, merchant.longitude], user_location]
+            map = create_map([merchant], user_location, route)
+            folium_static(map)
 
-@handle_error
-@log_action("driver_dashboard")
+def display_map():
+    st.subheader("Merchant Map")
+    session = Session()
+    merchants = session.query(Merchant).all()
+    user_location = (st.session_state.user.latitude, st.session_state.user.longitude)
+    map = create_map(merchants, user_location)
+    folium_static(map)
+
 def driver_dashboard():
     st.subheader("Driver Dashboard")
+    session = Session()
+    available_orders = session.query(Order).filter_by(status='Pending').all()
     
-    tab1, tab2, tab3, tab4 = st.tabs(["Marketplace", "Current Delivery", "Scheduling", "Earnings"])
-    
-    with tab1:
-        st.subheader("Available Orders")
-        with Session() as session:
-            orders = session.query(OrderModel).filter_by(status="Pending").all()
-            for order in orders:
-                with st.expander(f"Order {order.id} - {order.service}"):
-                    st.write(f"Date: {order.date}, Time: {order.time}")
-                    st.write(f"Location: {order.location}")
-                    if st.button(f"Accept Order", key=f"accept_{order.id}"):
-                        order.status = "Assigned"
-                        order.driver_id = st.session_state['user_id']
-                        session.commit()
-                        st.success(f"You have accepted order {order.id}")
-                        st.experimental_rerun()
-    
-    with tab2:
-        st.subheader("Current Delivery")
-        with Session() as session:
-            current_order = session.query(OrderModel).filter_by(driver_id=st.session_state['user_id'], status="Assigned").first()
-            if current_order:
-                st.write(f"Order {current_order.id} - {current_order.service}")
-                st.write(f"Date: {current_order.date}, Time: {current_order.time}")
-                st.write(f"Location: {current_order.location}")
-                if st.button("Complete Delivery"):
-                    current_order.status = "Completed"
-                    session.commit()
-                    st.success(f"Order {current_order.id} marked as completed.")
-                    st.experimental_rerun()
-            else:
-                st.info("No current delivery.")
-    
-    with tab3:
-        st.subheader("Scheduling")
-        date = st.date_input("Select date")
-        start_time = st.time_input("Start time")
-        end_time = st.time_input("End time")
-        if st.button("Set Availability"):
-            with Session() as session:
-                current_time = start_time
-                while current_time <= end_time:
-                    schedule = ScheduleModel(date=date, time=current_time, available=True)
-                    session.add(schedule)
-                    current_time = (datetime.combine(date, current_time) + timedelta(minutes=15)).time()
-                session.commit()
-                st.success("Availability set successfully!")
-    
-    with tab4:
-        st.subheader("Earnings")
-        with Session() as session:
-            completed_orders = session.query(OrderModel).filter_by(driver_id=st.session_state['user_id'], status="Completed").all()
-            total_earnings = len(completed_orders) * st.secrets["driver"]["earnings_per_delivery"]
-            st.write(f"Total Earnings: ${total_earnings:.2f}")
-            st.write(f"Completed Orders: {len(completed_orders)}")
-    
-    # Location permission and map
-    st.subheader("Your Location")
-    if 'location_enabled' not in st.session_state:
-        st.session_state['location_enabled'] = False
-    
-    if st.button("Enable Location"):
-        st.session_state['location_enabled'] = True
-        st.success("Location enabled. Please refresh the page.")
-    
-    if st.session_state['location_enabled']:
-        geolocator = Nominatim(user_agent="local_butler_app")
-        fort_meade = geolocator.geocode("Fort Meade, MD")
-        m = folium.Map(location=[fort_meade.latitude, fort_meade.longitude], zoom_start=13)
-        st_folium(m, height=400, width=700)
-    else:
-        st.info("Please enable location to view the map.")
-
-
+    for order in available_orders:
+        st.write(f"Order ID: {order.id}")
+        merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+        st.write(f"Pickup: {merchant.name}")
+        st.write(f"Delivery Address: {order.address}")
+        if st.button(f"Accept Order {order.id}"):
+            order.status = 'In Progress'
+            session.commit()
+            st.success(f"You have accepted order {order.id}")
 
 if __name__ == "__main__":
     main()
