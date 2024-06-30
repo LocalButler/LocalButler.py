@@ -17,7 +17,7 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 # SQLAlchemy setup
-Base = declarative_base()
+Base = sqlalchemy.orm.declarative_base()
 engine = create_engine('sqlite:///delivery_app.db', echo=True)
 Session = sessionmaker(bind=engine)
 
