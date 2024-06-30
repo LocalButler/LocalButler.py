@@ -104,7 +104,7 @@ def create_map(businesses_to_show):
             popup_html = f"""
             <b>{name}</b><br>
             Address: {info['address']}<br>
-            Phone: {info['phone']}<br>
+            Phone: {info.get('phone', 'N/A')}<br>
             """
             if 'url' in info and info['url']:
                 popup_html += f"<a href='{info['url']}' target='_blank'>Visit Website</a>"
@@ -327,9 +327,10 @@ RESTAURANTS = {
         "url": "https://www.dunkindonuts.com/en/mobile-app",
         "instructions": [
             "Place your order directly with Dunkin' by using their APP.",
-            "Specify the items you want to order and the pick-up date and time.",
+          "Specify the items you want to order and the pick-up date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],"address": "1614 Annapolis Rd, Odenton, MD 21113",
+        ],
+        "address": "1614 Annapolis Rd, Odenton, MD 21113",
         "phone": "(410) 674-3800"
     },
     "Baskin-Robbins": {
@@ -380,16 +381,24 @@ def main():
         if st.sidebar.button("🚪 Log Out"):
             st.session_state.user = None
             st.success("Logged out successfully.")
-            st.experimental_rerun()
+            st.rerun()
 
 def home_page():
     st.write(f"Welcome to Local Butler, {st.session_state.user.name}! 🎉")
     session = Session()
     merchants = session.query(Merchant).all()
     st.write("Here are the available merchants:")
-    businesses_to_show = {"business1": "Business 1", "business2": "Business 2"}  # Replace with your actual dictionary
-    selected_business = st.selectbox("Select a business:", list(businesses_to_show.keys()))
-    st.write(f"You selected: {selected_business}")
+    for merchant in merchants:
+        st.write(f"- 🏪 {merchant.name} ({merchant.type})")
+
+    businesses_to_show = {m.name: {
+        'address': f"{m.latitude}, {m.longitude}", 
+        'phone': 'N/A',  # You might want to add a phone field to your Merchant model
+        'url': m.website  # Make sure your Merchant model has a website field
+    } for m in merchants}
+    
+    map = create_map(businesses_to_show)
+    folium_static(map)
 
 def place_order():
     st.subheader("🛍️ Place a New Order")
@@ -490,7 +499,7 @@ def login_page():
             st.session_state.user = user
             st.success("Logged in successfully! 🎉")
             st.balloons()
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Invalid email or password ❌")
 
@@ -521,7 +530,7 @@ def display_user_orders():
                     time.sleep(2)  # Simulate status change every 2 seconds
             
             merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
-            businesses_to_show = {merchant.name: {'address': f"{merchant.latitude}, {merchant.longitude}", 'phone': '123-456-7890'}}
+            businesses_to_show = {merchant.name: {'address': f"{merchant.latitude}, {merchant.longitude}", 'phone': 'N/A', 'url': merchant.website}}
             map = create_map(businesses_to_show)
             folium_static(map)
 
@@ -563,7 +572,7 @@ def driver_dashboard():
                             session.commit()
                             st.success(f"You have accepted order {order.id} 🎉")
                             time.sleep(2)  # Give time for the success message to be seen
-                            st.experimental_rerun()  # Rerun the app to update the order list
+                            st.rerun()  # Rerun the app to update the order list
         
         time.sleep(10)  # Check for new orders every 10 seconds
         session.commit()  # Refresh the session to get the latest data
