@@ -101,14 +101,17 @@ def create_map(businesses_to_show):
     for name, info in businesses_to_show.items():
         location = geocode_with_retry(info['address'])
         if location:
+            popup_html = f"""
+            <b>{name}</b><br>
+            Address: {info['address']}<br>
+            Phone: {info['phone']}<br>
+            """
+            if 'url' in info and info['url']:
+                popup_html += f"<a href='{info['url']}' target='_blank'>Visit Website</a>"
+            
             folium.Marker(
                 [location.latitude, location.longitude],
-                popup=folium.Popup(f"""
-                <b>{name}</b><br>
-                Address: {info['address']}<br>
-                Phone: {info['phone']}<br>
-                <a href="{info['url']}" target="_blank">Visit Website</a>
-                """, max_width=300)
+                popup=folium.Popup(popup_html, max_width=300)
             ).add_to(m)
         else:
             st.warning(f"Could not locate {name}")
@@ -387,7 +390,13 @@ def home_page():
     for merchant in merchants:
         st.write(f"- 🏪 {merchant.name} ({merchant.type})")
     
-    businesses_to_show = {m.name: {'address': f"{m.latitude}, {m.longitude}", 'phone': '123-456-7890'} for m in merchants}
+    businesses_to_show = {
+        m.name: {
+            'address': f"{m.latitude}, {m.longitude}", 
+            'phone': '123-456-7890',
+            'url': m.website  # Add this line
+        } for m in merchants
+    }
     map = create_map(businesses_to_show)
     folium_static(map)
 
