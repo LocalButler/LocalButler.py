@@ -12,6 +12,9 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 import time
 import sqlalchemy
+from dataclasses import dataclass
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 # SQLAlchemy setup
 Base = declarative_base()
@@ -55,6 +58,18 @@ class Order(Base):
     user = relationship("User")
     merchant = relationship("Merchant")
 
+@dataclass
+class Service:
+    name: str
+    url: str
+    instructions: list
+    video_url: str = None
+    video_title: str = None
+    image_url: str = None
+    address: str = None
+    phone: str = None
+    hours: str = None
+
 # Create tables
 try:
     Base.metadata.create_all(engine, checkfirst=True)
@@ -73,45 +88,50 @@ if session.query(Merchant).count() == 0:
     session.add_all(sample_merchants)
     session.commit()
 
+# Geocoding cache
+geocoding_cache = {}
+
 # Helper functions
 def generate_order_id():
     return f"ORD-{random.randint(10000, 99999)}"
 
-def create_map(merchants, user_location=None, route=None):
-    try:
-        # Default to New York City coordinates if no merchants
-        default_location = [40.7128, -74.0060]
-        if merchants:
-            # Use the first merchant's location as the center
-            center_lat = sum(m.latitude for m in merchants) / len(merchants)
-            center_lon = sum(m.longitude for m in merchants) / len(merchants)
-            m = folium.Map(location=[center_lat, center_lon], zoom_start=12)
+def create_map(businesses_to_show):
+    m = folium.Map(location=[39.1054, -76.7285], zoom_start=12)
+    
+    for name, info in businesses_to_show.items():
+        location = geocode_with_retry(info['address'])
+        if location:
+            folium.Marker(
+                [location.latitude, location.longitude],
+                popup=f"""
+                <b>{name}</b><br>
+                Address: {info['address']}<br>
+                Phone: {info['phone']}<br>
+                """
+            ).add_to(m)
         else:
-            m = folium.Map(location=default_location, zoom_start=12)
+            st.warning(f"Could not locate {name}")
+    
+    return m
 
-        for merchant in merchants:
-            folium.Marker(
-                location=[merchant.latitude, merchant.longitude],
-                popup=f"<a href='{merchant.website}' target='_blank'>{merchant.name}</a>",
-                tooltip=merchant.name,
-                icon=folium.Icon(color='red', icon='info-sign')
-            ).add_to(m)
-        
-        if user_location:
-            folium.Marker(
-                location=user_location,
-                popup="Your Location",
-                tooltip="Your Location",
-                icon=folium.Icon(color='green', icon='home')
-            ).add_to(m)
-        
-        if route:
-            folium.PolyLine(route, color="blue", weight=2.5, opacity=1).add_to(m)
-        
-        return m
-    except Exception as e:
-        st.error(f"Error creating map: {e}")
-        return None
+def geocode_with_retry(address, max_retries=3):
+    if address in geocoding_cache:
+        return geocoding_cache[address]
+    
+    geolocator = Nominatim(user_agent="local_butler_app")
+    for attempt in range(max_retries):
+        try:
+            time.sleep(1)  # Add a delay to respect rate limits
+            location = geolocator.geocode(address)
+            if location:
+                geocoding_cache[address] = location
+                return location
+        except (GeocoderTimedOut, GeocoderServiceError):
+            if attempt == max_retries - 1:
+                st.warning(f"Could not geocode address: {address}")
+                return None
+            time.sleep(2)  # Wait for 2 seconds before retrying
+    return None
 
 def login_user(email, password):
     session = Session()
@@ -123,6 +143,22 @@ def login_user(email, password):
         except VerifyMismatchError:
             return None
     return None
+
+def display_service(service: Service):
+    st.write(f"ORDER NOW: [{service.name}]({service.url})")
+    if service.video_url:
+        st.video(service.video_url)
+    elif service.image_url:
+        st.image(service.image_url, caption=f"{service.name} App", use_column_width=True)
+    st.write("Instructions for placing your order:")
+    for instruction in service.instructions:
+        st.write(f"- {instruction}")
+    if service.address:
+        st.write(f"Address: {service.address}")
+    if service.phone:
+        st.write(f"Phone: {service.phone}")
+    if service.hours:
+        st.write(f"Hours: {service.hours}")
 
 # Color palette
 PRIMARY_COLOR = "#FF4B4B"
@@ -193,11 +229,9 @@ def home_page():
     for merchant in merchants:
         st.write(f"- 🏪 {merchant.name} ({merchant.type})")
     
-    map = create_map(merchants)
-    if map:
-        folium_static(map)
-    else:
-        st.error("Failed to create map. Please check your data and try again.")
+    businesses_to_show = {m.name: {'address': f"{m.latitude}, {m.longitude}", 'phone': '123-456-7890'} for m in merchants}
+    map = create_map(businesses_to_show)
+    folium_static(map)
 
 def place_order():
     st.subheader("🛍️ Place a New Order")
@@ -311,13 +345,9 @@ def display_user_orders():
                     time.sleep(2)  # Simulate status change every 2 seconds
             
             merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
-            user_location = (st.session_state.user.latitude, st.session_state.user.longitude)
-            route = [[merchant.latitude, merchant.longitude], user_location]
-            map = create_map([merchant], user_location, route)
-            if map:
-                folium_static(map)
-            else:
-                st.error("Failed to create map for this order.")
+            businesses_to_show = {merchant.name: {'address': f"{merchant.latitude}, {merchant.longitude}", 'phone': '123-456-7890'}}
+            map = create_map(businesses_to_show)
+            folium_static(map)
 
 def display_map():
     st.subheader("🗺️ Merchant Map")
@@ -328,15 +358,9 @@ def display_map():
         st.warning("No merchants found in the database.")
         return
 
-    user_location = None
-    if st.session_state.user and st.session_state.user.latitude and st.session_state.user.longitude:
-        user_location = (st.session_state.user.latitude, st.session_state.user.longitude)
-    
-    map = create_map(merchants, user_location)
-    if map:
-        folium_static(map)
-    else:
-        st.error("Failed to create map. Please check your data and try again.")
+    businesses_to_show = {m.name: {'address': f"{m.latitude}, {m.longitude}", 'phone': '123-456-7890'} for m in merchants}
+    map = create_map(businesses_to_show)
+    folium_static(map)
 
 def driver_dashboard():
     st.subheader("🚗 Driver Dashboard")
@@ -366,6 +390,35 @@ def driver_dashboard():
         
         time.sleep(10)  # Check for new orders every 10 seconds
         session.commit()  # Refresh the session to get the latest data
+
+# Sample services
+sample_services = [
+    Service(
+        name="Pizza Delivery",
+        url="https://www.pizzadelivery.com",
+        instructions=["Choose your pizza", "Add toppings", "Select size", "Proceed to checkout"],
+        video_url="https://www.youtube.com/watch?v=sample_pizza_video",
+        video_title="How to Order Pizza Online",
+        address="123 Pizza St, Pizzaville, PZ 12345",
+        phone="(555) 123-4567",
+        hours="Mon-Sun: 11AM-11PM"
+    ),
+    Service(
+        name="Grocery Delivery",
+        url="https://www.grocerydelivery.com",
+        instructions=["Browse categories", "Add items to cart", "Choose delivery time", "Checkout"],
+        image_url="https://example.com/grocery_app_image.jpg",
+        address="456 Grocery Ave, Foodtown, FT 67890",
+        phone="(555) 987-6543",
+        hours="Mon-Sat: 8AM-10PM, Sun: 9AM-9PM"
+    )
+]
+
+def display_services():
+    st.subheader("🛍️ Available Services")
+    for service in sample_services:
+        with st.expander(f"{service.name}"):
+            display_service(service)
 
 if __name__ == "__main__":
     main()
