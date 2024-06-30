@@ -166,7 +166,7 @@ SECONDARY_COLOR = "#0068C9"
 BACKGROUND_COLOR = "#F0F2F6"
 
 # Apply the color theme
-st.set_page_config(page_title="Delivery App", page_icon="🚚", layout="wide")
+st.set_page_config(page_title="Local Butler", page_icon="👔", layout="wide")
 
 # Custom CSS
 st.markdown(f"""
@@ -206,7 +206,8 @@ def main():
             "🏠 Home": home_page,
             "🛒 Order Now": place_order,
             "📦 My Orders": display_user_orders,
-            "🗺️ Map": display_map
+            "🗺️ Map": display_map,
+            "🛍️ Services": display_services
         }
         if st.session_state.user.type == 'driver':
             menu_items["🚗 Driver Dashboard"] = driver_dashboard
@@ -249,30 +250,37 @@ def place_order():
     address = st.text_input("Delivery Address", value=st.session_state.user.address)
     
     if st.button("🚀 Confirm Order"):
-        order_id = generate_order_id()
-        new_order = Order(
-            id=order_id,
-            user_id=st.session_state.user.id,
-            merchant_id=next(m.id for m in merchants if m.name == merchant),
-            service=service,
-            date=date,
-            time=time,
-            address=address,
-            status='Pending'
-        )
-        session.add(new_order)
-        session.commit()
-        
-        # Animated order confirmation
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        for i in range(100):
-            progress_bar.progress(i + 1)
-            status_text.text(f"Processing order... {i+1}%")
-            time.sleep(0.01)
-        status_text.text("Order placed successfully! 🎉")
-        st.success(f"Your order ID is {order_id}")
-        st.balloons()
+        if not all([merchant, service, date, time, address]):
+            st.error("Please fill in all fields.")
+        else:
+            try:
+                order_id = generate_order_id()
+                new_order = Order(
+                    id=order_id,
+                    user_id=st.session_state.user.id,
+                    merchant_id=next(m.id for m in merchants if m.name == merchant),
+                    service=service,
+                    date=date,
+                    time=time,
+                    address=address,
+                    status='Pending'
+                )
+                session.add(new_order)
+                session.commit()
+                
+                # Animated order confirmation
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                for i in range(100):
+                    progress_bar.progress(i + 1)
+                    status_text.text(f"Processing order... {i+1}%")
+                    time.sleep(0.01)
+                status_text.text("Order placed successfully! 🎉")
+                st.success(f"Your order ID is {order_id}")
+                st.balloons()
+            except Exception as e:
+                st.error(f"An error occurred while placing the order: {str(e)}")
+                session.rollback()
 
 def register_user():
     st.subheader("📝 Register")
@@ -289,19 +297,30 @@ def register_user():
         business_type = st.text_input("Business Type")
     
     if st.button("🚀 Register"):
-        hashed_password = ph.hash(password)
-        new_user = User(
-            name=name,
-            email=email,
-            password=hashed_password,
-            type=user_type.split()[1].lower(),
-            address=address
-        )
-        session = Session()
-        session.add(new_user)
-        session.commit()
-        st.success("Registered successfully! 🎉")
-        st.balloons()
+        if not all([name, email, password, address]):
+            st.error("Please fill in all fields.")
+        else:
+            try:
+                session = Session()
+                existing_user = session.query(User).filter_by(email=email).first()
+                if existing_user:
+                    st.error("Email already in use. Please use a different email.")
+                else:
+                    hashed_password = ph.hash(password)
+                    new_user = User(
+                        name=name,
+                        email=email,
+                        password=hashed_password,
+                        type=user_type.split()[1].lower(),
+                        address=address
+                    )
+                    session.add(new_user)
+                    session.commit()
+                    st.success("Registered successfully! 🎉")
+                    st.balloons()
+            except Exception as e:
+                st.error(f"An error occurred during registration: {str(e)}")
+                session.rollback()
 
 def login_page():
     st.subheader("🔑 Login")
@@ -391,34 +410,154 @@ def driver_dashboard():
         time.sleep(10)  # Check for new orders every 10 seconds
         session.commit()  # Refresh the session to get the latest data
 
-# Sample services
-sample_services = [
-    Service(
-        name="Pizza Delivery",
-        url="https://www.pizzadelivery.com",
-        instructions=["Choose your pizza", "Add toppings", "Select size", "Proceed to checkout"],
-        video_url="https://www.youtube.com/watch?v=sample_pizza_video",
-        video_title="How to Order Pizza Online",
-        address="123 Pizza St, Pizzaville, PZ 12345",
-        phone="(555) 123-4567",
-        hours="Mon-Sun: 11AM-11PM"
-    ),
-    Service(
-        name="Grocery Delivery",
-        url="https://www.grocerydelivery.com",
-        instructions=["Browse categories", "Add items to cart", "Choose delivery time", "Checkout"],
-        image_url="https://example.com/grocery_app_image.jpg",
-        address="456 Grocery Ave, Foodtown, FT 67890",
-        phone="(555) 987-6543",
-        hours="Mon-Sat: 8AM-10PM, Sun: 9AM-9PM"
-    )
-]
+# Define GROCERY_STORES and RESTAURANTS dictionaries
+GROCERY_STORES = {
+    "Weis Markets": {
+        "url": "https://www.weismarkets.com/",
+        "video_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/1ff75ee91b2717fabadb44ee645612d6e48e8ee3/Weis%20Promo%20Online%20ordering%20%E2%80%90.mp4",
+        "video_title": "Watch this video to learn how to order from Weis Markets:",
+        "instructions": [
+            "Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2288, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
+        "phone": "(410) 672-1877"
+    },
+    "SafeWay": {
+        "url": "https://www.safeway.com/",
+        "instructions": [
+            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png",
+        "address": "7643 Arundel Mills Blvd, Hanover, MD 21076",
+        "phone": "(410) 904-7222"
+    },
+    # Add other grocery stores here...
+}
+
+RESTAURANTS = {
+    "The Hideaway": {
+        "url": "https://order.toasttab.com/online/hideawayodenton",
+        "instructions": [
+            "Place your order directly with The Hideaway using their website or app.",
+            "Select pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/TheHideAway.jpg",
+        "address": "1439 Odenton Rd, Odenton, MD 21113",
+        "phone": "(410) 874-7213"
+    },
+    "Ruth's Chris Steak House": {
+        "url": "https://order.ruthschris.com/",
+        "instructions": [
+            "Place your order directly with Ruth's Chris Steak House using their website or app.",
+            "Select pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "1110 Town Center Blvd, Odenton, MD 21113",
+        "phone": "(410) 451-9600"
+    },
+    # Add other restaurants here...
+}
 
 def display_services():
     st.subheader("🛍️ Available Services")
-    for service in sample_services:
-        with st.expander(f"{service.name}"):
-            display_service(service)
+    
+    st.write("### 🛒 Grocery Stores")
+    for store_name, store_info in GROCERY_STORES.items():
+        with st.expander(store_name):
+            display_service(Service(
+                name=store_name,
+                url=store_info['url'],
+                instructions=store_info['instructions'],
+                video_url=store_info.get('video_url'),
+                video_title=store_info.get('video_title'),
+                image_url=store_info.get('image_url'),
+                address=store_info['address'],
+                phone=store_info['phone']
+            ))
+    
+    st.write("### 🍽️ Restaurants")
+    for restaurant_name, restaurant_info in RESTAURANTS.items():
+        with st.expander(restaurant_name):
+            display_service(Service(
+                name=restaurant_name,
+                url=restaurant_info['url'],
+                instructions=restaurant_info['instructions'],
+                image_url=restaurant_info.get('image_url'),
+                address=restaurant_info['address'],
+                phone=restaurant_info['phone']
+            ))
+
+# Add a search functionality
+def search_services():
+    st.subheader("🔍 Search Services")
+    search_term = st.text_input("Enter a service name or keyword:")
+    if search_term:
+        results = []
+        for store_name, store_info in GROCERY_STORES.items():
+            if search_term.lower() in store_name.lower():
+                results.append((store_name, store_info, "Grocery Store"))
+        for restaurant_name, restaurant_info in RESTAURANTS.items():
+            if search_term.lower() in restaurant_name.lower():
+                results.append((restaurant_name, restaurant_info, "Restaurant"))
+        
+        if results:
+            for name, info, service_type in results:
+                with st.expander(f"{name} ({service_type})"):
+                    display_service(Service(
+                        name=name,
+                        url=info['url'],
+                        instructions=info['instructions'],
+                        video_url=info.get('video_url'),
+                        video_title=info.get('video_title'),
+                        image_url=info.get('image_url'),
+                        address=info['address'],
+                        phone=info['phone']
+                    ))
+        else:
+            st.warning("No services found matching your search term.")
+
+# Update the main function to include the search functionality
+def main():
+    st.title("🚚 Delivery App")
+
+    # Initialize session state
+    if 'user' not in st.session_state:
+        st.session_state.user = None
+
+    # Authentication
+    if st.session_state.user is None:
+        auth_choice = st.sidebar.radio("Choose action", ["🔑 Login", "📝 Register"])
+        if auth_choice == "🔑 Login":
+            login_page()
+        else:
+            register_user()
+    else:
+        # Creative menu
+        menu_items = {
+            "🏠 Home": home_page,
+            "🛒 Order Now": place_order,
+            "📦 My Orders": display_user_orders,
+            "🗺️ Map": display_map,
+            "🛍️ Services": display_services,
+            "🔍 Search": search_services
+        }
+        if st.session_state.user.type == 'driver':
+            menu_items["🚗 Driver Dashboard"] = driver_dashboard
+
+        cols = st.columns(len(menu_items))
+        for i, (emoji_label, func) in enumerate(menu_items.items()):
+            if cols[i].button(emoji_label):
+                func()
+
+        if st.sidebar.button("🚪 Log Out"):
+            st.session_state.user = None
+            st.success("Logged out successfully.")
+            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
