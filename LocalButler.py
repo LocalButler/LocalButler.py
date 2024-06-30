@@ -103,11 +103,12 @@ def create_map(businesses_to_show):
         if location:
             folium.Marker(
                 [location.latitude, location.longitude],
-                popup=f"""
+                popup=folium.Popup(f"""
                 <b>{name}</b><br>
                 Address: {info['address']}<br>
                 Phone: {info['phone']}<br>
-                """
+                <a href="{info['url']}" target="_blank">Visit Website</a>
+                """, max_width=300)
             ).add_to(m)
         else:
             st.warning(f"Could not locate {name}")
@@ -126,9 +127,9 @@ def geocode_with_retry(address, max_retries=3):
             if location:
                 geocoding_cache[address] = location
                 return location
-        except (GeocoderTimedOut, GeocoderServiceError):
+        except (GeocoderTimedOut, GeocoderServiceError) as e:
             if attempt == max_retries - 1:
-                st.warning(f"Could not geocode address: {address}")
+                st.warning(f"Could not geocode address: {address}. Error: {str(e)}")
                 return None
             time.sleep(2)  # Wait for 2 seconds before retrying
     return None
@@ -185,6 +186,161 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
+# Define GROCERY_STORES and RESTAURANTS dictionaries
+GROCERY_STORES = {
+    "Weis Markets": {
+        "url": "https://www.weismarkets.com/",
+        "video_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/1ff75ee91b2717fabadb44ee645612d6e48e8ee3/Weis%20Promo%20Online%20ordering%20%E2%80%90.mp4",
+        "video_title": "Watch this video to learn how to order from Weis Markets:",
+        "instructions": [
+            "Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2288, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
+        "phone": "(410) 672-1877"
+    },
+    "SafeWay": {
+        "url": "https://www.safeway.com/",
+        "instructions": [
+            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png",
+        "address": "7643 Arundel Mills Blvd, Hanover, MD 21076",
+        "phone": "(410) 904-7222"
+    },
+    "Commissary": {
+        "url": "https://shop.commissaries.com/",
+        "instructions": [
+            "Place your order directly with the Commissary using your own account.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/comissaries.jpg",
+        "address": "2789 MacArthur Rd, Fort Meade, MD 20755",
+        "phone": "(301) 677-3060",
+        "hours": "Mon-Sat 9am-7pm, Sun 10am-6pm"
+    },
+    "Food Lion": {
+        "url": "https://shop.foodlion.com/?shopping_context=pickup&store=2517",
+        "instructions": [
+            "Place your order directly with Food Lion using your own account.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg",
+        "address": "Food Lion, Annapolis Road, Ridgefield, Anne Arundel County, Maryland, 20755, United States",
+        "phone": "(410) 519-8740"
+    }
+}
+
+RESTAURANTS = {
+    "The Hideaway": {
+        "url": "https://order.toasttab.com/online/hideawayodenton",
+        "instructions": [
+            "Place your order directly with The Hideaway using their website or app.",
+            "Select pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/TheHideAway.jpg",
+        "address": "1439 Odenton Rd, Odenton, MD 21113",
+        "phone": "(410) 874-7213"
+    },
+    "Ruth's Chris Steak House": {
+        "url": "https://order.ruthschris.com/",
+        "instructions": [
+            "Place your order directly with Ruth's Chris Steak House using their website or app.",
+            "Select pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "1110 Town Center Blvd, Odenton, MD 21113",
+        "phone": "(410) 451-9600"
+    },
+    "Baltimore Coffee & Tea Company": {
+        "url": "https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf",
+        "instructions": [
+            "Review the menu and decide on your order.",
+            "Call Baltimore Coffee & Tea Company to place your order.",
+            "Specify that you'll be using Local Butler for pick-up and delivery.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
+            "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
+        ],
+        "address": "1109 Town Center Blvd, Odenton, MD",
+        "phone": "(410) 439-8669"
+    },
+    "The All American Steakhouse": {
+        "url": "https://order.theallamericansteakhouse.com/menu/odenton",
+        "instructions": [
+            "Place your order directly with The All American Steakhouse by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "1502 Annapolis Rd, Odenton, MD 21113",
+        "phone": "(410) 305-0505"
+    },
+    "Jersey Mike's Subs": {
+        "url": "https://www.jerseymikes.com/menu",
+        "instructions": [
+            "Place your order directly with Jersey Mike's Subs using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2290 Blue Water Blvd, Odenton, MD 21113",
+        "phone": "(410) 695-3430"
+    },
+    "Bruster's Real Ice Cream": {
+        "url": "https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage",
+        "instructions": [
+            "Place your order directly with Bruster's Real Ice Cream using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2294 Blue Water Blvd, Odenton, MD 21113",
+        "phone": "(410) 874-7135"
+    },
+    "Luigino's": {
+        "url": "https://order.yourmenu.com/luiginos",
+        "instructions": [
+            "Place your order directly with Luigino's by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2289, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
+        "phone": "(410) 674-6000"
+    },
+    "PHO 5UP ODENTON": {
+        "url": "https://www.clover.com/online-ordering/pho-5up-odenton",
+        "instructions": [
+            "Place your order directly with PHO 5UP ODENTON by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2288 Blue Water Blvd , Odenton, MD 21113",
+        "phone": "(410) 874-7385"
+    },
+    "Dunkin": {
+        "url": "https://www.dunkindonuts.com/en/mobile-app",
+        "instructions": [
+            "Place your order directly with Dunkin' by using their APP.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],"address": "1614 Annapolis Rd, Odenton, MD 21113",
+        "phone": "(410) 674-3800"
+    },
+    "Baskin-Robbins": {
+        "url": "https://order.baskinrobbins.com/categories?storeId=BR-339568",
+        "instructions": [
+            "Place your order directly with Baskin-Robbins by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "1614 Annapolis Rd, Odenton, MD 21113",
+        "phone": "(410) 674-3800"
+    }
+}
+
 # Main app
 def main():
     st.title("🚚 Local Butler")
@@ -207,7 +363,8 @@ def main():
             "🛒 Order Now": place_order,
             "📦 My Orders": display_user_orders,
             "🗺️ Map": display_map,
-            "🛍️ Services": display_services
+            "🛍️ Services": display_services,
+            "🔍 Search": search_services
         }
         if st.session_state.user.type == 'driver':
             menu_items["🚗 Driver Dashboard"] = driver_dashboard
@@ -370,14 +527,15 @@ def display_user_orders():
 
 def display_map():
     st.subheader("🗺️ Merchant Map")
-    session = Session()
-    merchants = session.query(Merchant).all()
     
-    if not merchants:
-        st.warning("No merchants found in the database.")
+    businesses_to_show = {}
+    businesses_to_show.update(GROCERY_STORES)
+    businesses_to_show.update(RESTAURANTS)
+
+    if not businesses_to_show:
+        st.warning("No businesses found to display on the map.")
         return
 
-    businesses_to_show = {m.name: {'address': f"{m.latitude}, {m.longitude}", 'phone': '123-456-7890'} for m in merchants}
     map = create_map(businesses_to_show)
     folium_static(map)
 
@@ -410,59 +568,6 @@ def driver_dashboard():
         time.sleep(10)  # Check for new orders every 10 seconds
         session.commit()  # Refresh the session to get the latest data
 
-# Define GROCERY_STORES and RESTAURANTS dictionaries
-GROCERY_STORES = {
-    "Weis Markets": {
-        "url": "https://www.weismarkets.com/",
-        "video_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/1ff75ee91b2717fabadb44ee645612d6e48e8ee3/Weis%20Promo%20Online%20ordering%20%E2%80%90.mp4",
-        "video_title": "Watch this video to learn how to order from Weis Markets:",
-        "instructions": [
-            "Place your order directly with Weis Markets using your own account to accumulate grocery store points and clip your favorite coupons.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "2288, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
-        "phone": "(410) 672-1877"
-    },
-    "SafeWay": {
-        "url": "https://www.safeway.com/",
-        "instructions": [
-            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png",
-        "address": "7643 Arundel Mills Blvd, Hanover, MD 21076",
-        "phone": "(410) 904-7222"
-    },
-    # Add other grocery stores here...
-}
-
-RESTAURANTS = {
-    "The Hideaway": {
-        "url": "https://order.toasttab.com/online/hideawayodenton",
-        "instructions": [
-            "Place your order directly with The Hideaway using their website or app.",
-            "Select pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/TheHideAway.jpg",
-        "address": "1439 Odenton Rd, Odenton, MD 21113",
-        "phone": "(410) 874-7213"
-    },
-    "Ruth's Chris Steak House": {
-        "url": "https://order.ruthschris.com/",
-        "instructions": [
-            "Place your order directly with Ruth's Chris Steak House using their website or app.",
-            "Select pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "1110 Town Center Blvd, Odenton, MD 21113",
-        "phone": "(410) 451-9600"
-    },
-    # Add other restaurants here...
-}
-
 def display_services():
     st.subheader("🛍️ Available Services")
     
@@ -492,7 +597,6 @@ def display_services():
                 phone=restaurant_info['phone']
             ))
 
-# Add a search functionality
 def search_services():
     st.subheader("🔍 Search Services")
     search_term = st.text_input("Enter a service name or keyword:")
@@ -520,44 +624,6 @@ def search_services():
                     ))
         else:
             st.warning("No services found matching your search term.")
-
-# Update the main function to include the search functionality
-def main():
-    st.title("🚚 Local Butler")
-
-    # Initialize session state
-    if 'user' not in st.session_state:
-        st.session_state.user = None
-
-    # Authentication
-    if st.session_state.user is None:
-        auth_choice = st.sidebar.radio("Choose action", ["🔑 Login", "📝 Register"])
-        if auth_choice == "🔑 Login":
-            login_page()
-        else:
-            register_user()
-    else:
-        # Creative menu
-        menu_items = {
-            "🏠 Home": home_page,
-            "🛒 Order Now": place_order,
-            "📦 My Orders": display_user_orders,
-            "🗺️ Map": display_map,
-            "🛍️ Services": display_services,
-            "🔍 Search": search_services
-        }
-        if st.session_state.user.type == 'driver':
-            menu_items["🚗 Driver Dashboard"] = driver_dashboard
-
-        cols = st.columns(len(menu_items))
-        for i, (emoji_label, func) in enumerate(menu_items.items()):
-            if cols[i].button(emoji_label):
-                func()
-
-        if st.sidebar.button("🚪 Log Out"):
-            st.session_state.user = None
-            st.success("Logged out successfully.")
-            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
