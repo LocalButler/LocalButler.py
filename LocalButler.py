@@ -187,7 +187,7 @@ st.markdown(f"""
 
 # Main app
 def main():
-    st.title("🚚 Delivery App")
+    st.title("🚚 Local Butler")
 
     # Initialize session state
     if 'user' not in st.session_state:
@@ -223,7 +223,7 @@ def main():
             st.experimental_rerun()
 
 def home_page():
-    st.write(f"Welcome to our Delivery App, {st.session_state.user.name}! 🎉")
+    st.write(f"Welcome to Local Butler, {st.session_state.user.name}! 🎉")
     session = Session()
     merchants = session.query(Merchant).all()
     st.write("Here are the available merchants:")
@@ -523,7 +523,7 @@ def search_services():
 
 # Update the main function to include the search functionality
 def main():
-    st.title("🚚 Delivery App")
+    st.title("🚚 Local Butler")
 
     # Initialize session state
     if 'user' not in st.session_state:
