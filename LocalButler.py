@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 import time
+import sqlalchemy
 
 # SQLAlchemy setup
 Base = declarative_base()
@@ -55,34 +56,62 @@ class Order(Base):
     merchant = relationship("Merchant")
 
 # Create tables
-Base.metadata.create_all(engine)
+try:
+    Base.metadata.create_all(engine, checkfirst=True)
+    print("Database tables created successfully (or already exist).")
+except sqlalchemy.exc.OperationalError as e:
+    print(f"An error occurred while creating database tables: {e}")
+
+# Add sample data if the database is empty
+session = Session()
+if session.query(Merchant).count() == 0:
+    sample_merchants = [
+        Merchant(name="Pizza Place", type="Restaurant", latitude=40.7128, longitude=-74.0060, website="http://example.com"),
+        Merchant(name="Burger Joint", type="Restaurant", latitude=40.7282, longitude=-73.9942, website="http://example2.com"),
+        Merchant(name="Sushi Bar", type="Restaurant", latitude=40.7589, longitude=-73.9851, website="http://example3.com"),
+    ]
+    session.add_all(sample_merchants)
+    session.commit()
 
 # Helper functions
 def generate_order_id():
     return f"ORD-{random.randint(10000, 99999)}"
 
 def create_map(merchants, user_location=None, route=None):
-    m = folium.Map(location=[40.7128, -74.0060], zoom_start=12)
-    for merchant in merchants:
-        folium.Marker(
-            location=[merchant.latitude, merchant.longitude],
-            popup=f"<a href='{merchant.website}' target='_blank'>{merchant.name}</a>",
-            tooltip=merchant.name,
-            icon=folium.Icon(color='red', icon='info-sign')
-        ).add_to(m)
-    
-    if user_location:
-        folium.Marker(
-            location=user_location,
-            popup="Your Location",
-            tooltip="Your Location",
-            icon=folium.Icon(color='green', icon='home')
-        ).add_to(m)
-    
-    if route:
-        folium.PolyLine(route, color="blue", weight=2.5, opacity=1).add_to(m)
-    
-    return m
+    try:
+        # Default to New York City coordinates if no merchants
+        default_location = [40.7128, -74.0060]
+        if merchants:
+            # Use the first merchant's location as the center
+            center_lat = sum(m.latitude for m in merchants) / len(merchants)
+            center_lon = sum(m.longitude for m in merchants) / len(merchants)
+            m = folium.Map(location=[center_lat, center_lon], zoom_start=12)
+        else:
+            m = folium.Map(location=default_location, zoom_start=12)
+
+        for merchant in merchants:
+            folium.Marker(
+                location=[merchant.latitude, merchant.longitude],
+                popup=f"<a href='{merchant.website}' target='_blank'>{merchant.name}</a>",
+                tooltip=merchant.name,
+                icon=folium.Icon(color='red', icon='info-sign')
+            ).add_to(m)
+        
+        if user_location:
+            folium.Marker(
+                location=user_location,
+                popup="Your Location",
+                tooltip="Your Location",
+                icon=folium.Icon(color='green', icon='home')
+            ).add_to(m)
+        
+        if route:
+            folium.PolyLine(route, color="blue", weight=2.5, opacity=1).add_to(m)
+        
+        return m
+    except Exception as e:
+        st.error(f"Error creating map: {e}")
+        return None
 
 def login_user(email, password):
     session = Session()
@@ -163,8 +192,12 @@ def home_page():
     st.write("Here are the available merchants:")
     for merchant in merchants:
         st.write(f"- 🏪 {merchant.name} ({merchant.type})")
+    
     map = create_map(merchants)
-    folium_static(map)
+    if map:
+        folium_static(map)
+    else:
+        st.error("Failed to create map. Please check your data and try again.")
 
 def place_order():
     st.subheader("🛍️ Place a New Order")
@@ -281,26 +314,29 @@ def display_user_orders():
             user_location = (st.session_state.user.latitude, st.session_state.user.longitude)
             route = [[merchant.latitude, merchant.longitude], user_location]
             map = create_map([merchant], user_location, route)
-            folium_static(map)
+            if map:
+                folium_static(map)
+            else:
+                st.error("Failed to create map for this order.")
 
 def display_map():
     st.subheader("🗺️ Merchant Map")
     session = Session()
     merchants = session.query(Merchant).all()
-    user_location = (st.session_state.user.latitude, st.session_state.user.longitude)
     
-    map_container = st.empty()
+    if not merchants:
+        st.warning("No merchants found in the database.")
+        return
+
+    user_location = None
+    if st.session_state.user and st.session_state.user.latitude and st.session_state.user.longitude:
+        user_location = (st.session_state.user.latitude, st.session_state.user.longitude)
     
-    while True:
-        map = create_map(merchants, user_location)
-        with map_container:
-            folium_static(map)
-        
-        # Simulate movement (in a real app, this would be actual location updates)
-        user_location = (user_location[0] + random.uniform(-0.001, 0.001),
-                         user_location[1] + random.uniform(-0.001, 0.001))
-        
-        time.sleep(5)  # Update every 5 seconds
+    map = create_map(merchants, user_location)
+    if map:
+        folium_static(map)
+    else:
+        st.error("Failed to create map. Please check your data and try again.")
 
 def driver_dashboard():
     st.subheader("🚗 Driver Dashboard")
