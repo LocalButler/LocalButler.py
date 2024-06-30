@@ -166,7 +166,170 @@ def home_page():
     map = create_map(merchants)
     folium_static(map)
 
-# The rest of the functions (place_order, register_user, login_page, display_user_orders, display_map, driver_dashboard) remain the same as in the previous code
+def place_order():
+    st.subheader("🛍️ Place a New Order")
+
+    session = Session()
+    merchants = session.query(Merchant).all()
+    merchant = st.selectbox("Select Merchant", [m.name for m in merchants])
+    service = st.text_input("Service")
+    
+    date = st.date_input("Select Date", min_value=datetime.now().date())
+    time = st.selectbox("Select Time", 
+                        [f"{h:02d}:{m:02d} {'AM' if h<12 else 'PM'} EST" 
+                         for h in range(7, 22) for m in [0, 15, 30, 45]])
+    
+    address = st.text_input("Delivery Address", value=st.session_state.user.address)
+    
+    if st.button("🚀 Confirm Order"):
+        order_id = generate_order_id()
+        new_order = Order(
+            id=order_id,
+            user_id=st.session_state.user.id,
+            merchant_id=next(m.id for m in merchants if m.name == merchant),
+            service=service,
+            date=date,
+            time=time,
+            address=address,
+            status='Pending'
+        )
+        session.add(new_order)
+        session.commit()
+        
+        # Animated order confirmation
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        for i in range(100):
+            progress_bar.progress(i + 1)
+            status_text.text(f"Processing order... {i+1}%")
+            time.sleep(0.01)
+        status_text.text("Order placed successfully! 🎉")
+        st.success(f"Your order ID is {order_id}")
+        st.balloons()
+
+def register_user():
+    st.subheader("📝 Register")
+    user_type = st.selectbox("Register as", ["👤 Customer", "🚗 Driver", "🏪 Merchant", "🛠️ Service Provider"])
+    name = st.text_input("Name")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    address = st.text_input("Address")
+    
+    if user_type == "🚗 Driver":
+        vehicle_type = st.text_input("Vehicle Type")
+    elif user_type == "🏪 Merchant":
+        business_name = st.text_input("Business Name")
+        business_type = st.text_input("Business Type")
+    
+    if st.button("🚀 Register"):
+        hashed_password = ph.hash(password)
+        new_user = User(
+            name=name,
+            email=email,
+            password=hashed_password,
+            type=user_type.split()[1].lower(),
+            address=address
+        )
+        session = Session()
+        session.add(new_user)
+        session.commit()
+        st.success("Registered successfully! 🎉")
+        st.balloons()
+
+def login_page():
+    st.subheader("🔑 Login")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    
+    if st.button("🚀 Login"):
+        user = login_user(email, password)
+        if user:
+            st.session_state.user = user
+            st.success("Logged in successfully! 🎉")
+            st.balloons()
+            st.experimental_rerun()
+        else:
+            st.error("Invalid email or password ❌")
+
+def display_user_orders():
+    st.subheader("📦 My Orders")
+    session = Session()
+    user_orders = session.query(Order).filter_by(user_id=st.session_state.user.id).all()
+    
+    for order in user_orders:
+        with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
+            st.write(f"🛒 Service: {order.service}")
+            st.write(f"📅 Date: {order.date}")
+            st.write(f"🕒 Time: {order.time}")
+            st.write(f"📍 Address: {order.address}")
+            
+            # Live order status update
+            status_placeholder = st.empty()
+            progress_bar = st.progress(0)
+            
+            statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
+            status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
+            current_status_index = statuses.index(order.status)
+            
+            for i in range(current_status_index, len(statuses)):
+                status_placeholder.text(f"Current Status: {status_emojis[i]} {statuses[i]}")
+                progress_bar.progress((i + 1) * 25)
+                if i < len(statuses) - 1:
+                    time.sleep(2)  # Simulate status change every 2 seconds
+            
+            merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+            user_location = (st.session_state.user.latitude, st.session_state.user.longitude)
+            route = [[merchant.latitude, merchant.longitude], user_location]
+            map = create_map([merchant], user_location, route)
+            folium_static(map)
+
+def display_map():
+    st.subheader("🗺️ Merchant Map")
+    session = Session()
+    merchants = session.query(Merchant).all()
+    user_location = (st.session_state.user.latitude, st.session_state.user.longitude)
+    
+    map_container = st.empty()
+    
+    while True:
+        map = create_map(merchants, user_location)
+        with map_container:
+            folium_static(map)
+        
+        # Simulate movement (in a real app, this would be actual location updates)
+        user_location = (user_location[0] + random.uniform(-0.001, 0.001),
+                         user_location[1] + random.uniform(-0.001, 0.001))
+        
+        time.sleep(5)  # Update every 5 seconds
+
+def driver_dashboard():
+    st.subheader("🚗 Driver Dashboard")
+    session = Session()
+    
+    # Create an empty container for orders
+    orders_container = st.empty()
+    
+    while True:
+        available_orders = session.query(Order).filter_by(status='Pending').all()
+        
+        with orders_container.container():
+            if not available_orders:
+                st.info("No pending orders at the moment. Waiting for new orders... ⏳")
+            else:
+                for order in available_orders:
+                    with st.expander(f"📦 Order ID: {order.id}"):
+                        merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+                        st.write(f"🏪 Pickup: {merchant.name}")
+                        st.write(f"📍 Delivery Address: {order.address}")
+                        if st.button(f"✅ Accept Order {order.id}"):
+                            order.status = 'In Progress'
+                            session.commit()
+                            st.success(f"You have accepted order {order.id} 🎉")
+                            time.sleep(2)  # Give time for the success message to be seen
+                            st.experimental_rerun()  # Rerun the app to update the order list
+        
+        time.sleep(10)  # Check for new orders every 10 seconds
+        session.commit()  # Refresh the session to get the latest data
 
 if __name__ == "__main__":
     main()
