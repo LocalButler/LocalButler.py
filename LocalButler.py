@@ -387,18 +387,9 @@ def home_page():
     session = Session()
     merchants = session.query(Merchant).all()
     st.write("Here are the available merchants:")
-    for merchant in merchants:
-        st.write(f"- 🏪 {merchant.name} ({merchant.type})")
-    
-    businesses_to_show = {
-        m.name: {
-            'address': f"{m.latitude}, {m.longitude}", 
-            'phone': '123-456-7890',
-            'url': m.website  # Add this line
-        } for m in merchants
-    }
-    map = create_map(businesses_to_show)
-    folium_static(map)
+    businesses_to_show = {"business1": "Business 1", "business2": "Business 2"}  # Replace with your actual dictionary
+    selected_business = st.selectbox("Select a business:", list(businesses_to_show.keys()))
+    st.write(f"You selected: {selected_business}")
 
 def place_order():
     st.subheader("🛍️ Place a New Order")
