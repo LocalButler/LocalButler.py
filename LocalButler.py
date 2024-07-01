@@ -399,8 +399,11 @@ def place_order():
     st.subheader("🛍️ Place a New Order")
 
     session = Session()
-   merchant = st.selectbox("Select Merchant", list(ALL_MERCHANTS.keys()))
-    merchant = st.selectbox("Select Merchant", [m.name for m in merchants])
+    
+    # Combine GROCERY_STORES and RESTAURANTS
+    ALL_MERCHANTS = {**GROCERY_STORES, **RESTAURANTS}
+    
+    merchant = st.selectbox("Select Merchant", list(ALL_MERCHANTS.keys()))
     service = st.text_input("Service")
     
     date = st.date_input("Select Date", min_value=datetime.now().date())
@@ -419,7 +422,7 @@ def place_order():
                 new_order = Order(
                     id=order_id,
                     user_id=st.session_state.user.id,
-                    merchant_id=next(m.id for m in merchants if m.name == merchant),
+                    merchant_id=merchant,  # Use the merchant name as ID
                     service=service,
                     date=date,
                     time=time,
