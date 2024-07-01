@@ -390,7 +390,7 @@ def auth0_authentication():
 
 def main():
     st.title("🚚 Local Butler")
-     perform_initial_setup()
+    perform_initial_setup()
 
     user = auth0_authentication()
 
