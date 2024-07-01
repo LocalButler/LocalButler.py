@@ -179,7 +179,40 @@ GROCERY_STORES = {
         "address": "2288, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
         "phone": "(410) 672-1877"
     },
-    # ... (other grocery stores)
+    "SafeWay": {
+        "url": "https://www.safeway.com/",
+        "instructions": [
+            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png",
+        "address": "7643 Arundel Mills Blvd, Hanover, MD 21076",
+        "phone": "(410) 904-7222"
+    },
+    "Commissary": {
+        "url": "https://shop.commissaries.com/",
+        "instructions": [
+            "Place your order directly with the Commissary using your own account.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/comissaries.jpg",
+        "address": "2789 MacArthur Rd, Fort Meade, MD 20755",
+        "phone": "(301) 677-3060",
+        "hours": "Mon-Sat 9am-7pm, Sun 10am-6pm"
+    },
+    "Food Lion": {
+        "url": "https://shop.foodlion.com/?shopping_context=pickup&store=2517",
+        "instructions": [
+            "Place your order directly with Food Lion using your own account.",
+            "Select store pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg",
+        "address": "Food Lion, Annapolis Road, Ridgefield, Anne Arundel County, Maryland, 20755, United States",
+        "phone": "(410) 519-8740"
+    }
 }
 
 RESTAURANTS = {
@@ -194,9 +227,99 @@ RESTAURANTS = {
         "address": "1439 Odenton Rd, Odenton, MD 21113",
         "phone": "(410) 874-7213"
     },
-    # ... (other restaurants)
+    "Ruth's Chris Steak House": {
+        "url": "https://order.ruthschris.com/",
+        "instructions": [
+            "Place your order directly with Ruth's Chris Steak House using their website or app.",
+            "Select pick-up and specify the date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "1110 Town Center Blvd, Odenton, MD 21113",
+        "phone": "(410) 451-9600"
+    },
+    "Baltimore Coffee & Tea Company": {
+        "url": "https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf",
+        "instructions": [
+            "Review the menu and decide on your order.",
+            "Call Baltimore Coffee & Tea Company to place your order.",
+            "Specify that you'll be using Local Butler for pick-up and delivery.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
+            "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
+        ],
+        "address": "1109 Town Center Blvd, Odenton, MD",
+        "phone": "(410) 439-8669"
+    },
+    "The All American Steakhouse": {
+        "url": "https://order.theallamericansteakhouse.com/menu/odenton",
+        "instructions": [
+            "Place your order directly with The All American Steakhouse by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "1502 Annapolis Rd, Odenton, MD 21113",
+        "phone": "(410) 305-0505"
+    },
+    "Jersey Mike's Subs": {
+        "url": "https://www.jerseymikes.com/menu",
+        "instructions": [
+            "Place your order directly with Jersey Mike's Subs using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2290 Blue Water Blvd, Odenton, MD 21113",
+        "phone": "(410) 695-3430"
+    },
+    "Bruster's Real Ice Cream": {
+        "url": "https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage",
+        "instructions": [
+            "Place your order directly with Bruster's Real Ice Cream using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2294 Blue Water Blvd, Odenton, MD 21113",
+        "phone": "(410) 874-7135"
+    },
+    "Luigino's": {
+        "url": "https://order.yourmenu.com/luiginos",
+        "instructions": [
+            "Place your order directly with Luigino's by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2289, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
+        "phone": "(410) 674-6000"
+    },
+    "PHO 5UP ODENTON": {
+        "url": "https://www.clover.com/online-ordering/pho-5up-odenton",
+        "instructions": [
+            "Place your order directly with PHO 5UP ODENTON by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "2288 Blue Water Blvd , Odenton, MD 21113",
+        "phone": "(410) 874-7385"
+    },
+    "Dunkin": {
+        "url": "https://www.dunkindonuts.com/en/mobile-app",
+        "instructions": [
+            "Place your order directly with Dunkin' by using their APP.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "1614 Annapolis Rd, Odenton, MD 21113",
+        "phone": "(410) 674-3800"
+    },
+    "Baskin-Robbins": {
+        "url": "https://order.baskinrobbins.com/categories?storeId=BR-339568",
+        "instructions": [
+            "Place your order directly with Baskin-Robbins by using their website or app.",
+            "Specify the items you want to order and the pick-up date and time.",
+            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
+        ],
+        "address": "1614 Annapolis Rd, Odenton, MD 21113",
+        "phone": "(410) 674-3800"
+    }
 }
-
 def auth0_authentication():
     if 'user' not in st.session_state:
         st.session_state.user = None
