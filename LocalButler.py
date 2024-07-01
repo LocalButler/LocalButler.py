@@ -21,7 +21,8 @@ load_dotenv()
 
 AUTH0_CLIENT_ID = st.secrets["auth0"]["AUTH0_CLIENT_ID"]
 AUTH0_DOMAIN = st.secrets["auth0"]["AUTH0_DOMAIN"]
-AUTH0_CALLBACK_URL = st.secrets["auth0"]["AUTH0_CALLBACK_URL"]
+AUTH0_CALLBACK_URL = os.getenv("https://localbutler.streamlit.app/")
+
 
 # SQLAlchemy setup
 Base = sqlalchemy.orm.declarative_base()
