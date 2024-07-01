@@ -76,8 +76,6 @@ class Service:
     hours: str = None
 
 # Create tables
-from sqlalchemy import inspect
-
 def create_tables_if_not_exist(engine, Base):
     inspector = inspect(engine)
     existing_tables = inspector.get_table_names()
