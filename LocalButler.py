@@ -17,6 +17,9 @@ from dotenv import load_dotenv
 from auth0_component import login_button
 from sqlalchemy import inspect
 
+# Apply the color theme
+st.set_page_config(page_title="Local Butler", page_icon="👔", layout="wide")
+
 # Load environment variables
 load_dotenv()
 
@@ -174,9 +177,6 @@ def update_map(address):
 PRIMARY_COLOR = "#FF4B4B"
 SECONDARY_COLOR = "#0068C9"
 BACKGROUND_COLOR = "#F0F2F6"
-
-# Apply the color theme
-st.set_page_config(page_title="Local Butler", page_icon="👔", layout="wide")
 
 # Custom CSS
 st.markdown(f"""
