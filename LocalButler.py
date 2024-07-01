@@ -416,9 +416,6 @@ def home_page():
 def place_order():
     st.subheader("🛍️ Place a New Order")
 
-    def place_order():
-    st.subheader("🛍️ Place a New Order")
-
     if 'selected_merchant' not in st.session_state:
         st.session_state.selected_merchant = None
     if 'service' not in st.session_state:
@@ -431,6 +428,62 @@ def place_order():
         st.session_state.address = st.session_state.user.address if st.session_state.user else ""
 
     session = Session()
+    
+    # Combine GROCERY_STORES and RESTAURANTS
+    ALL_MERCHANTS = {**GROCERY_STORES, **RESTAURANTS}
+    
+    merchant = st.selectbox("Select Merchant", list(ALL_MERCHANTS.keys()), key='selected_merchant')
+    service = st.text_input("Service", key='service')
+    
+    date = st.date_input("Select Date", min_value=datetime.now().date(), key='date')
+    time = st.selectbox("Select Time", 
+                        [f"{h:02d}:{m:02d} {'AM' if h<12 else 'PM'} EST" 
+                         for h in range(7, 22) for m in [0, 15, 30, 45]],
+                        key='time')
+    
+    address = st.text_input("Delivery Address", value=st.session_state.address, key='address')
+    
+    if address:
+        map, location = update_map(address)
+        if map:
+            st.write("Verify your delivery location:")
+            folium_static(map)
+            st.write(f"Coordinates: {location.latitude}, {location.longitude}")
+        else:
+            st.warning("Unable to locate the address. Please check and try again.")
+
+    if st.button("🚀 Confirm Order"):
+        if not all([st.session_state.selected_merchant, st.session_state.service, st.session_state.date, st.session_state.time, st.session_state.address]):
+            st.error("Please fill in all fields.")
+        else:
+            try:
+                order_id = generate_order_id()
+                new_order = Order(
+                    id=order_id,
+                    user_id=st.session_state.user.id,
+                    merchant_id=st.session_state.selected_merchant,
+                    service=st.session_state.service,
+                    date=st.session_state.date,
+                    time=st.session_state.time,
+                    address=st.session_state.address,
+                    status='Pending'
+                )
+                session.add(new_order)
+                session.commit()
+                
+                # Animated order confirmation
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                for i in range(100):
+                    progress_bar.progress(i + 1)
+                    status_text.text(f"Processing order... {i+1}%")
+                    time.sleep(0.01)
+                status_text.text("Order placed successfully! 🎉")
+                st.success(f"Your order ID is {order_id}")
+                st.balloons()
+            except Exception as e:
+                st.error(f"An error occurred while placing the order: {str(e)}")
+                session.rollback()
     
     # Combine GROCERY_STORES and RESTAURANTS
     ALL_MERCHANTS = {**GROCERY_STORES, **RESTAURANTS}
