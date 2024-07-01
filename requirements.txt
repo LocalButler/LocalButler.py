@@ -9,4 +9,5 @@ folium
 streamlit-folium
 streamlit_sqlalchemy
 streamlit-leaflet
-numpy 
+numpy
+dotenv
