@@ -226,7 +226,7 @@ def auth0_authentication():
                 st.experimental_rerun()
         else:
             st.markdown(f"""
-            <a href="https://{AUTH0_DOMAIN}/authorize?response_type=code&client_id={AUTH0_CLIENT_ID}&redirect_uri={AUTH0_CALLBACK_URL}&scope=openid%20profile%20email&screen_hint=signup" target="_self">
+            <a href="https://{AUTH0_DOMAIN}/authorize?response_type=code&client_id={AUTH0_CLIENT_ID}&redirect_uri={https://localbutler.streamlit.app/}&scope=openid%20profile%20email&screen_hint=signup" target="_self">
             Register with Auth0
             </a>
             """, unsafe_allow_html=True)
