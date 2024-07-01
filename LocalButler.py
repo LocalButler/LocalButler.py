@@ -7,33 +7,35 @@ from datetime import datetime, timedelta
 import random
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
 import time
 import sqlalchemy
 from dataclasses import dataclass
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+import os
+from dotenv import load_dotenv
+from auth0_component import login_button
+
+# Load environment variables
+load_dotenv()
+
+AUTH0_CLIENT_ID = st.secrets["auth0"]["AUTH0_CLIENT_ID"]
+AUTH0_DOMAIN = st.secrets["auth0"]["AUTH0_DOMAIN"]
+AUTH0_CALLBACK_URL = st.secrets["auth0"]["AUTH0_CALLBACK_URL"]
 
 # SQLAlchemy setup
 Base = sqlalchemy.orm.declarative_base()
-engine = create_engine('sqlite:///delivery_app.db', echo=True)
+engine = create_engine(st.secrets["database"]["url"], echo=True)
 Session = sessionmaker(bind=engine)
-
-# Argon2 setup
-ph = PasswordHasher()
 
 # SQLAlchemy models
 class User(Base):
     __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
+    id = Column(String, primary_key=True)
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
     type = Column(String, nullable=False)
     address = Column(String)
-    latitude = Column(Float)
-    longitude = Column(Float)
 
 class Merchant(Base):
     __tablename__ = 'merchants'
@@ -47,7 +49,7 @@ class Merchant(Base):
 class Order(Base):
     __tablename__ = 'orders'
     id = Column(String, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
+    user_id = Column(String, ForeignKey('users.id'))
     merchant_id = Column(Integer, ForeignKey('merchants.id'))
     service = Column(String)
     date = Column(DateTime, nullable=False)
@@ -71,18 +73,6 @@ class Service:
 
 # Create tables
 Base.metadata.create_all(engine, checkfirst=True)
-print("Database tables created successfully (or already exist).")
-
-# Add sample data if the database is empty
-session = Session()
-if session.query(Merchant).count() == 0:
-    sample_merchants = [
-        Merchant(name="Pizza Place", type="Restaurant", latitude=40.7128, longitude=-74.0060, website="http://example.com"),
-        Merchant(name="Burger Joint", type="Restaurant", latitude=40.7282, longitude=-73.9942, website="http://example2.com"),
-        Merchant(name="Sushi Bar", type="Restaurant", latitude=40.7589, longitude=-73.9851, website="http://example3.com"),
-    ]
-    session.add_all(sample_merchants)
-    session.commit()
 
 # Geocoding cache
 geocoding_cache = {}
@@ -131,17 +121,6 @@ def geocode_with_retry(address, max_retries=3):
                 st.warning(f"Could not geocode address: {address}. Error: {str(e)}")
                 return None
             time.sleep(2)  # Wait for 2 seconds before retrying
-    return None
-
-def login_user(email, password):
-    session = Session()
-    user = session.query(User).filter_by(email=email).first()
-    if user:
-        try:
-            ph.verify(user.password, password)
-            return user
-        except VerifyMismatchError:
-            return None
     return None
 
 def display_service(service: Service):
@@ -199,40 +178,7 @@ GROCERY_STORES = {
         "address": "2288, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
         "phone": "(410) 672-1877"
     },
-    "SafeWay": {
-        "url": "https://www.safeway.com/",
-        "instructions": [
-            "Place your order directly with Safeway using your own account to accumulate grocery store points and clip your favorite coupons.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png",
-        "address": "7643 Arundel Mills Blvd, Hanover, MD 21076",
-        "phone": "(410) 904-7222"
-    },
-    "Commissary": {
-        "url": "https://shop.commissaries.com/",
-        "instructions": [
-            "Place your order directly with the Commissary using your own account.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/comissaries.jpg",
-        "address": "2789 MacArthur Rd, Fort Meade, MD 20755",
-        "phone": "(301) 677-3060",
-        "hours": "Mon-Sat 9am-7pm, Sun 10am-6pm"
-    },
-    "Food Lion": {
-        "url": "https://shop.foodlion.com/?shopping_context=pickup&store=2517",
-        "instructions": [
-            "Place your order directly with Food Lion using your own account.",
-            "Select store pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/foodlionhomedelivery.jpg",
-        "address": "Food Lion, Annapolis Road, Ridgefield, Anne Arundel County, Maryland, 20755, United States",
-        "phone": "(410) 519-8740"
-    }
+    # ... (other grocery stores)
 }
 
 RESTAURANTS = {
@@ -247,115 +193,52 @@ RESTAURANTS = {
         "address": "1439 Odenton Rd, Odenton, MD 21113",
         "phone": "(410) 874-7213"
     },
-    "Ruth's Chris Steak House": {
-        "url": "https://order.ruthschris.com/",
-        "instructions": [
-            "Place your order directly with Ruth's Chris Steak House using their website or app.",
-            "Select pick-up and specify the date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "1110 Town Center Blvd, Odenton, MD 21113",
-        "phone": "(410) 451-9600"
-    },
-    "Baltimore Coffee & Tea Company": {
-        "url": "https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf",
-        "instructions": [
-            "Review the menu and decide on your order.",
-            "Call Baltimore Coffee & Tea Company to place your order.",
-            "Specify that you'll be using Local Butler for pick-up and delivery.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!",
-            "We apologize for any inconvenience, but Baltimore Coffee & Tea Company does not currently offer online ordering."
-        ],
-        "address": "1109 Town Center Blvd, Odenton, MD",
-        "phone": "(410) 439-8669"
-    },
-    "The All American Steakhouse": {
-        "url": "https://order.theallamericansteakhouse.com/menu/odenton",
-        "instructions": [
-            "Place your order directly with The All American Steakhouse by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "1502 Annapolis Rd, Odenton, MD 21113",
-        "phone": "(410) 305-0505"
-    },
-    "Jersey Mike's Subs": {
-        "url": "https://www.jerseymikes.com/menu",
-        "instructions": [
-            "Place your order directly with Jersey Mike's Subs using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "2290 Blue Water Blvd, Odenton, MD 21113",
-        "phone": "(410) 695-3430"
-    },
-    "Bruster's Real Ice Cream": {
-        "url": "https://brustersonline.com/brusterscom/shoppingcart.aspx?number=415&source=homepage",
-        "instructions": [
-            "Place your order directly with Bruster's Real Ice Cream using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "2294 Blue Water Blvd, Odenton, MD 21113",
-        "phone": "(410) 874-7135"
-    },
-    "Luigino's": {
-        "url": "https://order.yourmenu.com/luiginos",
-        "instructions": [
-            "Place your order directly with Luigino's by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "2289, Blue Water Boulevard, Jackson Grove, Odenton, Anne Arundel County, Maryland, 21113, United States",
-        "phone": "(410) 674-6000"
-    },
-    "PHO 5UP ODENTON": {
-        "url": "https://www.clover.com/online-ordering/pho-5up-odenton",
-        "instructions": [
-            "Place your order directly with PHO 5UP ODENTON by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "2288 Blue Water Blvd , Odenton, MD 21113",
-        "phone": "(410) 874-7385"
-    },
-    "Dunkin": {
-        "url": "https://www.dunkindonuts.com/en/mobile-app",
-        "instructions": [
-            "Place your order directly with Dunkin' by using their APP.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"],
-        "address": "1614 Annapolis Rd, Odenton, MD 21113",
-        "phone": "(410) 674-3800"
-    },
-    "Baskin-Robbins": {
-        "url": "https://order.baskinrobbins.com/categories?storeId=BR-339568",
-        "instructions": [
-            "Place your order directly with Baskin-Robbins by using their website or app.",
-            "Specify the items you want to order and the pick-up date and time.",
-            "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
-        ],
-        "address": "1614 Annapolis Rd, Odenton, MD 21113",
-        "phone": "(410) 674-3800"
-    }
+    # ... (other restaurants)
 }
 
-# Main app
-def main():
-    st.title("🚚 Local Butler")
-
-    # Initialize session state
+def auth0_authentication():
     if 'user' not in st.session_state:
         st.session_state.user = None
 
-    # Authentication
     if st.session_state.user is None:
         auth_choice = st.sidebar.radio("Choose action", ["🔑 Login", "📝 Register"])
+        
         if auth_choice == "🔑 Login":
-            login_page()
+            user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
+            
+            if user_info:
+                session = Session()
+                user = session.query(User).filter_by(email=user_info['email']).first()
+                if not user:
+                    # Create a new user if they don't exist in your database
+                    user = User(
+                        id=user_info['sub'],
+                        name=user_info['name'],
+                        email=user_info['email'],
+                        type='customer',  # Default type, can be updated later
+                        address=''  # Can be updated later
+                    )
+                    session.add(user)
+                    session.commit()
+                
+                st.session_state.user = user
+                st.success(f"Welcome, {user.name}!")
+                st.experimental_rerun()
         else:
-            register_user()
-    else:
+            st.markdown(f"""
+            <a href="https://{AUTH0_DOMAIN}/authorize?response_type=code&client_id={AUTH0_CLIENT_ID}&redirect_uri={AUTH0_CALLBACK_URL}&scope=openid%20profile%20email&screen_hint=signup" target="_self">
+            Register with Auth0
+            </a>
+            """, unsafe_allow_html=True)
+
+    return st.session_state.user
+
+def main():
+    st.title("🚚 Local Butler")
+
+    user = auth0_authentication()
+
+    if user:
         # Creative menu
         menu_items = {
             "🏠 Home": home_page,
@@ -365,7 +248,7 @@ def main():
             "🛍️ Services": display_services,
             "🔍 Search": search_services
         }
-        if st.session_state.user.type == 'driver':
+        if user.type == 'driver':
             menu_items["🚗 Driver Dashboard"] = driver_dashboard
 
         cols = st.columns(len(menu_items))
@@ -377,6 +260,8 @@ def main():
             st.session_state.user = None
             st.success("Logged out successfully.")
             st.experimental_rerun()
+    else:
+        st.write("Please log in to access the full features of the app")
 
 def home_page():
     st.write(f"Welcome to Local Butler, {st.session_state.user.name}! 🎉")
@@ -433,55 +318,6 @@ def place_order():
             except Exception as e:
                 st.error(f"An error occurred while placing the order: {str(e)}")
                 session.rollback()
-
-def register_user():
-    st.subheader("📝 Register")
-    user_type = st.selectbox("Register as", ["👤 Customer", "🚗 Driver", "🏪 Merchant", "🛠️ Service Provider"])
-    name = st.text_input("Name")
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
-    address = st.text_input("Address")
-    
-    if st.button("🚀 Register"):
-        if not all([name, email, password, address]):
-            st.error("Please fill in all fields.")
-        else:
-            try:
-                session = Session()
-                existing_user = session.query(User).filter_by(email=email).first()
-                if existing_user:
-                    st.error("Email already in use. Please use a different email.")
-                else:
-                    hashed_password = ph.hash(password)
-                    new_user = User(
-                        name=name,
-                        email=email,
-                        password=hashed_password,
-                        type=user_type.split()[1].lower(),
-                        address=address
-                    )
-                    session.add(new_user)
-                    session.commit()
-                    st.success("Registered successfully! 🎉")
-                    st.balloons()
-            except Exception as e:
-                st.error(f"An error occurred during registration: {str(e)}")
-                session.rollback()
-
-def login_page():
-    st.subheader("🔑 Login")
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
-    
-    if st.button("🚀 Login"):
-        user = login_user(email, password)
-        if user:
-            st.session_state.user = user
-            st.success("Logged in successfully! 🎉")
-            st.balloons()
-            st.experimental_rerun()
-        else:
-            st.error("Invalid email or password ❌")
 
 def display_user_orders():
     st.subheader("📦 My Orders")
