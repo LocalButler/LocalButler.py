@@ -399,7 +399,7 @@ def place_order():
     st.subheader("🛍️ Place a New Order")
 
     session = Session()
-    merchants = session.query(Merchant).all()
+   merchant = st.selectbox("Select Merchant", list(ALL_MERCHANTS.keys()))
     merchant = st.selectbox("Select Merchant", [m.name for m in merchants])
     service = st.text_input("Service")
     
