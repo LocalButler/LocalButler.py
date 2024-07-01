@@ -433,15 +433,15 @@ def place_order():
     ALL_MERCHANTS = {**GROCERY_STORES, **RESTAURANTS}
     
     merchant = st.selectbox("Select Merchant", list(ALL_MERCHANTS.keys()), key='selected_merchant')
-    service = st.text_input("Service", key='service')
+    service = st.text_input("Service", key='service_input')
     
-    date = st.date_input("Select Date", min_value=datetime.now().date(), key='date')
+    date = st.date_input("Select Date", min_value=datetime.now().date(), key='date_input')
     time = st.selectbox("Select Time", 
                         [f"{h:02d}:{m:02d} {'AM' if h<12 else 'PM'} EST" 
                          for h in range(7, 22) for m in [0, 15, 30, 45]],
-                        key='time')
+                        key='time_input')
     
-    address = st.text_input("Delivery Address", value=st.session_state.address, key='address')
+    address = st.text_input("Delivery Address", value=st.session_state.address, key='address_input')
     
     if address:
         map, location = update_map(address)
@@ -452,8 +452,8 @@ def place_order():
         else:
             st.warning("Unable to locate the address. Please check and try again.")
 
-    if st.button("🚀 Confirm Order"):
-        if not all([st.session_state.selected_merchant, st.session_state.service, st.session_state.date, st.session_state.time, st.session_state.address]):
+    if st.button("🚀 Confirm Order", key='confirm_order_button'):
+        if not all([merchant, service, date, time, address]):
             st.error("Please fill in all fields.")
         else:
             try:
@@ -461,11 +461,11 @@ def place_order():
                 new_order = Order(
                     id=order_id,
                     user_id=st.session_state.user.id,
-                    merchant_id=st.session_state.selected_merchant,
-                    service=st.session_state.service,
-                    date=st.session_state.date,
-                    time=st.session_state.time,
-                    address=st.session_state.address,
+                    merchant_id=merchant,
+                    service=service,
+                    date=date,
+                    time=time,
+                    address=address,
                     status='Pending'
                 )
                 session.add(new_order)
