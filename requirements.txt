@@ -11,4 +11,4 @@ streamlit_sqlalchemy
 streamlit-leaflet
 numpy
 python-dotenv==1.0.0
-upgrade setuptools pip
+streamlit-auth0-component
