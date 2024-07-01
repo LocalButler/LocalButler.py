@@ -10,4 +10,4 @@ streamlit-folium
 streamlit_sqlalchemy
 streamlit-leaflet
 numpy
-dotenv
+python-dotenv==1.0.0
