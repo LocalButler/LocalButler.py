@@ -24,7 +24,7 @@ st.set_page_config(page_title="Local Butler", page_icon="👔", layout="wide")
 load_dotenv()
 
 AUTH0_CLIENT_ID = st.secrets["auth0"]["AUTH0_CLIENT_ID"]
-AUTH0_DOMAIN = st.secrets["auth0"]["AUTH0_DOMAIN"]
+AUTH0_DO = st.secrets["auth0"]["AUTH0_DO"]
 AUTH0_CALLBACK_URL = os.getenv("https://localbutler.streamlit.app/")
 
 # SQLAlchemy setup
@@ -74,25 +74,27 @@ class Service:
     address: str = None
     phone: str = None
     hours: str = None
-
-# Create tables
+    
 def create_tables_if_not_exist(engine, Base):
     inspector = inspect(engine)
     existing_tables = inspector.get_table_names()
-    
+    status_messages = []
     for table in Base.metadata.sorted_tables:
         if table.name not in existing_tables:
             table.create(engine)
-            st.success(f"Created table: {table.name}")
+            status_messages.append(f"Created table: {table.name}")
         else:
-            st.info(f"Table already exists: {table.name}")
+            status_messages.append(f"Table already exists: {table.name}")
+    return status_messages
 
-try:
-    create_tables_if_not_exist(engine, Base)
-    st.success("Database check completed.")
-except sqlalchemy.exc.OperationalError as e:
-    st.error(f"Error checking/creating tables: {str(e)}")
-    # Handle the error appropriately
+def perform_initial_setup():
+    if 'db_check_done' not in st.session_state:
+        try:
+            status_messages = create_tables_if_not_exist(engine, Base)
+            st.session_state.db_check_done = True
+            st.session_state.db_status_messages = status_messages
+        except sqlalchemy.exc.OperationalError as e:
+            st.error(f"Error checking/creating tables: {str(e)}")
 
 # Geocoding cache
 geocoding_cache = {}
@@ -214,7 +216,7 @@ GROCERY_STORES = {
             "Select store pick-up and specify the date and time.",
             "Let Butler Bot know you've placed a pick-up order, and we'll take care of the rest!"
         ],
-        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png",
+        "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py//safeway%20app%20ads.png",
         "address": "7643 Arundel Mills Blvd, Hanover, MD 21076",
         "phone": "(410) 904-7222"
     },
@@ -388,6 +390,7 @@ def auth0_authentication():
 
 def main():
     st.title("🚚 Local Butler")
+     perform_initial_setup()
 
     user = auth0_authentication()
 
@@ -423,6 +426,14 @@ def main():
         st.write("Please log in to access the full features of the app")
 
 def home_page():
+        if st.session_state.get('db_check_done', False):
+        with st.expander("Database Status"):
+            for message in st.session_state.get('db_status_messages', []):
+                if "Created table" in message:
+                    st.success(message)
+                else:
+                    st.info(message)
+        st.success("Database check completed.")
     st.write(f"Welcome to Local Butler, {st.session_state.user.name}! 🎉")
     session = Session()
     merchants = session.query(Merchant).all()
@@ -762,5 +773,5 @@ def search_services():
         else:
             st.warning("No services found matching your search term.")
 
-if __name__ == "__main__":
-    main()
+if __name__ == "____":
+    ()
