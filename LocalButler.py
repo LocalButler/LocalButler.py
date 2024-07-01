@@ -207,13 +207,42 @@ def auth0_authentication():
         auth_choice = st.sidebar.radio("Choose action", ["🔑 Login", "📝 Register"])
 
         if auth_choice == "🔑 Login":
-            user_info = login_button(
-                name="auth0_login",
-                client_id=AUTH0_CLIENT_ID,
-                domain=AUTH0_DOMAIN,
-                redirect_uri=st.secrets.get("AUTH0_CALLBACK_URL", "http://localhost:8501/")
-            )
+            try:
+                user_info = login_button(
+                    name="auth0_login",
+                    client_id=AUTH0_CLIENT_ID,
+                    domain=AUTH0_DOMAIN,
+                    redirect_uri=AUTH0_CALLBACK_URL
+                )
 
+                if user_info:
+                    session = Session()
+                    user = session.query(User).filter_by(email=user_info['email']).first()
+                    if not user:
+                        # Create a new user if they don't exist in your database
+                        user = User(
+                            id=user_info['sub'],
+                            name=user_info['name'],
+                            email=user_info['email'],
+                            type='customer',  # Default type, can be updated later
+                            address=''  # Can be updated later
+                        )
+                        session.add(user)
+                        session.commit()
+
+                    st.session_state.user = user
+                    st.success(f"Welcome, {user.name}!")
+                    st.experimental_rerun()
+            except Exception as e:
+                st.error(f"An error occurred during authentication: {str(e)}")
+        else:
+            st.markdown(f"""
+            <a href="https://{AUTH0_DOMAIN}/authorize?response_type=code&client_id={AUTH0_CLIENT_ID}&redirect_uri={AUTH0_CALLBACK_URL}&scope=openid%20profile%20email&screen_hint=signup" target="_self">
+            Register with Auth0
+            </a>
+            """, unsafe_allow_html=True)
+
+    return st.session_state.user
             if user_info:
                 session = Session()
                 user = session.query(User).filter_by(email=user_info['email']).first()
