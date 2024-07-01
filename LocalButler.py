@@ -426,14 +426,7 @@ def main():
         st.write("Please log in to access the full features of the app")
 
 def home_page():
-        if st.session_state.get('db_check_done', False):
-        with st.expander("Database Status"):
-            for message in st.session_state.get('db_status_messages', []):
-                if "Created table" in message:
-                    st.success(message)
-                else:
-                    st.info(message)
-        st.success("Database check completed.")
+
     st.write(f"Welcome to Local Butler, {st.session_state.user.name}! 🎉")
     session = Session()
     merchants = session.query(Merchant).all()
