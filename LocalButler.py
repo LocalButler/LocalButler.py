@@ -205,13 +205,14 @@ def auth0_authentication():
 
     if st.session_state.user is None:
         auth_choice = st.sidebar.radio("Choose action", ["🔑 Login", "📝 Register"])
-        
+
         if auth_choice == "🔑 Login":
-    user_info = login_button(
-        name="auth0_login",
-        client_id=AUTH0_CLIENT_ID,
-        domain=AUTH0_DOMAIN,
-        redirect_uri=st.secrets.get("AUTH0_CALLBACK_URL", "http://localhost:8501/")
+            user_info = login_button(
+                name="auth0_login",
+                client_id=AUTH0_CLIENT_ID,
+                domain=AUTH0_DOMAIN,
+                redirect_uri=st.secrets.get("AUTH0_CALLBACK_URL", "http://localhost:8501/")
+            )
 
             if user_info:
                 session = Session()
