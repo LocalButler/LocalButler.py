@@ -23,7 +23,6 @@ AUTH0_CLIENT_ID = st.secrets["auth0"]["AUTH0_CLIENT_ID"]
 AUTH0_DOMAIN = st.secrets["auth0"]["AUTH0_DOMAIN"]
 AUTH0_CALLBACK_URL = os.getenv("https://localbutler.streamlit.app/")
 
-
 # SQLAlchemy setup
 Base = sqlalchemy.orm.declarative_base()
 engine = create_engine(st.secrets["database"]["url"], echo=True)
@@ -320,6 +319,7 @@ RESTAURANTS = {
         "phone": "(410) 674-3800"
     }
 }
+
 def auth0_authentication():
     if 'user' not in st.session_state:
         st.session_state.user = None
@@ -350,7 +350,7 @@ def auth0_authentication():
                 st.experimental_rerun()
         else:
             st.markdown(f"""
-            <a href="https://{AUTH0_DOMAIN}/authorize?response_type=code&client_id={AUTH0_CLIENT_ID}&redirect_uri={https://localbutler.streamlit.app/}&scope=openid%20profile%20email&screen_hint=signup" target="_self">
+            <a href="https://{AUTH0_DOMAIN}/authorize?response_type=code&client_id={AUTH0_CLIENT_ID}&redirect_uri={AUTH0_CALLBACK_URL}&scope=openid%20profile%20email&screen_hint=signup" target="_self">
             Register with Auth0
             </a>
             """, unsafe_allow_html=True)
@@ -363,6 +363,9 @@ def main():
     user = auth0_authentication()
 
     if user:
+        if 'current_page' not in st.session_state:
+            st.session_state.current_page = "🏠 Home"
+
         # Creative menu
         menu_items = {
             "🏠 Home": home_page,
@@ -378,7 +381,10 @@ def main():
         cols = st.columns(len(menu_items))
         for i, (emoji_label, func) in enumerate(menu_items.items()):
             if cols[i].button(emoji_label):
-                func()
+                st.session_state.current_page = emoji_label
+
+        # Display the current page
+        menu_items[st.session_state.current_page]()
 
         if st.sidebar.button("🚪 Log Out"):
             st.session_state.user = None
@@ -398,23 +404,35 @@ def home_page():
 def place_order():
     st.subheader("🛍️ Place a New Order")
 
+    if 'selected_merchant' not in st.session_state:
+        st.session_state.selected_merchant = None
+    if 'service' not in st.session_state:
+        st.session_state.service = ""
+    if 'date' not in st.session_state:
+        st.session_state.date = datetime.now().date()
+    if 'time' not in st.session_state:
+        st.session_state.time = "07:00 AM EST"
+    if 'address' not in st.session_state:
+        st.session_state.address = st.session_state.user.address if st.session_state.user else ""
+
     session = Session()
     
     # Combine GROCERY_STORES and RESTAURANTS
     ALL_MERCHANTS = {**GROCERY_STORES, **RESTAURANTS}
     
-    merchant = st.selectbox("Select Merchant", list(ALL_MERCHANTS.keys()))
-    service = st.text_input("Service")
+    merchant = st.selectbox("Select Merchant", list(ALL_MERCHANTS.keys()), key='selected_merchant')
+    service = st.text_input("Service", key='service')
     
-    date = st.date_input("Select Date", min_value=datetime.now().date())
+    date = st.date_input("Select Date", min_value=datetime.now().date(), key='date')
     time = st.selectbox("Select Time", 
                         [f"{h:02d}:{m:02d} {'AM' if h<12 else 'PM'} EST" 
-                         for h in range(7, 22) for m in [0, 15, 30, 45]])
+                         for h in range(7, 22) for m in [0, 15, 30, 45]],
+                        key='time')
     
-    address = st.text_input("Delivery Address", value=st.session_state.user.address)
+    address = st.text_input("Delivery Address", value=st.session_state.address, key='address')
     
     if st.button("🚀 Confirm Order"):
-        if not all([merchant, service, date, time, address]):
+        if not all([st.session_state.selected_merchant, st.session_state.service, st.session_state.date, st.session_state.time, st.session_state.address]):
             st.error("Please fill in all fields.")
         else:
             try:
@@ -422,11 +440,11 @@ def place_order():
                 new_order = Order(
                     id=order_id,
                     user_id=st.session_state.user.id,
-                    merchant_id=merchant,  # Use the merchant name as ID
-                    service=service,
-                    date=date,
-                    time=time,
-                    address=address,
+                    merchant_id=st.session_state.selected_merchant,
+                    service=st.session_state.service,
+                    date=st.session_state.date,
+                    time=st.session_state.time,
+                    address=st.session_state.address,
                     status='Pending'
                 )
                 session.add(new_order)
@@ -448,11 +466,15 @@ def place_order():
 
 def display_user_orders():
     st.subheader("📦 My Orders")
+    if 'expanded_order' not in st.session_state:
+        st.session_state.expanded_order = None
+
     session = Session()
     user_orders = session.query(Order).filter_by(user_id=st.session_state.user.id).all()
     
     for order in user_orders:
-        with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
+        with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}", 
+                         expanded=(st.session_state.expanded_order == order.id)):
             st.write(f"🛒 Service: {order.service}")
             st.write(f"📅 Date: {order.date}")
             st.write(f"🕒 Time: {order.time}")
@@ -476,6 +498,13 @@ def display_user_orders():
             businesses_to_show = {merchant.name: {'address': f"{merchant.latitude}, {merchant.longitude}", 'phone': '123-456-7890'}}
             map = create_map(businesses_to_show)
             folium_static(map)
+
+            if st.button(f"Expand/Collapse Order {order.id}"):
+                if st.session_state.expanded_order == order.id:
+                    st.session_state.expanded_order = None
+                else:
+                    st.session_state.expanded_order = order.id
+                st.experimental_rerun()
 
 def display_map():
     st.subheader("🗺️ Merchant Map")
