@@ -16,6 +16,9 @@ import os
 from dotenv import load_dotenv
 from auth0_component import login_button
 
+AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID')
+AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
+
 # Load environment variables
 load_dotenv()
 
@@ -204,8 +207,12 @@ def auth0_authentication():
         auth_choice = st.sidebar.radio("Choose action", ["🔑 Login", "📝 Register"])
         
         if auth_choice == "🔑 Login":
-            user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
-            
+    user_info = login_button(
+        name="auth0_login",
+        client_id=AUTH0_CLIENT_ID,
+        domain=AUTH0_DOMAIN,
+        redirect_uri=st.secrets.get("AUTH0_CALLBACK_URL", "http://localhost:8501/")
+
             if user_info:
                 session = Session()
                 user = session.query(User).filter_by(email=user_info['email']).first()
