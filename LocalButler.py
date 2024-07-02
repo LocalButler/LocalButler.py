@@ -75,24 +75,8 @@ class Service:
     phone: str = None
     hours: str = None
 
-# Create tables
-def create_tables_if_not_exist(engine, Base):
-    inspector = inspect(engine)
-    existing_tables = inspector.get_table_names()
-    
-    for table in Base.metadata.sorted_tables:
-        if table.name not in existing_tables:
-            table.create(engine)
-            st.success(f"Created table: {table.name}")
-        else:
-            st.info(f"Table already exists: {table.name}")
-
-try:
-    create_tables_if_not_exist(engine, Base)
-    st.success("Database check completed.")
-except sqlalchemy.exc.OperationalError as e:
-    st.error(f"Error checking/creating tables: {str(e)}")
-    # Handle the error appropriately
+Base.metadata.create_all(engine, checkfirst=True)
+print("Database tables created successfully (or already exist).")
 
 # Geocoding cache
 geocoding_cache = {}
