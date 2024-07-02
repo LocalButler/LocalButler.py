@@ -18,7 +18,8 @@ from auth0_component import login_button
 from sqlalchemy import inspect
 
 # Apply the color theme
-st.set_page_config(page_title="Local Butler", page_icon="👔", layout="wide")
+st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
+
 
 # Load environment variables
 load_dotenv()
