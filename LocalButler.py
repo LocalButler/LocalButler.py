@@ -529,64 +529,35 @@ import time
 
 def display_user_orders():
     st.subheader("📦 My Orders")
-    
     session = Session()
     user_orders = session.query(Order).filter_by(user_id=st.session_state.user.id).all()
     
-    if not user_orders:
-        st.info("You don't have any orders yet.")
-    else:
-        for order in user_orders:
-            with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
-                st.write(f"📅 Date: {order.date}")
-                st.write(f"🕒 Time: {order.time}")
-                st.write(f"📍 Address: {order.address}")
-                
-                merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
-                if merchant:
-                    st.write(f"🏪 Merchant: {merchant.name}")
-                else:
-                    st.write("🏪 Merchant: Not available")
-                
-                if order.service:
-                    st.write(f"🛒 Service: {order.service}")
-                
-                # Order status display
-                statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
-                status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
-                current_status_index = statuses.index(order.status)
-                
-                # Calculate progress based on current status
-                progress = (current_status_index + 1) * 25
-                
-                st.write("Order Progress:")
-                
-                # Display progress bar
-                progress_bar = st.progress(progress)
-                
-                # Display status indicators on the same line
-                status_cols = st.columns(4)
-                for i, (status, emoji) in enumerate(zip(statuses, status_emojis)):
-                    with status_cols[i]:
-                        if i < current_status_index:
-                            st.markdown(f"<p style='text-align: center; color: green;'>{emoji}<br>{status}</p>", unsafe_allow_html=True)
-                        elif i == current_status_index:
-                            st.markdown(f"<p style='text-align: center; color: blue; font-weight: bold;'>{emoji}<br>{status}</p>", unsafe_allow_html=True)
-                        else:
-                            st.markdown(f"<p style='text-align: center; color: gray;'>{emoji}<br>{status}</p>", unsafe_allow_html=True)
-                
-                # Pulsing current status using Streamlit
-                current_status = st.empty()
-                for i in range(5):  # Pulse 5 times
-                    current_status.markdown(f"<p style='text-align: center; font-size: 24px; color: blue;'><strong>Current Status: {order.status}</strong></p>", unsafe_allow_html=True)
-                    time.sleep(0.5)
-                    current_status.markdown(f"<p style='text-align: center; font-size: 18px; color: blue;'>Current Status: {order.status}</p>", unsafe_allow_html=True)
-                    time.sleep(0.5)
-                
-                # After pulsing, keep the status displayed
-                current_status.markdown(f"<p style='text-align: center; font-size: 20px; color: blue;'><strong>Current Status: {order.status}</strong></p>", unsafe_allow_html=True)
+    for order in user_orders:
+        with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
+            st.write(f"🛒 Service: {order.service}")
+            st.write(f"📅 Date: {order.date}")
+            st.write(f"🕒 Time: {order.time}")
+            st.write(f"📍 Address: {order.address}")
+            
+            # Live order status update
+            status_placeholder = st.empty()
+            progress_bar = st.progress(0)
+            
+            statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
+            status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
+            current_status_index = statuses.index(order.status)
+            
+            for i in range(current_status_index, len(statuses)):
+                status_placeholder.text(f"Current Status: {status_emojis[i]} {statuses[i]}")
+                progress_bar.progress((i + 1) * 25)
+                if i < len(statuses) - 1:
+                    time.sleep(2)  # Simulate status change every 2 seconds
+            
+            merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+            businesses_to_show = {merchant.name: {'address': f"{merchant.latitude}, {merchant.longitude}", 'phone': '123-456-7890'}}
+            map = create_map(businesses_to_show)
+            folium_static(map)
 
-    session.close()
     
 def display_map():
     st.subheader("🗺️ Merchant Map")
