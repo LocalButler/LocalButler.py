@@ -520,27 +520,7 @@ def place_order():
                     session.rollback()
                 finally:
                     session.close()
-                    
-
-import time
-
-import streamlit as st
-import time
-
-def display_user_orders():
-    st.subheader("📦 My Orders")
-    session = Session()
-    user_orders = session.query(Order).filter_by(user_id=st.session_state.user.id).all()
-    
-    if not user_orders:
-        st.info("You don't have any orders yet.")
-    else:
-        for order in user_orders:
-            with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
-                st.write(f"🛒 Service: {order.service}")
-                st.write(f"📅 Date: {order.date}")
-                st.write(f"🕒 Time: {order.time}")
-                st.write(f"📍 Address: {order.address}")
+                
                 
 def display_user_orders():
     st.subheader("📦 My Orders")
@@ -551,8 +531,12 @@ def display_user_orders():
     if not user_orders:
         st.info("You don't have any orders yet.")
     else:
-        for order in user_orders:
-            with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
+        for index, order in enumerate(user_orders):
+            expander_key = f"order_expander_{order.id}"
+            with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}", key=expander_key):
+                if expander_key not in st.session_state:
+                    st.session_state[expander_key] = False
+
                 st.write(f"📅 Date: {order.date}")
                 st.write(f"🕒 Time: {order.time}")
                 st.write(f"📍 Address: {order.address}")
@@ -571,13 +555,10 @@ def display_user_orders():
                 status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
                 current_status_index = statuses.index(order.status)
                 
-                # Calculate progress based on current status
-                progress = (current_status_index + 1) * 25
-                
                 st.write("Order Progress:")
                 
                 # Display progress bar
-                progress_bar = st.progress(progress)
+                progress_bar = st.progress((current_status_index + 1) * 25)
                 
                 # Display status indicators on the same line
                 status_cols = st.columns(4)
@@ -592,21 +573,21 @@ def display_user_orders():
                 
                 # Live order status update
                 status_placeholder = st.empty()
-                progress_bar = st.progress(0)
                 
-                # Update progress bar
-                progress_bar.progress((current_status_index + 1) * 25)
-                
-                # Fading effect for current status
-                for _ in range(5):  # Repeat the fading effect 5 times
-                    for opacity in [1.0, 0.7, 0.4, 0.7, 1.0]:
-                        status_placeholder.markdown(
-                            f"<p style='text-align: center; font-size: 24px; opacity: {opacity};'>"
-                            f"Current Status: {status_emojis[current_status_index]} {statuses[current_status_index]}"
-                            f"</p>",
-                            unsafe_allow_html=True
-                        )
-                        time.sleep(0.2)
+                # Only play the animation if the expander was just opened
+                if not st.session_state[expander_key]:
+                    st.session_state[expander_key] = True
+                    
+                    # Fading effect for current status
+                    for _ in range(5):  # Repeat the fading effect 5 times
+                        for opacity in [1.0, 0.7, 0.4, 0.7, 1.0]:
+                            status_placeholder.markdown(
+                                f"<p style='text-align: center; font-size: 24px; opacity: {opacity};'>"
+                                f"Current Status: {status_emojis[current_status_index]} {statuses[current_status_index]}"
+                                f"</p>",
+                                unsafe_allow_html=True
+                            )
+                            time.sleep(0.2)
                 
                 # Keep the final status displayed
                 status_placeholder.markdown(
