@@ -338,7 +338,7 @@ def auth0_authentication():
         st.session_state.user = None
 
     if st.session_state.user is None:
-        auth_choice = st.sidebar.radio("Choose action", ["🔑 User Login,🚗 Driver Login"])
+        auth_choice = st.sidebar.radio("Choose action", ["🔑 User Login"])
         
         if auth_choice == "🔑 Login":
             user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
