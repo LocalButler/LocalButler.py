@@ -542,13 +542,57 @@ def display_user_orders():
                 st.write(f"🕒 Time: {order.time}")
                 st.write(f"📍 Address: {order.address}")
                 
-                # Live order status update
-                status_placeholder = st.empty()
-                progress_bar = st.progress(0)
+def display_user_orders():
+    st.subheader("📦 My Orders")
+    
+    session = Session()
+    user_orders = session.query(Order).filter_by(user_id=st.session_state.user.id).all()
+    
+    if not user_orders:
+        st.info("You don't have any orders yet.")
+    else:
+        for order in user_orders:
+            with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
+                st.write(f"📅 Date: {order.date}")
+                st.write(f"🕒 Time: {order.time}")
+                st.write(f"📍 Address: {order.address}")
                 
+                merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+                if merchant:
+                    st.write(f"🏪 Merchant: {merchant.name}")
+                else:
+                    st.write("🏪 Merchant: Not available")
+                
+                if order.service:
+                    st.write(f"🛒 Service: {order.service}")
+                
+                # Order status display
                 statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
                 status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
                 current_status_index = statuses.index(order.status)
+                
+                # Calculate progress based on current status
+                progress = (current_status_index + 1) * 25
+                
+                st.write("Order Progress:")
+                
+                # Display progress bar
+                progress_bar = st.progress(progress)
+                
+                # Display status indicators on the same line
+                status_cols = st.columns(4)
+                for i, (status, emoji) in enumerate(zip(statuses, status_emojis)):
+                    with status_cols[i]:
+                        if i < current_status_index:
+                            st.markdown(f"<p style='text-align: center; color: green;'>{emoji}<br>{status}</p>", unsafe_allow_html=True)
+                        elif i == current_status_index:
+                            st.markdown(f"<p style='text-align: center; color: blue; font-weight: bold;'>{emoji}<br>{status}</p>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<p style='text-align: center; color: gray;'>{emoji}<br>{status}</p>", unsafe_allow_html=True)
+                
+                # Live order status update
+                status_placeholder = st.empty()
+                progress_bar = st.progress(0)
                 
                 # Update progress bar
                 progress_bar.progress((current_status_index + 1) * 25)
@@ -571,6 +615,8 @@ def display_user_orders():
                     f"</p>",
                     unsafe_allow_html=True
                 )
+    
+    session.close()
                 
                 # Display merchant information and map
                 merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
