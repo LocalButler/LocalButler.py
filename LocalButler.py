@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_confetti import st_confetti
 import pandas as pd
 import numpy as np
 import folium
