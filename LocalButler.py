@@ -585,6 +585,7 @@ def display_user_orders():
                     )
     
     session.close()
+    
 def display_map():
     st.subheader("🗺️ Merchant Map")
     
