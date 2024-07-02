@@ -537,14 +537,11 @@ def display_user_orders():
                 st.write(f"🕒 Time: {order.time}")
                 st.write(f"📍 Address: {order.address}")
                 
-                if order.merchant_id:
-                    merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
-                    if merchant:
-                        st.write(f"🏪 Merchant: {merchant.name}")
-                    else:
-                        st.write("🏪 Merchant: Not available")
+                merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+                if merchant:
+                    st.write(f"🏪 Merchant: {merchant.name}")
                 else:
-                    st.write("🏪 Merchant: Not specified")
+                    st.write("🏪 Merchant: Not available")
                 
                 if order.service:
                     st.write(f"🛒 Service: {order.service}")
@@ -559,13 +556,14 @@ def display_user_orders():
                     if i < current_status_index:
                         st.write(f"{status_emojis[i]} {status} ✓")
                     elif i == current_status_index:
-                        st.write(f"**{status_emojis[i]} {status} (Current)**")
+                        st.markdown(f"**{status_emojis[i]} {status} (Current)**")
                     else:
                         st.write(f"{status_emojis[i]} {status}")
                 
+                # Calculate progress based on current status
                 progress = (current_status_index + 1) * 25
-                st.progress(progress)
-                
+                progress_bar = st.progress(progress)
+                st.write(f"Current Status: {order.status}")
 
     session.close()
     
