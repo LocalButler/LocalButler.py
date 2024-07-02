@@ -412,34 +412,41 @@ def home_page():
 
 def place_order():
     st.subheader("🛍️ Place a New Order")
-    if 'selected_merchant_1' not in st.session_state:
-        st.session_state.selected_merchant_1 = None
-    if 'service_1' not in st.session_state:
-        st.session_state.service_1 = ""
-    if 'date_1' not in st.session_state:
-        st.session_state.date_1 = datetime.now().date()
-    if 'time_1' not in st.session_state:
-        st.session_state.time_1 = "07:00 AM EST"
-    if 'address_1' not in st.session_state:
-        st.session_state.address_1 = st.session_state.user.address if st.session_state.user else ""
+    if 'selected_merchant_type' not in st.session_state:
+        st.session_state.selected_merchant_type = None
+    if 'selected_merchant' not in st.session_state:
+        st.session_state.selected_merchant = None
+    if 'service' not in st.session_state:
+        st.session_state.service = ""
+    if 'date' not in st.session_state:
+        st.session_state.date = datetime.now().date()
+    if 'time' not in st.session_state:
+        st.session_state.time = "07:00 AM EST"
+    if 'address' not in st.session_state:
+        st.session_state.address = st.session_state.user.address if st.session_state.user else ""
     if 'review_clicked' not in st.session_state:
         st.session_state.review_clicked = False
 
     session = Session()
     
-    # Combine GROCERY_STORES and RESTAURANTS
-    ALL_MERCHANTS = {**GROCERY_STORES, **RESTAURANTS}
+    # Step 1: Select merchant type
+    merchant_type = st.selectbox("Select Merchant Type", ["Restaurants", "Groceries"], key='selected_merchant_type')
+
+    # Step 2: Select specific merchant based on type
+    if merchant_type == "Restaurants":
+        merchant = st.selectbox("Select Restaurant", list(RESTAURANTS.keys()), key='selected_merchant')
+    else:
+        merchant = st.selectbox("Select Grocery Store", list(GROCERY_STORES.keys()), key='selected_merchant')
+
+    service = st.text_input("Service", key='service')
     
-    merchant = st.selectbox("Select Merchant", list(ALL_MERCHANTS.keys()), key='selected_merchant_1')
-    service = st.text_input("Service", key='service_1')
-    
-    date = st.date_input("Select Date", min_value=datetime.now().date(), key='date_1')
+    date = st.date_input("Select Date", min_value=datetime.now().date(), key='date')
     time = st.selectbox("Select Time", 
                         [f"{h:02d}:{m:02d} {'AM' if h < 12 else 'PM'} EST" 
                          for h in range(7, 22) for m in [0, 15, 30, 45]],
-                        key='time_1')
+                        key='time')
     
-    address = st.text_input("Delivery Address", value=st.session_state.address_1, key='address_1')
+    address = st.text_input("Delivery Address", value=st.session_state.address, key='address')
     
     if address:
         geolocator = Nominatim(user_agent="local_butler_app")
@@ -453,6 +460,10 @@ def place_order():
                 # Update address with full address from geocoding
                 address = location.address
                 st.text_input("Verified address (you can edit if needed):", value=address, key="verified_address")
+                st.write(f"Coordinates: {location.latitude}, {location.longitude}")
+                
+                # Add delivery notes text area
+                delivery_notes = st.text_area("Delivery Notes (optional)")
             else:
                 st.warning("Unable to locate the address. Please check and try again.")
         except Exception as e:
@@ -463,15 +474,18 @@ def place_order():
 
     if st.session_state.review_clicked:
         with st.expander("Order Details", expanded=True):
+            st.write(f"Merchant Type: {merchant_type}")
             st.write(f"Merchant: {merchant}")
             st.write(f"Service: {service}")
             st.write(f"Date: {date}")
             st.write(f"Time: {time}")
             st.write(f"Delivery Address: {address}")
+            if 'delivery_notes' in locals():
+                st.write(f"Delivery Notes: {delivery_notes}")
 
         if st.button("🚀 Confirm Order", key='confirm_order_button'):
             if not all([merchant, service, date, time, address]):
-                st.error("Please fill in all fields.")
+                st.error("Please fill in all required fields.")
             else:
                 try:
                     order_id = generate_order_id()
