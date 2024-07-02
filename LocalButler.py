@@ -617,22 +617,7 @@ def display_user_orders():
                 )
     
     session.close()
-                
-                # Display merchant information and map
-                merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
-                if merchant:
-                    st.write(f"🏪 Merchant: {merchant.name}")
-                    businesses_to_show = {merchant.name: {'address': f"{merchant.latitude}, {merchant.longitude}", 'phone': '123-456-7890'}}
-                    try:
-                        map = create_map(businesses_to_show)
-                        folium_static(map)
-                    except Exception as e:
-                        st.error(f"Error creating map: {str(e)}")
-                else:
-                    st.write("🏪 Merchant information not available")
-
-    session.close()
-    
+            
 def display_map():
     st.subheader("🗺️ Merchant Map")
     
