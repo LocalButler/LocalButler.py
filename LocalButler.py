@@ -524,6 +524,9 @@ def place_order():
 
 import time
 
+import streamlit as st
+import time
+
 def display_user_orders():
     st.subheader("📦 My Orders")
     
@@ -572,14 +575,16 @@ def display_user_orders():
                         else:
                             st.markdown(f"<p style='text-align: center; color: gray;'>{emoji}<br>{status}</p>", unsafe_allow_html=True)
                 
-                # Pulsating current status
+                # Pulsing current status using Streamlit
                 current_status = st.empty()
-                for size in range(18, 24, 2):
-                    current_status.markdown(f"<p style='text-align: center; font-size:{size}px; color: blue;'><strong>Current Status: {order.status}</strong></p>", unsafe_allow_html=True)
+                for i in range(5):  # Pulse 5 times
+                    current_status.markdown(f"<p style='text-align: center; font-size: 24px; color: blue;'><strong>Current Status: {order.status}</strong></p>", unsafe_allow_html=True)
                     time.sleep(0.5)
-                for size in range(24, 18, -2):
-                    current_status.markdown(f"<p style='text-align: center; font-size:{size}px; color: blue;'><strong>Current Status: {order.status}</strong></p>", unsafe_allow_html=True)
+                    current_status.markdown(f"<p style='text-align: center; font-size: 18px; color: blue;'>Current Status: {order.status}</p>", unsafe_allow_html=True)
                     time.sleep(0.5)
+                
+                # After pulsing, keep the status displayed
+                current_status.markdown(f"<p style='text-align: center; font-size: 20px; color: blue;'><strong>Current Status: {order.status}</strong></p>", unsafe_allow_html=True)
 
     session.close()
     
