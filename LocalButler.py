@@ -537,11 +537,14 @@ def display_user_orders():
                 st.write(f"🕒 Time: {order.time}")
                 st.write(f"📍 Address: {order.address}")
                 
-                merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
-                if merchant:
-                    st.write(f"🏪 Merchant: {merchant.name}")
+                if order.merchant_id:
+                    merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+                    if merchant:
+                        st.write(f"🏪 Merchant: {merchant.name}")
+                    else:
+                        st.write("🏪 Merchant: Not available")
                 else:
-                    st.write("🏪 Merchant: Not available")
+                    st.write("🏪 Merchant: Not specified")
                 
                 if order.service:
                     st.write(f"🛒 Service: {order.service}")
@@ -556,14 +559,13 @@ def display_user_orders():
                     if i < current_status_index:
                         st.write(f"{status_emojis[i]} {status} ✓")
                     elif i == current_status_index:
-                        st.markdown(f"**{status_emojis[i]} {status} (Current)**")
+                        st.write(f"**{status_emojis[i]} {status} (Current)**")
                     else:
                         st.write(f"{status_emojis[i]} {status}")
                 
-                # Calculate progress based on current status
                 progress = (current_status_index + 1) * 25
-                progress_bar = st.progress(progress)
-                st.write(f"Current Status: {order.status}")
+                st.progress(progress)
+                
 
     session.close()
     
@@ -582,35 +584,6 @@ def display_map():
     folium_static(map)
 
 def driver_dashboard():
-    st.subheader("🚗 Driver Dashboard")
-    session = Session()
-    
-    # Create an empty container for orders
-    orders_container = st.empty()
-    
-    while True:
-        available_orders = session.query(Order).filter_by(status='Pending').all()
-        
-        with orders_container.container():
-            if not available_orders:
-                st.info("No pending orders at the moment. Waiting for new orders... ⏳")
-            else:
-                for order in available_orders:
-                    with st.expander(f"📦 Order ID: {order.id}"):
-                        merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
-                        st.write(f"🏪 Pickup: {merchant.name if merchant else 'Not available'}")
-                        st.write(f"📍 Delivery Address: {order.address}")
-                        if st.button(f"✅ Accept Order {order.id}", key=f"accept_{order.id}"):
-                            order.status = 'Preparing'
-                            session.commit()
-                            st.success(f"You have accepted order {order.id} 🎉")
-                            time.sleep(2)  # Give time for the success message to be seen
-                            st.experimental_rerun()  # Rerun the app to update the order list
-        
-        time.sleep(10)  # Check for new orders every 10 seconds
-        session.commit()  # Refresh the session to get the latest data
-
-    session.close()def driver_dashboard():
     st.subheader("🚗 Driver Dashboard")
     session = Session()
     
