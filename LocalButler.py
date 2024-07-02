@@ -338,7 +338,7 @@ def auth0_authentication():
         st.session_state.user = None
 
     if st.session_state.user is None:
-        auth_choice = st.sidebar.radio("Choose action", ["🔑 Login", "📝 Register"])
+        auth_choice = st.sidebar.radio("Choose action", ["🔑 Login"])
         
         if auth_choice == "🔑 Login":
             user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
@@ -361,12 +361,7 @@ def auth0_authentication():
                 st.session_state.user = user
                 st.success(f"Welcome, {user.name}!")
                 st.experimental_rerun()
-        else:
-            st.markdown(f"""
-            <a href="https://{AUTH0_DOMAIN}/authorize?response_type=code&client_id={AUTH0_CLIENT_ID}&redirect_uri={AUTH0_CALLBACK_URL}&scope=openid%20profile%20email&screen_hint=signup" target="_self">
-            Register with Auth0
-            </a>
-            """, unsafe_allow_html=True)
+
 
     return st.session_state.user
 
