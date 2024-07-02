@@ -16,7 +16,7 @@ import os
 from dotenv import load_dotenv
 from auth0_component import login_button
 from sqlalchemy import inspect
-from streamlit_confetti import st_confetti
+import st_confetti
 
 # Apply the color theme
 st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
