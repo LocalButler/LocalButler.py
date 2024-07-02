@@ -417,32 +417,32 @@ def home_page():
 def place_order():
     st.subheader("🛍️ Place a New Order")
 
-    if 'selected_merchant' not in st.session_state:
-        st.session_state.selected_merchant = None
-    if 'service' not in st.session_state:
-        st.session_state.service = ""
-    if 'date' not in st.session_state:
-        st.session_state.date = datetime.now().date()
-    if 'time' not in st.session_state:
-        st.session_state.time = "07:00 AM EST"
-    if 'address' not in st.session_state:
-        st.session_state.address = st.session_state.user.address if st.session_state.user else ""
+    if 'selected_merchant_1' not in st.session_state:
+    st.session_state.selected_merchant_1 = None
+    if 'service_1' not in st.session_state:
+    st.session_state.service_1 = ""
+    if 'date_1' not in st.session_state:
+        st.session_state.date_1 = datetime.now().date()
+    if 'time_1' not in st.session_state:
+        st.session_state.time_1 = "07:00 AM EST"
+    if 'address_1' not in st.session_state:
+        st.session_state.address_1 = st.session_state.user.address if st.session_state.user else ""
 
     session = Session()
     
     # Combine GROCERY_STORES and RESTAURANTS
     ALL_MERCHANTS = {**GROCERY_STORES, **RESTAURANTS}
     
-    merchant = st.selectbox("Select Merchant", list(ALL_MERCHANTS.keys()), key='selected_merchant')
-    service = st.text_input("Service", key='service_input')
+    merchant = st.selectbox("Select Merchant", list(ALL_MERCHANTS.keys()), key='selected_merchant_1')
+    service = st.text_input("Service", key='service_1')
     
-    date = st.date_input("Select Date", min_value=datetime.now().date(), key='date_input')
+    date = st.date_input("Select Date", min_value=datetime.now().date(), key='date_1')
     time = st.selectbox("Select Time", 
-                        [f"{h:02d}:{m:02d} {'AM' if h<12 else 'PM'} EST" 
-                         for h in range(7, 22) for m in [0, 15, 30, 45]],
-                        key='time_input')
+                    [f"{h:02d}:{m:02d} {'AM' if h<12 else 'PM'} EST" 
+                     for h in range(7, 22) for m in [0, 15, 30, 45]],
+                    key='time_1')
     
-    address = st.text_input("Delivery Address", value=st.session_state.address, key='address_input')
+    address = st.text_input("Delivery Address", value=st.session_state.address, key='address_1')
     
     if address:
         map, location = update_map(address)
