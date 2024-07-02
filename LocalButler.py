@@ -412,7 +412,6 @@ def home_page():
 
 def place_order():
     st.subheader("🛍️ Place a New Order")
-
     if 'selected_merchant_1' not in st.session_state:
         st.session_state.selected_merchant_1 = None
     if 'service_1' not in st.session_state:
@@ -423,6 +422,8 @@ def place_order():
         st.session_state.time_1 = "07:00 AM EST"
     if 'address_1' not in st.session_state:
         st.session_state.address_1 = st.session_state.user.address if st.session_state.user else ""
+    if 'review_clicked' not in st.session_state:
+        st.session_state.review_clicked = False
 
     session = Session()
     
@@ -441,47 +442,71 @@ def place_order():
     address = st.text_input("Delivery Address", value=st.session_state.address_1, key='address_1')
     
     if address:
-        map, location = update_map(address)
-        if map:
-            st.write("Verify your delivery location:")
-            folium_static(map)
-            st.write(f"Coordinates: {location.latitude}, {location.longitude}")
-        else:
-            st.warning("Unable to locate the address. Please check and try again.")
-
-    if st.button("🚀 Confirm Order", key='confirm_order_button'):
-        if not all([merchant, service, date, time, address]):
-            st.error("Please fill in all fields.")
-        else:
-            try:
-                order_id = generate_order_id()
-                new_order = Order(
-                    id=order_id,
-                    user_id=st.session_state.user.id,
-                    merchant_id=merchant,
-                    service=service,
-                    date=date,
-                    time=time,
-                    address=address,
-                    status='Pending'
-                )
-                session.add(new_order)
-                session.commit()
+        geolocator = Nominatim(user_agent="local_butler_app")
+        try:
+            location = geolocator.geocode(address)
+            if location:
+                m = folium.Map(location=[location.latitude, location.longitude], zoom_start=15)
+                folium.Marker([location.latitude, location.longitude]).add_to(m)
+                folium_static(m)
                 
-                # Animated order confirmation
-                progress_bar = st.progress(0)
-                status_text = st.empty()
-                for i in range(100):
-                    progress_bar.progress(i + 1)
-                    status_text.text(f"Processing order... {i+1}%")
-                    time.sleep(0.01)
-                status_text.text("Order placed successfully! 🎉")
-                st.success(f"Your order ID is {order_id}")
-                st.balloons()
-            except Exception as e:
-                st.error(f"An error occurred while placing the order: {str(e)}")
-                session.rollback()
+                # Update address with full address from geocoding
+                address = location.address
+                st.text_input("Verified address (you can edit if needed):", value=address, key="verified_address")
+            else:
+                st.warning("Unable to locate the address. Please check and try again.")
+        except Exception as e:
+            st.error(f"An error occurred while processing the address: {str(e)}")
 
+    if st.button("Review Order"):
+        st.session_state.review_clicked = True
+
+    if st.session_state.review_clicked:
+        with st.expander("Order Details", expanded=True):
+            st.write(f"Merchant: {merchant}")
+            st.write(f"Service: {service}")
+            st.write(f"Date: {date}")
+            st.write(f"Time: {time}")
+            st.write(f"Delivery Address: {address}")
+
+        if st.button("🚀 Confirm Order", key='confirm_order_button'):
+            if not all([merchant, service, date, time, address]):
+                st.error("Please fill in all fields.")
+            else:
+                try:
+                    order_id = generate_order_id()
+                    new_order = Order(
+                        id=order_id,
+                        user_id=st.session_state.user.id,
+                        merchant_id=merchant,
+                        service=service,
+                        date=date,
+                        time=time,
+                        address=address,
+                        status='Pending'
+                    )
+                    session.add(new_order)
+                    session.commit()
+                    
+                    # Animated order confirmation
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    for i in range(100):
+                        progress_bar.progress(i + 1)
+                        status_text.text(f"Processing order... {i+1}%")
+                        time.sleep(0.01)
+                    status_text.text("Order placed successfully! 🎉")
+                    st.success(f"Your order ID is {order_id}")
+                    st.balloons()
+                    
+                    # Reset the review state
+                    st.session_state.review_clicked = False
+                except Exception as e:
+                    st.error(f"An error occurred while placing the order: {str(e)}")
+                    session.rollback()
+                finally:
+                    session.close()
+                    
 def display_user_orders():
     st.subheader("📦 My Orders")
     if 'expanded_order' not in st.session_state:
