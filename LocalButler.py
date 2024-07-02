@@ -532,32 +532,60 @@ def display_user_orders():
     session = Session()
     user_orders = session.query(Order).filter_by(user_id=st.session_state.user.id).all()
     
-    for order in user_orders:
-        with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
-            st.write(f"🛒 Service: {order.service}")
-            st.write(f"📅 Date: {order.date}")
-            st.write(f"🕒 Time: {order.time}")
-            st.write(f"📍 Address: {order.address}")
-            
-            # Live order status update
-            status_placeholder = st.empty()
-            progress_bar = st.progress(0)
-            
-            statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
-            status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
-            current_status_index = statuses.index(order.status)
-            
-            for i in range(current_status_index, len(statuses)):
-                status_placeholder.text(f"Current Status: {status_emojis[i]} {statuses[i]}")
-                progress_bar.progress((i + 1) * 25)
-                if i < len(statuses) - 1:
-                    time.sleep(2)  # Simulate status change every 2 seconds
-            
-            merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
-            businesses_to_show = {merchant.name: {'address': f"{merchant.latitude}, {merchant.longitude}", 'phone': '123-456-7890'}}
-            map = create_map(businesses_to_show)
-            folium_static(map)
+    if not user_orders:
+        st.info("You don't have any orders yet.")
+    else:
+        for order in user_orders:
+            with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
+                st.write(f"🛒 Service: {order.service}")
+                st.write(f"📅 Date: {order.date}")
+                st.write(f"🕒 Time: {order.time}")
+                st.write(f"📍 Address: {order.address}")
+                
+                # Live order status update
+                status_placeholder = st.empty()
+                progress_bar = st.progress(0)
+                
+                statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
+                status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
+                current_status_index = statuses.index(order.status)
+                
+                # Update progress bar
+                progress_bar.progress((current_status_index + 1) * 25)
+                
+                # Fading effect for current status
+                for _ in range(5):  # Repeat the fading effect 5 times
+                    for opacity in [1.0, 0.7, 0.4, 0.7, 1.0]:
+                        status_placeholder.markdown(
+                            f"<p style='text-align: center; font-size: 24px; opacity: {opacity};'>"
+                            f"Current Status: {status_emojis[current_status_index]} {statuses[current_status_index]}"
+                            f"</p>",
+                            unsafe_allow_html=True
+                        )
+                        time.sleep(0.2)
+                
+                # Keep the final status displayed
+                status_placeholder.markdown(
+                    f"<p style='text-align: center; font-size: 24px;'>"
+                    f"Current Status: {status_emojis[current_status_index]} {statuses[current_status_index]}"
+                    f"</p>",
+                    unsafe_allow_html=True
+                )
+                
+                # Display merchant information and map
+                merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+                if merchant:
+                    st.write(f"🏪 Merchant: {merchant.name}")
+                    businesses_to_show = {merchant.name: {'address': f"{merchant.latitude}, {merchant.longitude}", 'phone': '123-456-7890'}}
+                    try:
+                        map = create_map(businesses_to_show)
+                        folium_static(map)
+                    except Exception as e:
+                        st.error(f"Error creating map: {str(e)}")
+                else:
+                    st.write("🏪 Merchant information not available")
 
+    session.close()
     
 def display_map():
     st.subheader("🗺️ Merchant Map")
