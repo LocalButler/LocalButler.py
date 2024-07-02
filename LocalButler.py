@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_confetti import st_confetti
 import pandas as pd
 import numpy as np
 import folium
@@ -521,9 +522,6 @@ def place_order():
                 finally:
                     session.close()
                     
-import streamlit as st
-from streamlit_confetti import st_confetti
-import time
 
 def display_user_orders():
     st.subheader("📦 My Orders")
