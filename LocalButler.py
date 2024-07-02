@@ -527,6 +527,10 @@ import time
 import streamlit as st
 import time
 
+I apologize for the confusion. It seems that the version of Streamlit you're using doesn't support the key parameter in the st.expander() function. Let's modify the code to work around this issue. We'll use a different approach to control the animation:
+pythonCopyimport streamlit as st
+import time
+
 def display_user_orders():
     st.subheader("📦 My Orders")
     
@@ -538,9 +542,16 @@ def display_user_orders():
     else:
         for index, order in enumerate(user_orders):
             expander_key = f"order_expander_{order.id}"
-            with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}", key=expander_key):
-                if expander_key not in st.session_state:
-                    st.session_state[expander_key] = False
+            
+            # Initialize the session state for this order if it doesn't exist
+            if expander_key not in st.session_state:
+                st.session_state[expander_key] = {"expanded": False, "animation_played": False}
+            
+            with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
+                # Check if the expander was just expanded
+                if not st.session_state[expander_key]["expanded"]:
+                    st.session_state[expander_key]["expanded"] = True
+                    st.session_state[expander_key]["animation_played"] = False
 
                 st.write(f"📅 Date: {order.date}")
                 st.write(f"🕒 Time: {order.time}")
@@ -579,9 +590,9 @@ def display_user_orders():
                 # Live order status update
                 status_placeholder = st.empty()
                 
-                # Only play the animation if the expander was just opened
-                if not st.session_state[expander_key]:
-                    st.session_state[expander_key] = True
+                # Only play the animation if it hasn't been played yet
+                if not st.session_state[expander_key]["animation_played"]:
+                    st.session_state[expander_key]["animation_played"] = True
                     
                     # Fading effect for current status
                     for _ in range(5):  # Repeat the fading effect 5 times
