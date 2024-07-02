@@ -437,9 +437,7 @@ def place_order():
         merchant = st.selectbox("Select Restaurant", list(RESTAURANTS.keys()), key='selected_merchant')
     else:
         merchant = st.selectbox("Select Grocery Store", list(GROCERY_STORES.keys()), key='selected_merchant')
-
-    service = st.text_input("Service", key='service')
-    
+ 
     date = st.date_input("Select Date", min_value=datetime.now().date(), key='date')
     time = st.selectbox("Select Time", 
                         [f"{h:02d}:{m:02d} {'AM' if h < 12 else 'PM'} EST" 
@@ -476,7 +474,6 @@ def place_order():
         with st.expander("Order Details", expanded=True):
             st.write(f"Merchant Type: {merchant_type}")
             st.write(f"Merchant: {merchant}")
-            st.write(f"Service: {service}")
             st.write(f"Date: {date}")
             st.write(f"Time: {time}")
             st.write(f"Delivery Address: {address}")
@@ -484,7 +481,7 @@ def place_order():
                 st.write(f"Delivery Notes: {delivery_notes}")
 
         if st.button("🚀 Confirm Order", key='confirm_order_button'):
-            if not all([merchant, service, date, time, address]):
+            if not all([merchant, date, time, address]):
                 st.error("Please fill in all required fields.")
             else:
                 try:
@@ -493,7 +490,6 @@ def place_order():
                         id=order_id,
                         user_id=st.session_state.user.id,
                         merchant_id=merchant,
-                        service=service,
                         date=date,
                         time=time,
                         address=address,
@@ -532,7 +528,6 @@ def display_user_orders():
     for order in user_orders:
         with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}", 
                          expanded=(st.session_state.expanded_order == order.id)):
-            st.write(f"🛒 Service: {order.service}")
             st.write(f"📅 Date: {order.date}")
             st.write(f"🕒 Time: {order.time}")
             st.write(f"📍 Address: {order.address}")
