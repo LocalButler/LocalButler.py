@@ -610,9 +610,7 @@ def driver_dashboard():
         time.sleep(10)  # Check for new orders every 10 seconds
         session.commit()  # Refresh the session to get the latest data
 
-    session.close()
-    
-    def driver_dashboard():
+    session.close()def driver_dashboard():
     st.subheader("🚗 Driver Dashboard")
     session = Session()
     
