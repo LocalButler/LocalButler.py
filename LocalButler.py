@@ -16,6 +16,7 @@ import os
 from dotenv import load_dotenv
 from auth0_component import login_button
 from sqlalchemy import inspect
+from streamlit_confetti import st_confetti
 
 # Apply the color theme
 st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
@@ -520,47 +521,69 @@ def place_order():
                 finally:
                     session.close()
                     
+import streamlit as st
+from streamlit_confetti import st_confetti
+import time
+
 def display_user_orders():
     st.subheader("📦 My Orders")
-    if 'expanded_order' not in st.session_state:
-        st.session_state.expanded_order = None
-
+    
     session = Session()
     user_orders = session.query(Order).filter_by(user_id=st.session_state.user.id).all()
     
-    for order in user_orders:
-        with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}", 
-                         expanded=(st.session_state.expanded_order == order.id)):
-            st.write(f"📅 Date: {order.date}")
-            st.write(f"🕒 Time: {order.time}")
-            st.write(f"📍 Address: {order.address}")
-            
-            # Live order status update
-            status_placeholder = st.empty()
-            progress_bar = st.progress(0)
-            
-            statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
-            status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
-            current_status_index = statuses.index(order.status)
-            
-            for i in range(current_status_index, len(statuses)):
-                status_placeholder.text(f"Current Status: {status_emojis[i]} {statuses[i]}")
-                progress_bar.progress((i + 1) * 25)
-                if i < len(statuses) - 1:
-                    time.sleep(2)  # Simulate status change every 2 seconds
-            
-            merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
-            businesses_to_show = {merchant.name: {'address': f"{merchant.latitude}, {merchant.longitude}", 'phone': '123-456-7890'}}
-            map = create_map(businesses_to_show)
-            folium_static(map)
-
-            if st.button(f"Expand/Collapse Order {order.id}"):
-                if st.session_state.expanded_order == order.id:
-                    st.session_state.expanded_order = None
+    if not user_orders:
+        st.info("You don't have any orders yet.")
+    else:
+        for order in user_orders:
+            with st.expander(f"🛍️ Order ID: {order.id} - Status: {order.status}"):
+                st.write(f"📅 Date: {order.date}")
+                st.write(f"🕒 Time: {order.time}")
+                st.write(f"📍 Address: {order.address}")
+                
+                if order.merchant_id:
+                    merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+                    if merchant:
+                        st.write(f"🏪 Merchant: {merchant.name}")
+                    else:
+                        st.write("🏪 Merchant: Not available")
                 else:
-                    st.session_state.expanded_order = order.id
-                st.experimental_rerun()
-
+                    st.write("🏪 Merchant: Not specified")
+                
+                if order.service:
+                    st.write(f"🛒 Service: {order.service}")
+                
+                # Order status display
+                statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
+                status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
+                current_status_index = statuses.index(order.status)
+                
+                st.write("Order Progress:")
+                for i, status in enumerate(statuses):
+                    if i < current_status_index:
+                        st.write(f"{status_emojis[i]} {status} ✓")
+                    elif i == current_status_index:
+                        st.write(f"**{status_emojis[i]} {status} (Current)**")
+                    else:
+                        st.write(f"{status_emojis[i]} {status}")
+                
+                progress = (current_status_index + 1) * 25
+                st.progress(progress)
+                
+                # Confetti animation for delivered orders
+                if order.status == 'Delivered':
+                    st_confetti(
+                        type="confetti",
+                        origin="left",
+                        count=100,
+                    )
+                    time.sleep(0.5)  # Short delay for visual effect
+                    st_confetti(
+                        type="confetti",
+                        origin="right",
+                        count=100,
+                    )
+    
+    session.close()
 def display_map():
     st.subheader("🗺️ Merchant Map")
     
