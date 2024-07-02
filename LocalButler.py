@@ -527,10 +527,6 @@ import time
 import streamlit as st
 import time
 
-I apologize for the confusion. It seems that the version of Streamlit you're using doesn't support the key parameter in the st.expander() function. Let's modify the code to work around this issue. We'll use a different approach to control the animation:
-pythonCopyimport streamlit as st
-import time
-
 def display_user_orders():
     st.subheader("📦 My Orders")
     
