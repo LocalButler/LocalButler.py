@@ -410,6 +410,9 @@ def home_page():
     for merchant in merchants:
         st.write(f"- {merchant.name}")
 
+import time
+from datetime import datetime
+
 def place_order():
     st.subheader("🛍️ Place a New Order")
     if 'selected_merchant_type' not in st.session_state:
@@ -439,7 +442,7 @@ def place_order():
         merchant = st.selectbox("Select Grocery Store", list(GROCERY_STORES.keys()), key='selected_merchant')
  
     date = st.date_input("Select Date", min_value=datetime.now().date(), key='date')
-    time = st.selectbox("Select Time", 
+    order_time = st.selectbox("Select Time", 
                         [f"{h:02d}:{m:02d} {'AM' if h < 12 else 'PM'} EST" 
                          for h in range(7, 22) for m in [0, 15, 30, 45]],
                         key='time')
@@ -475,13 +478,13 @@ def place_order():
             st.write(f"Merchant Type: {merchant_type}")
             st.write(f"Merchant: {merchant}")
             st.write(f"Date: {date}")
-            st.write(f"Time: {time}")
+            st.write(f"Time: {order_time}")
             st.write(f"Delivery Address: {address}")
             if 'delivery_notes' in locals():
                 st.write(f"Delivery Notes: {delivery_notes}")
 
         if st.button("🚀 Confirm Order", key='confirm_order_button'):
-            if not all([merchant, date, time, address]):
+            if not all([merchant, date, order_time, address]):
                 st.error("Please fill in all required fields.")
             else:
                 try:
@@ -491,7 +494,7 @@ def place_order():
                         user_id=st.session_state.user.id,
                         merchant_id=merchant,
                         date=date,
-                        time=time,
+                        time=order_time,
                         address=address,
                         status='Pending'
                     )
