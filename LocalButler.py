@@ -367,7 +367,8 @@ def auth0_authentication():
     return st.session_state.user
 
 def main():
-   st.title("Local Butler")
+    st.title("🚚 Local Butler")
+
     user = auth0_authentication()
 
     if user:
