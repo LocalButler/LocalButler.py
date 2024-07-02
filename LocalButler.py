@@ -367,8 +367,7 @@ def auth0_authentication():
     return st.session_state.user
 
 def main():
-   st.title("Local Butler") and st.image("https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png")
-
+   st.title("Local Butler")
     user = auth0_authentication()
 
     if user:
