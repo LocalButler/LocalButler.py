@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_confetti import st_confetti
 import pandas as pd
 import numpy as np
 import folium
@@ -567,20 +566,7 @@ def display_user_orders():
                 progress = (current_status_index + 1) * 25
                 st.progress(progress)
                 
-                # Confetti animation for delivered orders
-                if order.status == 'Delivered':
-                    st_confetti(
-                        type="confetti",
-                        origin="left",
-                        count=100,
-                    )
-                    time.sleep(0.5)  # Short delay for visual effect
-                    st_confetti(
-                        type="confetti",
-                        origin="right",
-                        count=100,
-                    )
-    
+
     session.close()
     
 def display_map():
