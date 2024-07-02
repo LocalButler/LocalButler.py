@@ -522,6 +522,8 @@ def place_order():
                     session.close()
                     
 
+import time
+
 def display_user_orders():
     st.subheader("📦 My Orders")
     
@@ -551,19 +553,33 @@ def display_user_orders():
                 status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
                 current_status_index = statuses.index(order.status)
                 
-                st.write("Order Progress:")
-                for i, status in enumerate(statuses):
-                    if i < current_status_index:
-                        st.write(f"{status_emojis[i]} {status} ✓")
-                    elif i == current_status_index:
-                        st.markdown(f"**{status_emojis[i]} {status} (Current)**")
-                    else:
-                        st.write(f"{status_emojis[i]} {status}")
-                
                 # Calculate progress based on current status
                 progress = (current_status_index + 1) * 25
+                
+                st.write("Order Progress:")
+                
+                # Display progress bar
                 progress_bar = st.progress(progress)
-                st.write(f"Current Status: {order.status}")
+                
+                # Display status indicators on the same line
+                status_cols = st.columns(4)
+                for i, (status, emoji) in enumerate(zip(statuses, status_emojis)):
+                    with status_cols[i]:
+                        if i < current_status_index:
+                            st.markdown(f"<p style='text-align: center; color: green;'>{emoji}<br>{status}</p>", unsafe_allow_html=True)
+                        elif i == current_status_index:
+                            st.markdown(f"<p style='text-align: center; color: blue; font-weight: bold;'>{emoji}<br>{status}</p>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<p style='text-align: center; color: gray;'>{emoji}<br>{status}</p>", unsafe_allow_html=True)
+                
+                # Pulsating current status
+                current_status = st.empty()
+                for size in range(18, 24, 2):
+                    current_status.markdown(f"<p style='text-align: center; font-size:{size}px; color: blue;'><strong>Current Status: {order.status}</strong></p>", unsafe_allow_html=True)
+                    time.sleep(0.5)
+                for size in range(24, 18, -2):
+                    current_status.markdown(f"<p style='text-align: center; font-size:{size}px; color: blue;'><strong>Current Status: {order.status}</strong></p>", unsafe_allow_html=True)
+                    time.sleep(0.5)
 
     session.close()
     
