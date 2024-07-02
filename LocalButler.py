@@ -600,6 +600,33 @@ def driver_dashboard():
                 for order in available_orders:
                     with st.expander(f"📦 Order ID: {order.id}"):
                         merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+                        st.write(f"🏪 Pickup: {merchant.name if merchant else 'Not available'}")
+                        st.write(f"📍 Delivery Address: {order.address}")
+                        if st.button(f"✅ Accept Order {order.id}", key=f"accept_{order.id}"):
+                            order.status = 'Preparing'
+                            session.commit()
+                            st.success(f"You have accepted order {order.id} 🎉")
+                            time.sleep(2)  # Give time for the success message to be seen
+                            st.experimental_rerun()  # Rerun the app to update the order list
+        
+        time.sleep(10)  # Check for new orders every 10 seconds
+        session.commit()  # Refresh the session to get the latest data
+
+    session.close()
+    
+    # Create an empty container for orders
+    orders_container = st.empty()
+    
+    while True:
+        available_orders = session.query(Order).filter_by(status='Pending').all()
+        
+        with orders_container.container():
+            if not available_orders:
+                st.info("No pending orders at the moment. Waiting for new orders... ⏳")
+            else:
+                for order in available_orders:
+                    with st.expander(f"📦 Order ID: {order.id}"):
+                        merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
                         st.write(f"🏪 Pickup: {merchant.name}")
                         st.write(f"📍 Delivery Address: {order.address}")
                         if st.button(f"✅ Accept Order {order.id}"):
