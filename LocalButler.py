@@ -474,52 +474,66 @@ def place_order():
     if st.button("Review Order"):
         st.session_state.review_clicked = True
 
-    if st.session_state.review_clicked:
-        with st.expander("Order Details", expanded=True):
-            st.write(f"Merchant Type: {merchant_type}")
-            st.write(f"Merchant: {merchant}")
-            st.write(f"Date: {date}")
-            st.write(f"Time: {order_time}")
-            st.write(f"Delivery Address: {address}")
-            if 'delivery_notes' in locals():
-                st.write(f"Delivery Notes: {delivery_notes}")
+if st.session_state.review_clicked:
+    with st.expander("Order Details", expanded=True):
+        st.write(f"Merchant Type: {merchant_type}")
+        st.write(f"Merchant: {merchant}")
+        st.write(f"Date: {date}")
+        st.write(f"Time: {order_time}")
+        st.write(f"Delivery Address: {address}")
+        if 'delivery_notes' in locals():
+            st.write(f"Delivery Notes: {delivery_notes}")
 
-        if st.button("🚀 Confirm Order", key='confirm_order_button'):
-            if not all([merchant, date, order_time, address]):
-                st.error("Please fill in all required fields.")
-            else:
-                try:
-                    order_id = generate_order_id()
-                    new_order = Order(
-                        id=order_id,
-                        user_id=st.session_state.user.id,
-                        merchant_id=merchant,
-                        date=date,
-                        time=order_time,
-                        address=address,
-                        status='Pending'
-                    )
-                    session.add(new_order)
-                    session.commit()
-                    
-                    # Animated order confirmation
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    for i in range(100):
-                        progress_bar.progress(i + 1)
-                        status_text.text(f"Processing order... {i+1}%")
-                        time.sleep(0.01)
-                    status_text.text("Order placed successfully! 🎉")
-                    st.success(f"Your order ID is {order_id}")
-                    st.balloons()
-                    
-                    # Reset the review state
-                    st.session_state.review_clicked = False
-                except Exception as e:
-                    st.error(f"An error occurred while placing the order: {str(e)}")
-                    session.rollback()
-                finally:
-                    session.close()
+    # Add this new section for order confirmation
+    st.subheader("Order Confirmation")
+    confirmation_type = st.radio("How would you like to confirm your order?", ["Order Number", "Screenshot"])
+    
+    order_confirmation = None
+    if confirmation_type == "Order Number":
+        order_confirmation = st.text_input("Enter your order number:")
+    else:
+        uploaded_file = st.file_uploader("Upload your order screenshot", type=["png", "jpg", "jpeg"])
+        if uploaded_file is not None:
+            st.image(uploaded_file, caption="Uploaded Screenshot", use_column_width=True)
+            order_confirmation = uploaded_file.name  # Use the filename as a reference
+
+    if st.button("🚀 Confirm Order", key='confirm_order_button'):
+        if not all([merchant, date, order_time, address, order_confirmation]):
+            st.error("Please fill in all required fields, including the order confirmation.")
+        else:
+            try:
+                order_id = generate_order_id()
+                new_order = Order(
+                    id=order_id,
+                    user_id=st.session_state.user.id,
+                    merchant_id=merchant,
+                    date=date,
+                    time=order_time,
+                    address=address,
+                    status='Pending',
+                    service=f"Order confirmation: {order_confirmation}"  # Store confirmation in service field
+                )
+                session.add(new_order)
+                session.commit()
+                
+                # Animated order confirmation
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                for i in range(100):
+                    progress_bar.progress(i + 1)
+                    status_text.text(f"Processing order... {i+1}%")
+                    time.sleep(0.01)
+                status_text.text("Order placed successfully! 🎉")
+                st.success(f"Your order ID is {order_id}")
+                st.balloons()
+                
+                # Reset the review state
+                st.session_state.review_clicked = False
+            except Exception as e:
+                st.error(f"An error occurred while placing the order: {str(e)}")
+                session.rollback()
+            finally:
+                session.close()
                     
 
 import time
