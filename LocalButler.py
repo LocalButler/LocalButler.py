@@ -729,16 +729,33 @@ def live_shop():
         st.session_state.live_session_active = not st.session_state.live_session_active
 
     if st.session_state.live_session_active:
-        def video_frame_callback(frame):
-            img = frame.to_ndarray(format="bgr24")
-            cv2.putText(img, f"Local Butler LIVE SHOP - {st.session_state.selected_store}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            return av.VideoFrame.from_ndarray(img, format="bgr24")
+        col1, col2 = st.columns(2)
 
-        webrtc_streamer(
-            key=f"live_shop_{st.session_state.selected_store}",
-            video_frame_callback=video_frame_callback,
-            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-        )
+        with col1:
+            st.subheader("Your Camera")
+            def user_video_frame_callback(frame):
+                img = frame.to_ndarray(format="bgr24")
+                cv2.putText(img, f"User - Local Butler LIVE SHOP", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+            webrtc_streamer(
+                key=f"user_live_shop_{st.session_state.selected_store}",
+                video_frame_callback=user_video_frame_callback,
+                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+            )
+
+        with col2:
+            st.subheader(f"{st.session_state.selected_store} Associate")
+            def merchant_video_frame_callback(frame):
+                img = frame.to_ndarray(format="bgr24")
+                cv2.putText(img, f"{st.session_state.selected_store} Associate", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+            webrtc_streamer(
+                key=f"merchant_live_shop_{st.session_state.selected_store}",
+                video_frame_callback=merchant_video_frame_callback,
+                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+            )
 
         # Simple chat feature
         st.subheader(f"Chat with {st.session_state.selected_store} Associate")
