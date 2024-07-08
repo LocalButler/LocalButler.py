@@ -13,3 +13,4 @@ numpy
 python-dotenv==1.0.0
 streamlit-auth0-component
 streamlit-confetti
+streamlit-webrtc
