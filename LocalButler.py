@@ -19,6 +19,7 @@ import os
 from dotenv import load_dotenv
 from auth0_component import login_button
 from sqlalchemy import inspect
+from functools import lru_cache
 
 # Apply the color theme
 st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
@@ -110,10 +111,21 @@ def create_map(businesses_to_show):
             st.warning(f"Could not locate {name}")
     
     return m
-
-def geocode_with_retry(address, max_retries=3):
-    if address in geocoding_cache:
-        return geocoding_cache[address]
+    
+@lru_cache(maxsize=100)
+def geocode_with_retry(address, max_retries=3, initial_delay=1):
+    geolocator = Nominatim(user_agent="local_butler_app")
+    for attempt in range(max_retries):
+        try:
+            time.sleep(initial_delay * (2 ** attempt))  # Exponential backoff
+            location = geolocator.geocode(address)
+            if location:
+                return location
+        except (GeocoderTimedOut, GeocoderServiceError) as e:
+            if attempt == max_retries - 1:
+                st.warning(f"Could not geocode address: {address}. Error: {str(e)}")
+                return None
+    return None
     
     geolocator = Nominatim(user_agent="local_butler_app")
     for attempt in range(max_retries):
