@@ -383,7 +383,7 @@ def main():
             "📦 My Orders": display_user_orders,
             "🗺️ Map": display_map,
             "🛍️ Services": display_services,
-            "🔍 Search": search_services
+            "🔍 Live": Live_services
         }
         if user.type == 'driver':
             menu_items["🚗 Driver Dashboard"] = driver_dashboard
@@ -717,33 +717,44 @@ def display_services():
                 phone=restaurant_info['phone']
             ))
 
-def search_services():
-    st.subheader("🔍 Search Services")
-    search_term = st.text_input("Enter a service name or keyword:")
-    if search_term:
-        results = []
-        for store_name, store_info in GROCERY_STORES.items():
-            if search_term.lower() in store_name.lower():
-                results.append((store_name, store_info, "Grocery Store"))
-        for restaurant_name, restaurant_info in RESTAURANTS.items():
-            if search_term.lower() in restaurant_name.lower():
-                results.append((restaurant_name, restaurant_info, "Restaurant"))
-        
-        if results:
-            for name, info, service_type in results:
-                with st.expander(f"{name} ({service_type})"):
-                    display_service(Service(
-                        name=name,
-                        url=info['url'],
-                        instructions=info['instructions'],
-                        video_url=info.get('video_url'),
-                        video_title=info.get('video_title'),
-                        image_url=info.get('image_url'),
-                        address=info['address'],
-                        phone=info['phone']
-                    ))
-        else:
-            st.warning("No services found matching your search term.")
+def live_shop():
+    st.title("LIVE SHOP - Virtual Shopping Experience")
+    st.write("Welcome to our new LIVE SHOP feature! Connect with a store associate for a real-time shopping experience.")
+
+    # Instructions
+    with st.expander("How to use LIVE SHOP"):
+        st.write("""
+        1. Click the 'START' button below to begin your video session.
+        2. Wait for a store associate to join the call.
+        3. Communicate your shopping needs via video and chat.
+        4. View product recommendations in the 'Featured Products' section.
+        5. Complete your purchase through our secure checkout process.
+        """)
+
+    def video_frame_callback(frame):
+        img = frame.to_ndarray(format="bgr24")
+        # Add a simple text overlay
+        cv2.putText(img, "Local Butler LIVE SHOP", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+    webrtc_streamer(
+        key="live_shop",
+        video_frame_callback=video_frame_callback,
+        rtc_configuration={
+            "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+        }
+    )
+
+    # Simple chat feature
+    st.subheader("Chat with Store Associate")
+    user_message = st.text_input("Type your message:")
+    if st.button("Send"):
+        st.write(f"You: {user_message}")
+        # Here you would typically send the message to a backend or to the store associate
+
+    # Product showcase (placeholder)
+    st.subheader("Featured Products")
+    st.write("Products viewed during your live shopping session will appear here.")
 
 if __name__ == "__main__":
     main()
