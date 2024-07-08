@@ -386,7 +386,7 @@ def main():
             "📦 My Orders": display_user_orders,
             "🗺️ Map": display_map,
             "🛍️ Services": display_services,
-            "🔍 Live": live_shop
+            "🔴 Live": live_shop
         }
         if user.type == 'driver':
             menu_items["🚗 Driver Dashboard"] = driver_dashboard
