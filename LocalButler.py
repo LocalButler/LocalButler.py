@@ -1,7 +1,4 @@
 import streamlit as st
-from streamlit_webrtc import webrtc_streamer
-import av
-import cv2
 import pandas as pd
 import numpy as np
 import folium
@@ -386,7 +383,7 @@ def main():
             "📦 My Orders": display_user_orders,
             "🗺️ Map": display_map,
             "🛍️ Services": display_services,
-            "🎦 Live": live_shop
+            "🔍 Search": search_services
         }
         if user.type == 'driver':
             menu_items["🚗 Driver Dashboard"] = driver_dashboard
@@ -720,76 +717,33 @@ def display_services():
                 phone=restaurant_info['phone']
             ))
 
-def live_shop():
-    st.title("LIVE SHOP - Virtual Shopping Experience")
-    st.write("Welcome to our new LIVE SHOP feature! Connect with a store associate for a real-time shopping experience.")
-
-    # Combine GROCERY_STORES and RESTAURANTS dictionaries
-    all_stores = {**GROCERY_STORES, **RESTAURANTS}
-
-    # Store selection
-    selected_store = st.selectbox("Select a store for your live shopping experience:", list(all_stores.keys()))
-
-    if selected_store:
-        store_info = all_stores[selected_store]
-
-        st.subheader(f"Live Shopping at {selected_store}")
-        st.write(f"Address: {store_info['address']}")
-        st.write(f"Phone: {store_info['phone']}")
-
-        # Instructions
-        with st.expander("How to use LIVE SHOP"):
-            st.write(f"""
-            1. Click the 'START' button below to begin your video session with {selected_store}.
-            2. Wait for a {selected_store} associate to join the call.
-            3. Communicate your shopping needs via video and chat.
-            4. View product recommendations in the 'Featured Products' section.
-            5. Complete your purchase through our secure checkout process.
-            """)
-
-        def video_frame_callback(frame):
-            img = frame.to_ndarray(format="bgr24")
-            # Add a text overlay with the store name
-            cv2.putText(img, f"Local Butler LIVE SHOP - {selected_store}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            return av.VideoFrame.from_ndarray(img, format="bgr24")
-
-        webrtc_streamer(
-            key=f"live_shop_{selected_store}",
-            video_frame_callback=video_frame_callback,
-            rtc_configuration={
-                "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-            }
-        )
-
-        # Simple chat feature
-        st.subheader(f"Chat with {selected_store} Associate")
-        user_message = st.text_input("Type your message:")
-        if st.button("Send"):
-            st.write(f"You: {user_message}")
-            # Here you would typically send the message to a backend or to the store associate
-
-        # Product showcase (placeholder)
-        st.subheader("Featured Products")
-        st.write(f"Products viewed during your live shopping session at {selected_store} will appear here.")
-
-        # Display store-specific instructions
-        if 'instructions' in store_info:
-            with st.expander(f"{selected_store} Ordering Instructions"):
-                for instruction in store_info['instructions']:
-                    st.write(f"- {instruction}")
-
-        # Display store image or video if available
-        if 'image_url' in store_info:
-            st.image(store_info['image_url'], caption=f"{selected_store} Store Image", use_column_width=True)
-        elif 'video_url' in store_info:
-            st.video(store_info['video_url'])
-
-        # Add a link to the store's website
-        if 'url' in store_info:
-            st.markdown(f"[Visit {selected_store}'s Website]({store_info['url']})")
-
-    else:
-        st.warning("Please select a store to begin your live shopping experience.")
+def search_services():
+    st.subheader("🔍 Search Services")
+    search_term = st.text_input("Enter a service name or keyword:")
+    if search_term:
+        results = []
+        for store_name, store_info in GROCERY_STORES.items():
+            if search_term.lower() in store_name.lower():
+                results.append((store_name, store_info, "Grocery Store"))
+        for restaurant_name, restaurant_info in RESTAURANTS.items():
+            if search_term.lower() in restaurant_name.lower():
+                results.append((restaurant_name, restaurant_info, "Restaurant"))
+        
+        if results:
+            for name, info, service_type in results:
+                with st.expander(f"{name} ({service_type})"):
+                    display_service(Service(
+                        name=name,
+                        url=info['url'],
+                        instructions=info['instructions'],
+                        video_url=info.get('video_url'),
+                        video_title=info.get('video_title'),
+                        image_url=info.get('image_url'),
+                        address=info['address'],
+                        phone=info['phone']
+                    ))
+        else:
+            st.warning("No services found matching your search term.")
 
 if __name__ == "__main__":
     main()
