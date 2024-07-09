@@ -422,6 +422,9 @@ def auth0_authentication():
 def main():
     st.title("🚚 Local Butler")
 
+    # Initialize Amplitude
+    init_amplitude()
+    
     user = auth0_authentication()
 
     if user:
