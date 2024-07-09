@@ -551,7 +551,8 @@ def place_order():
                     session.add(new_order)
                     session.commit()
             
-# Prepare order data for Amplitude
+try:
+    # Prepare order data for Amplitude
     order_data = {
         "order_id": order_id,
         "merchant_type": merchant_type,
@@ -564,10 +565,10 @@ def place_order():
     # Send order data to Amplitude
     track_amplitude_event("Order Placed", order_data)
 except Exception as e:
-    st.error(f"An error occurred while tracking the order: {str(e)}")
+    st.error(f"An error occurred while preparing or sending order data: {str(e)}")
 finally:
     # This block will always execute, whether an exception occurred or not
-    st.write("Order processing completed.")
+    st.write("Order data processing completed.")
                     
                     # Animated order confirmation
                     progress_bar = st.progress(0)
