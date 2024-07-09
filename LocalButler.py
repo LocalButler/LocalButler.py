@@ -550,41 +550,27 @@ def place_order():
                     )
                     session.add(new_order)
                     session.commit()
-            
-try:
-    # Your existing code inside the try block
-    order_id = generate_order_id()
-    new_order = Order(
-        id=order_id,
-        user_id=st.session_state.user.id,
-        merchant_id=merchant,
-        date=date,
-        time=order_time,
-        address=address,
-        status='Pending'
-    )
-    session.add(new_order)
-    session.commit()
 
-    # Animated order confirmation
-    progress_bar = st.progress(0)
-    status_text = st.empty()
-    for i in range(100):
-        progress_bar.progress(i + 1)
-        status_text.text(f"Processing order... {i+1}%")
-        time.sleep(0.01)
-    status_text.text("Order placed successfully! 🎉")
-    st.success(f"Your order ID is {order_id}")
-    st.balloons()
+                    # Animated order confirmation
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    for i in range(100):
+                        progress_bar.progress(i + 1)
+                        status_text.text(f"Processing order... {i+1}%")
+                        time.sleep(0.01)
+                    status_text.text("Order placed successfully! 🎉")
+                    st.success(f"Your order ID is {order_id}")
+                    st.balloons()
 
-    # Reset the review state
-    st.session_state.review_clicked = False
+                    # Reset the review state
+                    st.session_state.review_clicked = False
 
-except Exception as e:
-    st.error(f"An error occurred while placing the order: {str(e)}")
-    session.rollback()
-finally:
-    session.close()
+                except Exception as e:
+                    st.error(f"An error occurred while placing the order: {str(e)}")
+                    session.rollback()
+                finally:
+                    session.close()
+
 
 def display_user_orders():
     st.subheader("📦 My Orders")
