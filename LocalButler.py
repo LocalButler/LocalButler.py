@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 from auth0_component import login_button
 from sqlalchemy import inspect
 from functools import lru_cache
-from your_analytics_module import track_amplitude_event
+
 
 def init_amplitude():
     return components.html(
