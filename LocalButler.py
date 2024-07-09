@@ -407,7 +407,6 @@ def main():
         # Display the current page
         menu_items[st.session_state.current_page]()
 
-        {user.name}
 
         if st.sidebar.button("🚪 Log Out"):
             st.session_state.user = None
