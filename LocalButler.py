@@ -2,6 +2,8 @@ import streamlit as st
 from streamlit_webrtc import webrtc_streamer
 import av
 import cv2
+import streamlit.components.v1 as components
+import json
 import pandas as pd
 import numpy as np
 import folium
@@ -20,6 +22,42 @@ from dotenv import load_dotenv
 from auth0_component import login_button
 from sqlalchemy import inspect
 from functools import lru_cache
+from your_analytics_module import track_amplitude_event
+
+def init_amplitude():
+    return components.html(
+        f"""
+        <script defer src="https://cdn.amplitude.com/libs/analytics-browser-2.9.0-min.js.gz"></script>
+        <script defer src="https://cdn.amplitude.com/libs/plugin-autocapture-browser-0.9.0-min.js.gz"></script>
+        <script type="module">
+            amplitude.init('{st.secrets.amplitude.API_KEY}');
+            const autocapturePlugin = window.amplitudeAutocapturePlugin.plugin({{
+                cssSelectorAllowlist: [
+                    'a', 'button', 'input', 'select', 'textarea', 'label',
+                    '[data-amp-default-track]', '.amp-default-track',
+                    '.stButton', '.stSelectbox', '.stTextInput', '.stDateInput'
+                ],
+                pageUrlAllowlist: [
+                    'https://localbutler.streamlit.app'  // Replace with your actual app URL
+                ],
+                dataAttributePrefix: 'data-amp-track'
+            }});
+            amplitude.add(autocapturePlugin);
+        </script>
+        """,
+        height=0,
+    )
+
+def track_amplitude_event(event_name, event_properties):
+    event_properties_json = json.dumps(event_properties)
+    components.html(
+        f"""
+        <script>
+        amplitude.track("{event_name}", {event_properties_json});
+        </script>
+        """,
+        height=0,
+    )
 
 # Apply the color theme
 st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
@@ -509,6 +547,20 @@ def place_order():
                     )
                     session.add(new_order)
                     session.commit()
+                    
+                    # Prepare order data for Amplitude
+                    order_data = {
+                        "order_id": order_id,
+                        "merchant_type": merchant_type,
+                        "merchant": merchant,
+                        "date": str(date),
+                        "time": order_time,
+                        "address": address,
+                        "user_id": st.session_state.user.id
+                    }
+
+                    # Send order data to Amplitude
+                    track_amplitude_event("Order Placed", order_data)
                     
                     # Animated order confirmation
                     progress_bar = st.progress(0)
