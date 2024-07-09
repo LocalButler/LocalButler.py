@@ -24,8 +24,7 @@ from sqlalchemy import inspect
 from functools import lru_cache
 from amplitude import Amplitude
 
-amplitude = Amplitude("st.secrets.amplitude.API_KEY")
-
+amplitude = Amplitude(st.secrets.amplitude.API_KEY)
 
 def init_amplitude():
     return components.html(
