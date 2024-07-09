@@ -533,23 +533,23 @@ def place_order():
             if 'delivery_notes' in locals():
                 st.write(f"Delivery Notes: {delivery_notes}")
 
-       if st.button("🚀 Confirm Order", key='confirm_order_button'):
-    if not all([merchant, date, order_time, address]):
-        st.error("Please fill in all required fields.")
-    else:
-        try:
-            order_id = generate_order_id()
-            new_order = Order(
-                id=order_id,
-                user_id=st.session_state.user.id,
-                merchant_id=merchant,
-                date=date,
-                time=order_time,
-                address=address,
-                status='Pending'
-            )
-            session.add(new_order)
-            session.commit()
+        if st.button("🚀 Confirm Order", key='confirm_order_button'):
+            if not all([merchant, date, order_time, address]):
+                st.error("Please fill in all required fields.")
+            else:
+                try:
+                    order_id = generate_order_id()
+                    new_order = Order(
+                        id=order_id,
+                        user_id=st.session_state.user.id,
+                        merchant_id=merchant,
+                        date=date,
+                        time=order_time,
+                        address=address,
+                        status='Pending'
+                    )
+                    session.add(new_order)
+                    session.commit()
             
             # Prepare order data for Amplitude
             order_data = {
