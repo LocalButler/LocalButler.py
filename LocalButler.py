@@ -585,25 +585,6 @@ except Exception as e:
     session.rollback()
 finally:
     session.close()
-                    
-                    # Animated order confirmation
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    for i in range(100):
-                        progress_bar.progress(i + 1)
-                        status_text.text(f"Processing order... {i+1}%")
-                        time.sleep(0.01)
-                    status_text.text("Order placed successfully! 🎉")
-                    st.success(f"Your order ID is {order_id}")
-                    st.balloons()
-                    
-                    # Reset the review state
-                    st.session_state.review_clicked = False
-                except Exception as e:
-                    st.error(f"An error occurred while placing the order: {str(e)}")
-                    session.rollback()
-                finally:
-                    session.close()
 
 def display_user_orders():
     st.subheader("📦 My Orders")
