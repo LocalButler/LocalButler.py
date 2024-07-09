@@ -50,15 +50,16 @@ def init_amplitude():
         height=0,
     )
 
+from amplitude import Amplitude, BaseEvent
+
 def track_amplitude_event(event_name, event_properties):
-    event_properties_json = json.dumps(event_properties)
-    components.html(
-        f"""
-        <script>
-        amplitude.track("{event_name}", {event_properties_json});
-        </script>
-        """,
-        height=0,
+    amplitude.track(
+        BaseEvent(
+            event_type=event_name,
+            user_id=st.session_state.user.id if st.session_state.user else None,
+            device_id=None,  # You might want to implement device ID tracking
+            event_properties=event_properties
+        )
     )
 
 # Apply the color theme
@@ -532,37 +533,36 @@ def place_order():
             if 'delivery_notes' in locals():
                 st.write(f"Delivery Notes: {delivery_notes}")
 
-        if st.button("🚀 Confirm Order", key='confirm_order_button'):
-            if not all([merchant, date, order_time, address]):
-                st.error("Please fill in all required fields.")
-            else:
-                try:
-                    order_id = generate_order_id()
-                    new_order = Order(
-                        id=order_id,
-                        user_id=st.session_state.user.id,
-                        merchant_id=merchant,
-                        date=date,
-                        time=order_time,
-                        address=address,
-                        status='Pending'
-                    )
-                    session.add(new_order)
-                    session.commit()
-                    
-                    # Prepare order data for Amplitude
-                    order_data = {
-                        "order_id": order_id,
-                        "merchant_type": merchant_type,
-                        "merchant": merchant,
-                        "date": str(date),
-                        "time": order_time,
-                        "address": address,
-                        "user_id": st.session_state.user.id
-                    }
+       if st.button("🚀 Confirm Order", key='confirm_order_button'):
+    if not all([merchant, date, order_time, address]):
+        st.error("Please fill in all required fields.")
+    else:
+        try:
+            order_id = generate_order_id()
+            new_order = Order(
+                id=order_id,
+                user_id=st.session_state.user.id,
+                merchant_id=merchant,
+                date=date,
+                time=order_time,
+                address=address,
+                status='Pending'
+            )
+            session.add(new_order)
+            session.commit()
+            
+            # Prepare order data for Amplitude
+            order_data = {
+                "order_id": order_id,
+                "merchant_type": merchant_type,
+                "merchant": merchant,
+                "date": str(date),
+                "time": order_time,
+                "address": address,
+            }
 
-                    # Send order data to Amplitude
-                    track_amplitude_event("Order Placed", order_data)
+            # Send order data to Amplitude
+            track_amplitude_event("Order Placed", order_data)
                     
                     # Animated order confirmation
                     progress_bar = st.progress(0)
