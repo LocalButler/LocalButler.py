@@ -552,23 +552,39 @@ def place_order():
                     session.commit()
             
 try:
-    # Prepare order data for Amplitude
-    order_data = {
-        "order_id": order_id,
-        "merchant_type": merchant_type,
-        "merchant": merchant,
-        "date": str(date),
-        "time": order_time,
-        "address": address,
-    }
+    # Your existing code inside the try block
+    order_id = generate_order_id()
+    new_order = Order(
+        id=order_id,
+        user_id=st.session_state.user.id,
+        merchant_id=merchant,
+        date=date,
+        time=order_time,
+        address=address,
+        status='Pending'
+    )
+    session.add(new_order)
+    session.commit()
 
-    # Send order data to Amplitude
-    track_amplitude_event("Order Placed", order_data)
+    # Animated order confirmation
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    for i in range(100):
+        progress_bar.progress(i + 1)
+        status_text.text(f"Processing order... {i+1}%")
+        time.sleep(0.01)
+    status_text.text("Order placed successfully! 🎉")
+    st.success(f"Your order ID is {order_id}")
+    st.balloons()
+
+    # Reset the review state
+    st.session_state.review_clicked = False
+
 except Exception as e:
-    st.error(f"An error occurred while preparing or sending order data: {str(e)}")
+    st.error(f"An error occurred while placing the order: {str(e)}")
+    session.rollback()
 finally:
-    # This block will always execute, whether an exception occurred or not
-    st.write("Order data processing completed.")
+    session.close()
                     
                     # Animated order confirmation
                     progress_bar = st.progress(0)
