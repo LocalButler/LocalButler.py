@@ -17,7 +17,7 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 import os
 from dotenv import load_dotenv
-from auth0_component import in_button
+from auth0_component import login_button
 from sqlalchemy import inspect
 from functools import lru_cache
 
@@ -406,7 +406,6 @@ def main():
 
         # Display the current page
         menu_items[st.session_state.current_page]()
-
 
         if st.sidebar.button("🚪 Log Out"):
             st.session_state.user = None
