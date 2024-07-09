@@ -2,8 +2,6 @@ import streamlit as st
 from streamlit_webrtc import webrtc_streamer
 import av
 import cv2
-import streamlit.components.v1 as components
-import json
 import pandas as pd
 import numpy as np
 import folium
@@ -22,45 +20,6 @@ from dotenv import load_dotenv
 from auth0_component import login_button
 from sqlalchemy import inspect
 from functools import lru_cache
-from amplitude import Amplitude
-
-amplitude = Amplitude(st.secrets.amplitude.API_KEY)
-
-def init_amplitude():
-    return components.html(
-        f"""
-        <script defer src="https://cdn.amplitude.com/libs/analytics-browser-2.9.0-min.js.gz"></script>
-        <script defer src="https://cdn.amplitude.com/libs/plugin-autocapture-browser-0.9.0-min.js.gz"></script>
-        <script type="module">
-            amplitude.init('{st.secrets.amplitude.API_KEY}');
-            const autocapturePlugin = window.amplitudeAutocapturePlugin.plugin({{
-                cssSelectorAllowlist: [
-                    'a', 'button', 'input', 'select', 'textarea', 'label',
-                    '[data-amp-default-track]', '.amp-default-track',
-                    '.stButton', '.stSelectbox', '.stTextInput', '.stDateInput'
-                ],
-                pageUrlAllowlist: [
-                    'https://localbutler.streamlit.app'  // Replace with your actual app URL
-                ],
-                dataAttributePrefix: 'data-amp-track'
-            }});
-            amplitude.add(autocapturePlugin);
-        </script>
-        """,
-        height=0,
-    )
-
-from amplitude import Amplitude, BaseEvent
-
-def track_amplitude_event(event_name, event_properties):
-    amplitude.track(
-        BaseEvent(
-            event_type=event_name,
-            user_id=st.session_state.user.id if st.session_state.user else None,
-            device_id=None,  # You might want to implement device ID tracking
-            event_properties=event_properties
-        )
-    )
 
 # Apply the color theme
 st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
@@ -422,9 +381,6 @@ def auth0_authentication():
 def main():
     st.title("🚚 Local Butler")
 
-    # Initialize Amplitude
-    init_amplitude()
-    
     user = auth0_authentication()
 
     if user:
@@ -553,7 +509,7 @@ def place_order():
                     )
                     session.add(new_order)
                     session.commit()
-
+                    
                     # Animated order confirmation
                     progress_bar = st.progress(0)
                     status_text = st.empty()
@@ -564,16 +520,14 @@ def place_order():
                     status_text.text("Order placed successfully! 🎉")
                     st.success(f"Your order ID is {order_id}")
                     st.balloons()
-
+                    
                     # Reset the review state
                     st.session_state.review_clicked = False
-
                 except Exception as e:
                     st.error(f"An error occurred while placing the order: {str(e)}")
                     session.rollback()
                 finally:
                     session.close()
-
 
 def display_user_orders():
     st.subheader("📦 My Orders")
