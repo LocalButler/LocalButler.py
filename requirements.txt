@@ -17,3 +17,4 @@ streamlit-webrtc
 opencv-python-headless
 av
 amplitude-analytics
+clerk
