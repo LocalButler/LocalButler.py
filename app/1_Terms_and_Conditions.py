@@ -45,7 +45,7 @@ Governing Law
     st.write("Last updated: July 16, 2024")
 
     if st.button("Return to Home"):
-        st.switch_page("Home.py")
+        st.switch_page("User.py")
 
 if __name__ == "__main__":
     main()
