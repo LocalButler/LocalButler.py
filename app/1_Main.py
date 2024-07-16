@@ -23,6 +23,23 @@ from sqlalchemy import inspect
 from functools import lru_cache
 from pystrix import Manager
 
+st.set_page_config(
+    page_title="Log In",
+    page_icon="👋",
+)
+
+st.title("🚚 Local Butler")
+st.sidebar.success("Select a page above.")
+
+if "my_input" not in st.session_state:
+    st.session_state["my_input"] = ""
+
+my_input = st.text_input("Input a text here", st.session_state["my_input"])
+submit = st.button("Submit")
+if submit:
+    st.session_state["my_input"] = my_input
+    st.write("You have entered: ", my_input)
+
 
 
 
@@ -388,13 +405,7 @@ def auth0_authentication():
     return st.session_state.user
 
 def main():
-st.set_page_config(
-    page_title="Multipage App",
-    page_icon="👋",
-)
 
-
-    st.title("🚚 Local Butler")
 
     user = auth0_authentication()
 
