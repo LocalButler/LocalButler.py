@@ -435,7 +435,7 @@ def main():
         # Display the current page
         menu_items[st.session_state.current_page]()
 
-if st.sidebar.button("🚪 Log Out"):
+if st.sidebar.button("🚪 Log Out,📄 Terms and Conditions"):
     st.session_state.user = None
     st.success("Logged out successfully.")
     st.experimental_rerun()
