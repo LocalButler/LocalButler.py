@@ -24,6 +24,8 @@ from functools import lru_cache
 from pystrix import Manager
 
 
+
+
 # Apply the color theme
 st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
 
@@ -386,9 +388,11 @@ def auth0_authentication():
     return st.session_state.user
 
 def main():
-        if is_terms_page():
-        st.switch_page("pages/1_Terms_and_Conditions.py")
-        return
+st.set_page_config(
+    page_title="Multipage App",
+    page_icon="👋",
+)
+
 
     st.title("🚚 Local Butler")
 
