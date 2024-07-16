@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit.runtime.scriptrunner import get_script_run_ctx
 from streamlit_webrtc import webrtc_streamer
 import av
 import cv2
@@ -21,6 +22,7 @@ from auth0_component import login_button
 from sqlalchemy import inspect
 from functools import lru_cache
 from pystrix import Manager
+
 
 # Apply the color theme
 st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
@@ -169,6 +171,10 @@ def update_map(address):
         ).add_to(m)
         return m, location
     return None, None
+
+def is_terms_page():
+    ctx = get_script_run_ctx()
+    return ctx.page_script_hash == "terms_and_conditions"
 
 # Color palette
 PRIMARY_COLOR = "#FF4B4B"
@@ -380,9 +386,15 @@ def auth0_authentication():
     return st.session_state.user
 
 def main():
+        if is_terms_page():
+        st.switch_page("pages/1_Terms_and_Conditions.py")
+        return
+
     st.title("🚚 Local Butler")
 
     user = auth0_authentication()
+
+    
 
     if user:
         if 'current_page' not in st.session_state:
