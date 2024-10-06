@@ -39,6 +39,12 @@ if submit:
     st.session_state["my_input"] = my_input
     st.write("You have entered: ", my_input)
 
+
+
+
+# Apply the color theme
+st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
+
 # Load environment variables
 load_dotenv()
 
