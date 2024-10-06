@@ -445,7 +445,6 @@ def main():
           st.session_state.user = None
           st.session_state.user_type = None
           st.success("Logged out successfully.")
-          st.experimental_rerun()
   else:
       st.write("Please log in to access the full features of the app")
 def home_page():
@@ -679,7 +678,6 @@ def driver_dashboard():
                             session.commit()
                             st.success(f"You have accepted order {order.id} 🎉")
                             time.sleep(2)  # Give time for the success message to be seen
-                            st.experimental_rerun()  # Rerun the app to update the order list
         
         time.sleep(10)  # Check for new orders every 10 seconds
         session.commit()  # Refresh the session to get the latest data
@@ -703,7 +701,6 @@ def display_available_orders():
                     order.status = 'Preparing'
                     session.commit()
                     st.success(f"You have accepted order {order.id}")
-                    st.experimental_rerun()
     
     session.close()
 
