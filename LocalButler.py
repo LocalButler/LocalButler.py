@@ -184,6 +184,10 @@ def update_map(address):
         return m, location
     return None, None
 
+def is_terms_page():
+    ctx = get_script_run_ctx()
+    return ctx.page_script_hash == "terms_and_conditions"
+
 # Color palette
 PRIMARY_COLOR = "#FF4B4B"
 SECONDARY_COLOR = "#0068C9"
