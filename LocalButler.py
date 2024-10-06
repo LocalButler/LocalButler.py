@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit.runtime.scriptrunner import get_script_run_ctx
 from streamlit_webrtc import webrtc_streamer
 import av
 import cv2
@@ -24,20 +23,6 @@ from functools import lru_cache
 
 # Apply the color theme
 st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
-
-if "my_input" not in st.session_state:
-    st.session_state["my_input"] = ""
-
-my_input = st.text_input("Input a text here", st.session_state["my_input"])
-submit = st.button("Submit")
-if submit:
-    st.session_state["my_input"] = my_input
-    st.write("You have entered: ", my_input)
-
-
-
-
-
 
 # Load environment variables
 load_dotenv()
@@ -183,10 +168,6 @@ def update_map(address):
         ).add_to(m)
         return m, location
     return None, None
-
-def is_terms_page():
-    ctx = get_script_run_ctx()
-    return ctx.page_script_hash == "terms_and_conditions"
 
 # Color palette
 PRIMARY_COLOR = "#FF4B4B"
@@ -371,7 +352,7 @@ def auth0_authentication():
         st.session_state.user = None
 
     if st.session_state.user is None:
-        auth_choice = st.sidebar.radio("Choose action", ["🔑 Login,📄Terms and Conditions"])
+        auth_choice = st.sidebar.radio("Choose action", ["🔑 Login"])
         
         if auth_choice == "🔑 Login":
             user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
@@ -398,6 +379,8 @@ def auth0_authentication():
     return st.session_state.user
 
 def main():
+    st.title("🚚 Local Butler")
+
     user = auth0_authentication()
 
     if user:
@@ -428,14 +411,8 @@ def main():
             st.session_state.user = None
             st.success("Logged out successfully.")
             st.experimental_rerun()
-
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("[Terms and Conditions](/Terms_and_Conditions)")
-    
     else:
         st.write("Please log in to access the full features of the app")
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("[Terms and Conditions](/Terms_and_Conditions)")
 
 def home_page():
     st.write(f"Welcome to Local Butler, {st.session_state.user.name}! 🎉")
