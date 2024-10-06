@@ -22,10 +22,8 @@ from auth0_component import login_button
 from sqlalchemy import inspect
 from functools import lru_cache
 
-st.set_page_config(
-    page_title="Log In",
-    page_icon="👋",
-)
+# Apply the color theme
+st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
 
 st.title("🚚 Local Butler")
 st.sidebar.success("Select a page above.")
@@ -42,8 +40,7 @@ if submit:
 
 
 
-# Apply the color theme
-st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
+
 
 # Load environment variables
 load_dotenv()
