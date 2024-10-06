@@ -443,7 +443,7 @@ if st.sidebar.button("🚪 Log Out,📄 Terms and Conditions"):
 st.sidebar.markdown("---")
 st.sidebar.markdown("[Terms and Conditions](/Terms_and_Conditions)")
     
-else:
+    else:
     st.write("Please log in to access the full features of the app")
     st.sidebar.markdown("---")
     st.sidebar.markdown("[Terms and Conditions](/Terms_and_Conditions)")
