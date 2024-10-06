@@ -397,7 +397,6 @@ def main():
             "📦 My Orders": display_user_orders,
             "🗺️ Map": display_map,
             "🛍️ Services": display_services,
-            "🎦 Live": live_shop
         }
 
         cols = st.columns(len(menu_items))
