@@ -349,8 +349,9 @@ RESTAURANTS = {
 
 def auth0_authentication():
   # Retrieve Auth0 credentials from Streamlit secrets
-  AUTH0_CLIENT_ID = st.secrets["auth0"]["client_id"]
-  AUTH0_DOMAIN = st.secrets["auth0"]["domain"]
+AUTH0_CLIENT_ID = st.secrets["auth0"]["AUTH0_CLIENT_ID"]
+AUTH0_DOMAIN = st.secrets["auth0"]["AUTH0_DOMAIN"]
+AUTH0_CALLBACK_URL = os.getenv("https://localbutler.streamlit.app/")
 
   if 'user' not in st.session_state:
       st.session_state.user = None
