@@ -352,9 +352,12 @@ RESTAURANTS = {
 }
 
 def auth0_authentication():
-  # Retrieve Auth0 credentials from Streamlit secrets
+  logging.info("Starting auth0_authentication function")
+  
   AUTH0_CLIENT_ID = st.secrets["auth0"]["AUTH0_CLIENT_ID"]
   AUTH0_DOMAIN = st.secrets["auth0"]["AUTH0_DOMAIN"]
+
+  logging.info(f"Auth0 credentials loaded: CLIENT_ID={AUTH0_CLIENT_ID}, DOMAIN={AUTH0_DOMAIN}")
 
   if 'user' not in st.session_state:
       st.session_state.user = None
@@ -363,32 +366,44 @@ def auth0_authentication():
       auth_choice = st.sidebar.radio("Choose action", ["🔑 Customer Login", "🚗 Driver Login"])
       
       if st.sidebar.button("Login"):
-          user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
-          
-          if user_info:
-              session = Session()
-              user = session.query(User).filter_by(email=user_info['email']).first()
-              if not user:
-                  # Create a new user if they don't exist in your database
-                  user = User(
-                      id=user_info['sub'],
-                      name=user_info['name'],
-                      email=user_info['email'],
-                      type='driver' if auth_choice == "🚗 Driver Login" else 'customer',
-                      address=''  # Can be updated later
-                  )
-                  session.add(user)
-                  session.commit()
-              elif auth_choice == "🚗 Driver Login" and user.type != 'driver':
-                  # Update existing user to driver if they're logging in as a driver
-                  user.type = 'driver'
-                  session.commit()
+          logging.info(f"Login button clicked for {auth_choice}")
+          try:
+              user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
+              logging.info(f"User info received: {user_info}")
               
-              st.session_state.user = user
-              st.success(f"Welcome, {'Driver' if user.type == 'driver' else ''} {user.name}!")
+              if user_info:
+                  session = Session()
+                  user = session.query(User).filter_by(email=user_info['email']).first()
+                  if not user:
+                      logging.info("Creating new user")
+                      user = User(
+                          id=user_info['sub'],
+                          name=user_info['name'],
+                          email=user_info['email'],
+                          type='driver' if auth_choice == "🚗 Driver Login" else 'customer',
+                          address=''
+                      )
+                      session.add(user)
+                      session.commit()
+                  elif auth_choice == "🚗 Driver Login" and user.type != 'driver':
+                      logging.info("Updating existing user to driver")
+                      user.type = 'driver'
+                      session.commit()
+                  
+                  st.session_state.user = user
+                  logging.info(f"User authenticated: {user.name}")
+                  st.success(f"Welcome, {'Driver' if user.type == 'driver' else ''} {user.name}!")
+              else:
+                  logging.warning("Login failed: No user info received")
+                  st.error("Login failed. Please try again.")
+          except Exception as e:
+              logging.error(f"Error during authentication: {str(e)}")
+              st.error(f"An error occurred during login: {str(e)}")
+          finally:
+              if 'session' in locals():
+                  session.close()
 
   return st.session_state.user
-
 def main():
   st.title("🚚 Local Butler")
 
