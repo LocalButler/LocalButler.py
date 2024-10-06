@@ -21,7 +21,6 @@ from dotenv import load_dotenv
 from auth0_component import login_button
 from sqlalchemy import inspect
 from functools import lru_cache
-from pystrix import Manager
 
 st.set_page_config(
     page_title="Log In",
