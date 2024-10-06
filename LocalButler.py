@@ -1,6 +1,5 @@
 import streamlit as st
 from streamlit.runtime.scriptrunner import get_script_run_ctx
-import cv2
 import pandas as pd
 import numpy as np
 import folium
