@@ -405,11 +405,7 @@ def auth0_authentication():
     return st.session_state.user
 
 def main():
-
-
     user = auth0_authentication()
-
-    
 
     if user:
         if 'current_page' not in st.session_state:
@@ -435,18 +431,18 @@ def main():
         # Display the current page
         menu_items[st.session_state.current_page]()
 
-if st.sidebar.button("🚪 Log Out,📄 Terms and Conditions"):
-    st.session_state.user = None
-    st.success("Logged out successfully.")
-    st.experimental_rerun()
+        if st.sidebar.button("🚪 Log Out"):
+            st.session_state.user = None
+            st.success("Logged out successfully.")
+            st.experimental_rerun()
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("[Terms and Conditions](/Terms_and_Conditions)")
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("[Terms and Conditions](/Terms_and_Conditions)")
     
     else:
-    st.write("Please log in to access the full features of the app")
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("[Terms and Conditions](/Terms_and_Conditions)")
+        st.write("Please log in to access the full features of the app")
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("[Terms and Conditions](/Terms_and_Conditions)")
 
 def home_page():
     st.write(f"Welcome to Local Butler, {st.session_state.user.name}! 🎉")
