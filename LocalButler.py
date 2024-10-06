@@ -399,8 +399,6 @@ def main():
             "🛍️ Services": display_services,
             "🎦 Live": live_shop
         }
-        if user.type == 'driver':
-            menu_items["🚗 Driver Dashboard"] = driver_dashboard
 
         cols = st.columns(len(menu_items))
         for i, (emoji_label, func) in enumerate(menu_items.items()):
