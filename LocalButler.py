@@ -365,44 +365,45 @@ def auth0_authentication():
   if st.session_state.user is None:
       auth_choice = st.sidebar.radio("Choose action", ["🔑 Customer Login", "🚗 Driver Login"])
       
-      # Use the imported login_button directly
-      user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
-      
-      if user_info:
-          logging.info(f"User info received: {user_info}")
-          try:
-              session = Session()
-              user = session.query(User).filter_by(email=user_info['email']).first()
-              if not user:
-                  logging.info("Creating new user")
-                  user = User(
-                      id=user_info['sub'],
-                      name=user_info['name'],
-                      email=user_info['email'],
-                      type='driver' if auth_choice == "🚗 Driver Login" else 'customer',
-                      address=''
-                  )
-                  session.add(user)
-                  session.commit()
-              elif auth_choice == "🚗 Driver Login" and user.type != 'driver':
-                  logging.info("Updating existing user to driver")
-                  user.type = 'driver'
-                  session.commit()
-              
-              st.session_state.user = user
-              st.session_state.user_type = user.type
-              logging.info(f"User authenticated: {user.name}, Type: {user.type}")
-              st.success(f"Welcome, {'Driver' if user.type == 'driver' else ''} {user.name}!")
-              return user.type
-          except Exception as e:
-              logging.error(f"Error during authentication: {str(e)}")
-              st.error(f"An error occurred during login: {str(e)}")
-          finally:
-              if 'session' in locals():
-                  session.close()
-      elif user_info is False:
-          logging.warning("Login failed: No user info received")
-          st.error("Login failed. Please try again.")
+      # Only attempt login when the button is clicked
+      if st.sidebar.button("Login"):
+          user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
+          
+          if user_info:
+              logging.info(f"User info received: {user_info}")
+              try:
+                  session = Session()
+                  user = session.query(User).filter_by(email=user_info['email']).first()
+                  if not user:
+                      logging.info("Creating new user")
+                      user = User(
+                          id=user_info['sub'],
+                          name=user_info['name'],
+                          email=user_info['email'],
+                          type='driver' if auth_choice == "🚗 Driver Login" else 'customer',
+                          address=''
+                      )
+                      session.add(user)
+                      session.commit()
+                  elif auth_choice == "🚗 Driver Login" and user.type != 'driver':
+                      logging.info("Updating existing user to driver")
+                      user.type = 'driver'
+                      session.commit()
+                  
+                  st.session_state.user = user
+                  st.session_state.user_type = user.type
+                  logging.info(f"User authenticated: {user.name}, Type: {user.type}")
+                  st.success(f"Welcome, {'Driver' if user.type == 'driver' else ''} {user.name}!")
+                  return user.type
+              except Exception as e:
+                  logging.error(f"Error during authentication: {str(e)}")
+                  st.error(f"An error occurred during login: {str(e)}")
+              finally:
+                  if 'session' in locals():
+                      session.close()
+          else:
+              logging.warning("Login failed: No user info received")
+              st.error("Login failed. Please try again.")
 
   return st.session_state.user_type if st.session_state.user else None
 
