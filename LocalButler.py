@@ -391,8 +391,10 @@ def auth0_authentication():
                       session.commit()
                   
                   st.session_state.user = user
-                  logging.info(f"User authenticated: {user.name}")
+                  st.session_state.user_type = user.type
+                  logging.info(f"User authenticated: {user.name}, Type: {user.type}")
                   st.success(f"Welcome, {'Driver' if user.type == 'driver' else ''} {user.name}!")
+                  return user.type
               else:
                   logging.warning("Login failed: No user info received")
                   st.error("Login failed. Please try again.")
@@ -403,27 +405,34 @@ def auth0_authentication():
               if 'session' in locals():
                   session.close()
 
-  return st.session_state.user
+  return st.session_state.user_type if st.session_state.user else None
+
 def main():
   st.title("🚚 Local Butler")
 
-  user = auth0_authentication()
+  user_type = auth0_authentication()
 
-  if user:
+  if user_type:
       if 'current_page' not in st.session_state:
           st.session_state.current_page = "🏠 Home"
 
-      # Creative menu
-      menu_items = {
-          "🏠 Home": home_page,
-          "🛒 Order Now": place_order,
-          "📦 My Orders": display_user_orders,
-          "🗺️ Map": display_map,
-          "🛍️ Services": display_services,
-          "🎦 Live": live_shop
-      }
-      if user.type == 'driver':
-          menu_items["🚗 Driver Dashboard"] = driver_dashboard
+      if user_type == 'driver':
+          # Driver menu
+          menu_items = {
+              "🚗 Driver Dashboard": driver_dashboard,
+              "📦 Available Orders": display_available_orders,
+              "🗺️ Map": display_map,
+          }
+      else:
+          # Customer menu
+          menu_items = {
+              "🏠 Home": home_page,
+              "🛒 Order Now": place_order,
+              "📦 My Orders": display_user_orders,
+              "🗺️ Map": display_map,
+              "🛍️ Services": display_services,
+              "🎦 Live": live_shop
+          }
 
       cols = st.columns(len(menu_items))
       for i, (emoji_label, func) in enumerate(menu_items.items()):
@@ -435,7 +444,9 @@ def main():
 
       if st.sidebar.button("🚪 Log Out"):
           st.session_state.user = None
+          st.session_state.user_type = None
           st.success("Logged out successfully.")
+          st.experimental_rerun()
   else:
       st.write("Please log in to access the full features of the app")
 def home_page():
@@ -662,6 +673,8 @@ def driver_dashboard():
                         merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
                         st.write(f"🏪 Pickup: {merchant.name if merchant else 'Not available'}")
                         st.write(f"📍 Delivery Address: {order.address}")
+                        st.write(f"📅 Date: {order.date}")
+                        st.write(f"🕒 Time: {order.time}")
                         if st.button(f"✅ Accept Order {order.id}", key=f"accept_{order.id}"):
                             order.status = 'Preparing'
                             session.commit()
@@ -672,6 +685,27 @@ def driver_dashboard():
         time.sleep(10)  # Check for new orders every 10 seconds
         session.commit()  # Refresh the session to get the latest data
 
+    session.close()
+
+def display_available_orders():
+    st.subheader("📦 Available Orders")
+    session = Session()
+    available_orders = session.query(Order).filter_by(status='Pending').all()
+    
+    if not available_orders:
+        st.info("No pending orders at the moment.")
+    else:
+        for order in available_orders:
+            with st.expander(f"Order ID: {order.id}"):
+                st.write(f"Date: {order.date}")
+                st.write(f"Time: {order.time}")
+                st.write(f"Address: {order.address}")
+                if st.button(f"Accept Order {order.id}"):
+                    order.status = 'Preparing'
+                    session.commit()
+                    st.success(f"You have accepted order {order.id}")
+                    st.experimental_rerun()
+    
     session.close()
 
 def display_services():
