@@ -1,6 +1,5 @@
 import streamlit as st
 from streamlit.runtime.scriptrunner import get_script_run_ctx
-from streamlit_webrtc import webrtc_streamer
 import av
 import cv2
 import pandas as pd
@@ -747,9 +746,9 @@ def live_shop():
     # Instructions
     with st.expander("How to use LIVE SHOP"):
         st.write(f"""
-        1. Click the 'START LIVE SESSION' button below to begin your video session with {st.session_state.selected_store}.
-        2. Wait for a {st.session_state.selected_store} associate to join the call.
-        3. Communicate your shopping needs via video and chat.
+        1. Click the 'START LIVE SESSION' button below to begin your session with {st.session_state.selected_store}.
+        2. Wait for a {st.session_state.selected_store} associate to join the chat.
+        3. Communicate your shopping needs via chat.
         4. View product recommendations in the 'Featured Products' section.
         5. Complete your purchase through our secure checkout process.
         """)
@@ -759,33 +758,9 @@ def live_shop():
         st.session_state.live_session_active = not st.session_state.live_session_active
 
     if st.session_state.live_session_active:
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.subheader("Your Camera")
-            def user_video_frame_callback(frame):
-                img = frame.to_ndarray(format="bgr24")
-                cv2.putText(img, f"User - Local Butler LIVE SHOP", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                return av.VideoFrame.from_ndarray(img, format="bgr24")
-
-            webrtc_streamer(
-                key=f"user_live_shop_{st.session_state.selected_store}",
-                video_frame_callback=user_video_frame_callback,
-                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-            )
-
-        with col2:
-            st.subheader(f"{st.session_state.selected_store} Associate")
-            def merchant_video_frame_callback(frame):
-                img = frame.to_ndarray(format="bgr24")
-                cv2.putText(img, f"{st.session_state.selected_store} Associate", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                return av.VideoFrame.from_ndarray(img, format="bgr24")
-
-            webrtc_streamer(
-                key=f"merchant_live_shop_{st.session_state.selected_store}",
-                video_frame_callback=merchant_video_frame_callback,
-                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-            )
+        # Remove the video streaming feature
+        # Instead, display a placeholder for future video implementation
+        st.info("Video streaming feature coming soon! For now, please use the chat to communicate with the store associate.")
 
         # Simple chat feature
         st.subheader(f"Chat with {st.session_state.selected_store} Associate")
@@ -818,6 +793,5 @@ def live_shop():
             st.markdown(f"[Visit {st.session_state.selected_store}'s Website]({store_info['url']})")
     else:
         st.info("Click 'START LIVE SESSION' to begin your live shopping experience.")
-
 if __name__ == "__main__":
     main()
