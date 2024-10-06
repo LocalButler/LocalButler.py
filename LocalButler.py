@@ -378,7 +378,6 @@ def auth0_authentication():
               
               st.session_state.user = user
               st.success(f"Welcome, {user.name}!")
-              st.experimental_rerun()
 
   return st.session_state.user
 
