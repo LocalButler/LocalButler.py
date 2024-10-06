@@ -20,10 +20,6 @@ from dotenv import load_dotenv
 from auth0_component import login_button
 from sqlalchemy import inspect
 from functools import lru_cache
-import logging
-
-logging.basicConfig(level=logging.INFO)
-
 
 # Apply the color theme
 st.set_page_config(page_title="Local Butler", page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png", layout="wide")
@@ -352,102 +348,74 @@ RESTAURANTS = {
 }
 
 def auth0_authentication():
-  logging.info("Starting auth0_authentication function")
-  
+  # Retrieve Auth0 credentials from Streamlit secrets
   AUTH0_CLIENT_ID = st.secrets["auth0"]["AUTH0_CLIENT_ID"]
   AUTH0_DOMAIN = st.secrets["auth0"]["AUTH0_DOMAIN"]
 
-  logging.info(f"Auth0 credentials loaded: CLIENT_ID={AUTH0_CLIENT_ID}, DOMAIN={AUTH0_DOMAIN}")
-
   if 'user' not in st.session_state:
       st.session_state.user = None
-  if 'login_attempted' not in st.session_state:
-      st.session_state.login_attempted = False
 
   if st.session_state.user is None:
-      # Remove the radio button for choosing login type
-      login_placeholder = st.empty()
-      if login_placeholder.button("Login"):
-          st.session_state.login_attempted = True
+      auth_choice = st.sidebar.radio("Choose action", ["🔑 Login"])
+      
+      if auth_choice == "🔑 Login":
           user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
           
           if user_info:
-              logging.info(f"User info received: {user_info}")
-              try:
-                  session = Session()
-                  user = session.query(User).filter_by(email=user_info['email']).first()
-                  if not user:
-                      logging.info("Creating new user")
-                      user = User(
-                          id=user_info['sub'],
-                          name=user_info['name'],
-                          email=user_info['email'],
-                          type='customer',  # Always set as customer
-                          address=''
-                      )
-                      session.add(user)
-                      session.commit()
-                  
-                  st.session_state.user = user
-                  st.session_state.user_type = 'customer'  # Always set as customer
-                  logging.info(f"User authenticated: {user.name}")
-                  login_placeholder.success(f"Welcome, {user.name}!")
-                  return 'customer'
-              except Exception as e:
-                  logging.error(f"Error during authentication: {str(e)}")
-                  login_placeholder.error(f"An error occurred during login: {str(e)}")
-              finally:
-                  if 'session' in locals():
-                      session.close()
-          elif st.session_state.login_attempted:
-              logging.warning("Login failed: No user info received")
-              login_placeholder.error("Login failed. Please try again.")
+              session = Session()
+              user = session.query(User).filter_by(email=user_info['email']).first()
+              if not user:
+                  # Create a new user if they don't exist in your database
+                  user = User(
+                      id=user_info['sub'],
+                      name=user_info['name'],
+                      email=user_info['email'],
+                      type='customer',  # Default type, can be updated later
+                      address=''  # Can be updated later
+                  )
+                  session.add(user)
+                  session.commit()
+              
+              st.session_state.user = user
+              st.success(f"Welcome, {user.name}!")
 
-  return 'customer' if st.session_state.user else None
+  return st.session_state.user
 
 def main():
-  st.title("🚚 Local Butler")
+    st.title("🚚 Local Butler")
 
-  user_type = auth0_authentication()
+    user = auth0_authentication()
 
-  if user_type:
-      if 'current_page' not in st.session_state:
-          st.session_state.current_page = "🏠 Home"
+    if user:
+        if 'current_page' not in st.session_state:
+            st.session_state.current_page = "🏠 Home"
 
-      if user_type == 'driver':
-          # Driver menu
-          menu_items = {
-              "🚗 Driver Dashboard": driver_dashboard,
-              "📦 Available Orders": display_available_orders,
-              "🗺️ Map": display_map,
-          }
-      else:
-          # Customer menu
-          menu_items = {
-              "🏠 Home": home_page,
-              "🛒 Order Now": place_order,
-              "📦 My Orders": display_user_orders,
-              "🗺️ Map": display_map,
-              "🛍️ Services": display_services,
-              "🎦 Live": live_shop
-          }
+        # Creative menu
+        menu_items = {
+            "🏠 Home": home_page,
+            "🛒 Order Now": place_order,
+            "📦 My Orders": display_user_orders,
+            "🗺️ Map": display_map,
+            "🛍️ Services": display_services,
+            "🎦 Live": live_shop
+        }
+        if user.type == 'driver':
+            menu_items["🚗 Driver Dashboard"] = driver_dashboard
 
-      cols = st.columns(len(menu_items))
-      for i, (emoji_label, func) in enumerate(menu_items.items()):
-          if cols[i].button(emoji_label):
-              st.session_state.current_page = emoji_label
+        cols = st.columns(len(menu_items))
+        for i, (emoji_label, func) in enumerate(menu_items.items()):
+            if cols[i].button(emoji_label):
+                st.session_state.current_page = emoji_label
 
-      # Display the current page
-      menu_items[st.session_state.current_page]()
+        # Display the current page
+        menu_items[st.session_state.current_page]()
 
-      if st.sidebar.button("🚪 Log Out"):
-          st.session_state.user = None
-          st.session_state.user_type = None
-          st.session_state.login_attempted = False
-          st.success("Logged out successfully.")
-          st.rerun()
-  else:
-      st.write("Please log in to access the full features of the app")
+        if st.sidebar.button("🚪 Log Out"):
+            st.session_state.user = None
+            st.success("Logged out successfully.")
+    else:
+        st.write("Please log in to access the full features of the app")
+
 def home_page():
     st.write(f"Welcome to Local Butler, {st.session_state.user.name}! 🎉")
     session = Session()
@@ -672,37 +640,16 @@ def driver_dashboard():
                         merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
                         st.write(f"🏪 Pickup: {merchant.name if merchant else 'Not available'}")
                         st.write(f"📍 Delivery Address: {order.address}")
-                        st.write(f"📅 Date: {order.date}")
-                        st.write(f"🕒 Time: {order.time}")
                         if st.button(f"✅ Accept Order {order.id}", key=f"accept_{order.id}"):
                             order.status = 'Preparing'
                             session.commit()
                             st.success(f"You have accepted order {order.id} 🎉")
                             time.sleep(2)  # Give time for the success message to be seen
+                            st.experimental_rerun()  # Rerun the app to update the order list
         
         time.sleep(10)  # Check for new orders every 10 seconds
         session.commit()  # Refresh the session to get the latest data
 
-    session.close()
-
-def display_available_orders():
-    st.subheader("📦 Available Orders")
-    session = Session()
-    available_orders = session.query(Order).filter_by(status='Pending').all()
-    
-    if not available_orders:
-        st.info("No pending orders at the moment.")
-    else:
-        for order in available_orders:
-            with st.expander(f"Order ID: {order.id}"):
-                st.write(f"Date: {order.date}")
-                st.write(f"Time: {order.time}")
-                st.write(f"Address: {order.address}")
-                if st.button(f"Accept Order {order.id}"):
-                    order.status = 'Preparing'
-                    session.commit()
-                    st.success(f"You have accepted order {order.id}")
-    
     session.close()
 
 def display_services():
