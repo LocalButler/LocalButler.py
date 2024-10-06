@@ -413,7 +413,6 @@ def main():
         if st.sidebar.button("🚪 Log Out"):
             st.session_state.user = None
             st.success("Logged out successfully.")
-            st.experimental_rerun()
     else:
         st.write("Please log in to access the full features of the app")
 
