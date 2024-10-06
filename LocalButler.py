@@ -348,38 +348,39 @@ RESTAURANTS = {
 }
 
 def auth0_authentication():
-      # Retrieve Auth0 credentials from Streamlit secrets
+  # Retrieve Auth0 credentials from Streamlit secrets
   AUTH0_CLIENT_ID = st.secrets["auth0"]["client_id"]
   AUTH0_DOMAIN = st.secrets["auth0"]["domain"]
-    if 'user' not in st.session_state:
-        st.session_state.user = None
 
-    if st.session_state.user is None:
-        auth_choice = st.sidebar.radio("Choose action", ["🔑 Login"])
-        
-        if auth_choice == "🔑 Login":
-            user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
-            
-            if user_info:
-                session = Session()
-                user = session.query(User).filter_by(email=user_info['email']).first()
-                if not user:
-                    # Create a new user if they don't exist in your database
-                    user = User(
-                        id=user_info['sub'],
-                        name=user_info['name'],
-                        email=user_info['email'],
-                        type='customer',  # Default type, can be updated later
-                        address=''  # Can be updated later
-                    )
-                    session.add(user)
-                    session.commit()
-                
-                st.session_state.user = user
-                st.success(f"Welcome, {user.name}!")
-                st.experimental_rerun()
+  if 'user' not in st.session_state:
+      st.session_state.user = None
 
-    return st.session_state.user
+  if st.session_state.user is None:
+      auth_choice = st.sidebar.radio("Choose action", ["🔑 Login"])
+      
+      if auth_choice == "🔑 Login":
+          user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
+          
+          if user_info:
+              session = Session()
+              user = session.query(User).filter_by(email=user_info['email']).first()
+              if not user:
+                  # Create a new user if they don't exist in your database
+                  user = User(
+                      id=user_info['sub'],
+                      name=user_info['name'],
+                      email=user_info['email'],
+                      type='customer',  # Default type, can be updated later
+                      address=''  # Can be updated later
+                  )
+                  session.add(user)
+                  session.commit()
+              
+              st.session_state.user = user
+              st.success(f"Welcome, {user.name}!")
+              st.experimental_rerun()
+
+  return st.session_state.user
 
 def main():
     st.title("🚚 Local Butler")
