@@ -356,9 +356,9 @@ def auth0_authentication():
       st.session_state.user = None
 
   if st.session_state.user is None:
-      auth_choice = st.sidebar.radio("Choose action", ["🔑 Login"])
+      auth_choice = st.sidebar.radio("Choose action", ["🔑 Customer Login", "🚗 Driver Login"])
       
-      if auth_choice == "🔑 Login":
+      if st.sidebar.button("Login"):
           user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
           
           if user_info:
@@ -370,52 +370,55 @@ def auth0_authentication():
                       id=user_info['sub'],
                       name=user_info['name'],
                       email=user_info['email'],
-                      type='customer',  # Default type, can be updated later
+                      type='driver' if auth_choice == "🚗 Driver Login" else 'customer',
                       address=''  # Can be updated later
                   )
                   session.add(user)
                   session.commit()
+              elif auth_choice == "🚗 Driver Login" and user.type != 'driver':
+                  # Update existing user to driver if they're logging in as a driver
+                  user.type = 'driver'
+                  session.commit()
               
               st.session_state.user = user
-              st.success(f"Welcome, {user.name}!")
+              st.success(f"Welcome, {'Driver' if user.type == 'driver' else ''} {user.name}!")
 
   return st.session_state.user
 
 def main():
-    st.title("🚚 Local Butler")
+  st.title("🚚 Local Butler")
 
-    user = auth0_authentication()
+  user = auth0_authentication()
 
-    if user:
-        if 'current_page' not in st.session_state:
-            st.session_state.current_page = "🏠 Home"
+  if user:
+      if 'current_page' not in st.session_state:
+          st.session_state.current_page = "🏠 Home"
 
-        # Creative menu
-        menu_items = {
-            "🏠 Home": home_page,
-            "🛒 Order Now": place_order,
-            "📦 My Orders": display_user_orders,
-            "🗺️ Map": display_map,
-            "🛍️ Services": display_services,
-            "🎦 Live": live_shop
-        }
-        if user.type == 'driver':
-            menu_items["🚗 Driver Dashboard"] = driver_dashboard
+      # Creative menu
+      menu_items = {
+          "🏠 Home": home_page,
+          "🛒 Order Now": place_order,
+          "📦 My Orders": display_user_orders,
+          "🗺️ Map": display_map,
+          "🛍️ Services": display_services,
+          "🎦 Live": live_shop
+      }
+      if user.type == 'driver':
+          menu_items["🚗 Driver Dashboard"] = driver_dashboard
 
-        cols = st.columns(len(menu_items))
-        for i, (emoji_label, func) in enumerate(menu_items.items()):
-            if cols[i].button(emoji_label):
-                st.session_state.current_page = emoji_label
+      cols = st.columns(len(menu_items))
+      for i, (emoji_label, func) in enumerate(menu_items.items()):
+          if cols[i].button(emoji_label):
+              st.session_state.current_page = emoji_label
 
-        # Display the current page
-        menu_items[st.session_state.current_page]()
+      # Display the current page
+      menu_items[st.session_state.current_page]()
 
-        if st.sidebar.button("🚪 Log Out"):
-            st.session_state.user = None
-            st.success("Logged out successfully.")
-    else:
-        st.write("Please log in to access the full features of the app")
-
+      if st.sidebar.button("🚪 Log Out"):
+          st.session_state.user = None
+          st.success("Logged out successfully.")
+  else:
+      st.write("Please log in to access the full features of the app")
 def home_page():
     st.write(f"Welcome to Local Butler, {st.session_state.user.name}! 🎉")
     session = Session()
