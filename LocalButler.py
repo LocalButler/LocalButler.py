@@ -74,7 +74,7 @@ class Order(Base):
     address = Column(String, nullable=False)
     status = Column(String, nullable=False)
     payment_status = Column(String, default="Pending")
-    payment_method = Column(String, default="Online")  # Online or In-Person
+    payment_method = Column(String, default="Online")
     total_amount = Column(Float, default=0.0)
     user = relationship("User")
     merchant = relationship("Merchant")
@@ -125,6 +125,7 @@ def geocode_with_retry(address, max_retries=3, initial_delay=1):
             time.sleep(initial_delay * (2 ** attempt))
             location = geolocator.geocode(address)
             if location:
+                geocoding_cache[address] = location
                 return location
         except (GeocoderTimedOut, GeocoderServiceError) as e:
             if attempt == max_retries - 1:
@@ -138,6 +139,7 @@ class Service:
     url: str
     instructions: list
     video_url: str = None
+    video_title: str = None
     image_url: str = None
     address: str = None
     phone: str = None
@@ -181,7 +183,7 @@ def create_stripe_checkout_session(order_id, amount, service_type):
                     'product_data': {
                         'name': f"Local Butler {service_type} - Order {order_id}"
                     },
-                    'unit_amount': int(amount * 100),  # Convert to cents
+                    'unit_amount': int(amount * 100),
                 },
                 'quantity': 1,
             }],
@@ -196,8 +198,8 @@ def create_stripe_checkout_session(order_id, amount, service_type):
 
 # Laundry pricing
 def calculate_laundry_total(weight):
-    RATE_PER_POUND = 2.00  # $2 per pound
-    MINIMUM_WEIGHT = 5.0   # Minimum 5 pounds
+    RATE_PER_POUND = 2.00
+    MINIMUM_WEIGHT = 5.0
     if weight < MINIMUM_WEIGHT:
         return MINIMUM_WEIGHT * RATE_PER_POUND
     return weight * RATE_PER_POUND
@@ -243,40 +245,40 @@ st.markdown(f"""
 # Service dictionary
 SERVICES = {
     "Groceries": {
-        "Local Butler Groceries": {
-            "url": "https://localbutler.streamlit.app",
+        "Weis Markets": {
+            "url": "https://www.weismarkets.com/",
+            "video_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/1ff75ee91b2717fabadb44ee645612d6e48e8ee3/Weis%20Promo%20Online%20ordering%20%E2%80%90.mp4",
             "instructions": [
-                "Order groceries via our app.",
-                "Select pick-up time and address.",
-                "We coordinate with local stores."
+                "Place your order directly with Weis Markets using your own account.",
+                "Select store pick-up and specify the date and time.",
+                "Let Butler Bot know you've placed a pick-up order."
             ],
             "address": "2288 Blue Water Boulevard, Odenton, MD 21113",
             "phone": "(410) 672-1877"
+        },
+        "SafeWay": {
+            "url": "https://www.safeway.com/",
+            "instructions": [
+                "Place your order directly with Safeway using your own account.",
+                "Select store pick-up and specify the date and time.",
+                "Let Butler Bot know you've placed a pick-up order."
+            ],
+            "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/safeway%20app%20ads.png",
+            "address": "7643 Arundel Mills Blvd, Hanover, MD 21076",
+            "phone": "(410) 904-7222"
         }
     },
     "Restaurants": {
-        "Local Butler Restaurants": {
-            "url": "https://localbutler.streamlit.app",
+        "The Hideaway": {
+            "url": "https://order.toasttab.com/online/hideawayodenton",
             "instructions": [
-                "Order food via our app.",
-                "Select pick-up time and address.",
-                "We coordinate with local restaurants."
+                "Place your order directly with The Hideaway using their website.",
+                "Select pick-up and specify the date and time.",
+                "Let Butler Bot know you've placed a pick-up order."
             ],
+            "image_url": "https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/TheHideAway.jpg",
             "address": "1439 Odenton Rd, Odenton, MD 21113",
             "phone": "(410) 874-7213"
-        }
-    },
-    "Dog Walking": {
-        "Local Butler Dog Walking": {
-            "url": "https://localbutler.streamlit.app",
-            "instructions": [
-                "Select duration (30 or 60 minutes).",
-                "Specify time and address.",
-                "Our team walks your dog with care."
-            ],
-            "address": "Odenton, MD 21113",
-            "phone": "(410) 555-1234",
-            "hours": "Mon-Sun 7am-7pm"
         }
     },
     "Laundry": {
@@ -292,32 +294,6 @@ SERVICES = {
             "phone": "(410) 555-5678",
             "hours": "Mon-Fri 8am-6pm"
         }
-    },
-    "Home Cleaning": {
-        "Local Butler Cleaning": {
-            "url": "https://localbutler.streamlit.app",
-            "instructions": [
-                "Select number of rooms and cleaning type.",
-                "Schedule a time and address.",
-                "Our team ensures a spotless home."
-            ],
-            "address": "Odenton, MD 21113",
-            "phone": "(410) 555-9012",
-            "hours": "Mon-Sat 9am-5pm"
-        }
-    },
-    "Carwash/Detailing": {
-        "Local Butler Carwash": {
-            "url": "https://localbutler.streamlit.app",
-            "instructions": [
-                "Choose wash or detailing package.",
-                "Schedule time and location.",
-                "We make your car shine."
-            ],
-            "address": "Odenton, MD 21113",
-            "phone": "(410) 555-3456",
-            "hours": "Mon-Sun 8am-6pm"
-        }
     }
 }
 
@@ -330,6 +306,25 @@ PARTNERSHIPS = {
         "image_url": "https://example.com/factor_logo.jpg"
     }
 }
+
+def populate_merchants():
+    session = Session()
+    for service_type, providers in SERVICES.items():
+        for provider_name, provider_info in providers.items():
+            location = geocode_with_retry(provider_info['address'])
+            if location:
+                merchant = session.query(Merchant).filter_by(name=provider_name).first()
+                if not merchant:
+                    merchant = Merchant(
+                        name=provider_name,
+                        type=service_type,
+                        latitude=location.latitude,
+                        longitude=location.longitude,
+                        website=provider_info['url']
+                    )
+                    session.add(merchant)
+    session.commit()
+    session.close()
 
 def auth0_authentication():
     if 'user' not in st.session_state:
@@ -358,6 +353,7 @@ def auth0_authentication():
 
 def main():
     st.markdown("<h1 style='text-align: center;'>🚚 Local Butler</h1>", unsafe_allow_html=True)
+    populate_merchants()  # Ensure merchants are populated
 
     user = auth0_authentication()
 
@@ -372,6 +368,7 @@ def main():
             "🗺️ Map": display_map,
             "🛍️ Services": display_services,
             "🤝 Subscriptions": display_subscriptions,
+            "🚗 Driver Dashboard": driver_dashboard
         }
 
         cols = st.columns(len(menu_items))
@@ -383,6 +380,7 @@ def main():
         
         if st.sidebar.button("🚪 Log Out"):
             st.session_state.user = None
+            st.session_state.current_page = "🏠 Home"
             st.success("Logged out successfully.")
     else:
         st.write("Please log in to access Local Butler’s features.")
@@ -424,7 +422,6 @@ def place_order():
     )
     address = st.text_input("Service Address", value=st.session_state.address, key='address')
     
-    # Service-specific inputs
     if service_type == "Laundry":
         weight = st.number_input("Estimated Laundry Weight (lbs)", min_value=0.0, value=5.0, step=0.1)
         st.session_state.total_amount = calculate_laundry_total(weight)
@@ -458,6 +455,7 @@ def place_order():
             if 'delivery_notes' in locals():
                 st.write(f"**Notes**: {delivery_notes}")
 
+        merchant = session.query(Merchant).filter_by(name=provider).first()
         if payment_method == "Online":
             if st.button("💳 Pay with Card", key='stripe_button'):
                 if not all([provider, date, order_time, address, st.session_state.total_amount]):
@@ -469,6 +467,7 @@ def place_order():
                         new_order = Order(
                             id=order_id,
                             user_id=st.session_state.user.id,
+                            merchant_id=merchant.id if merchant else None,
                             service=service_type,
                             date=date,
                             time=order_time,
@@ -494,7 +493,7 @@ def place_order():
                     else:
                         st.error("Payment failed. Try again.")
                     session.close()
-        else:  # In-Person
+        else:
             if st.button("✅ Confirm In-Person Payment", key='inperson_button'):
                 if not all([provider, date, order_time, address, st.session_state.total_amount]):
                     st.error("Please fill in all required fields.")
@@ -503,6 +502,7 @@ def place_order():
                     new_order = Order(
                         id=order_id,
                         user_id=st.session_state.user.id,
+                        merchant_id=merchant.id if merchant else None,
                         service=service_type,
                         date=date,
                         time=order_time,
@@ -535,6 +535,9 @@ def display_user_orders():
                 st.write(f"**Total**: ${order.total_amount:.2f}")
                 st.write(f"**Payment Status**: {order.payment_status}")
                 st.write(f"**Payment Method**: {order.payment_method}")
+                merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+                if merchant:
+                    st.write(f"**Merchant**: {merchant.name}")
                 statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
                 status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
                 current_status_index = statuses.index(order.status)
@@ -569,6 +572,8 @@ def display_services():
                     name=provider_name,
                     url=provider_info['url'],
                     instructions=provider_info['instructions'],
+                    video_url=provider_info.get('video_url'),
+                    image_url=provider_info.get('image_url'),
                     address=provider_info.get('address'),
                     phone=provider_info.get('phone'),
                     hours=provider_info.get('hours')
@@ -613,6 +618,9 @@ def driver_dashboard():
                         st.write(f"**Address**: {order.address}")
                         st.write(f"**Total**: ${order.total_amount:.2f}")
                         st.write(f"**Payment Method**: {order.payment_method}")
+                        merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+                        if merchant:
+                            st.write(f"**Pickup**: {merchant.name}")
                         if order.service == "Laundry":
                             st.info("Verify laundry weight with portable scale at pick-up.")
                         if order.payment_method == "In-Person":
@@ -629,7 +637,9 @@ def driver_dashboard():
 
 def live_shop():
     st.subheader("📹 LIVE SHOP")
-    all_stores = {**SERVICES["Groceries"], **SERVICES["Restaurants"]}
+    all_stores = {}
+    for service_type, providers in SERVICES.items():
+        all_stores.update(providers)
     if 'selected_store' not in st.session_state:
         st.session_state.selected_store = None
     if 'live_session_active' not in st.session_state:
