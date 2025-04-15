@@ -17,6 +17,7 @@ import os
 from dotenv import load_dotenv
 from auth0_component import login_button
 from functools import lru_cache
+import stripe
 import requests
 import json
 
@@ -33,7 +34,11 @@ load_dotenv()
 
 AUTH0_CLIENT_ID = st.secrets["auth0"]["AUTH0_CLIENT_ID"]
 AUTH0_DOMAIN = st.secrets["auth0"]["AUTH0_DOMAIN"]
-PAYPAL_CLIENT_ID = st.secrets["paypal"]["PAYPAL_CLIENT_ID"]
+STRIPE_SECRET_KEY = st.secrets["stripe"]["STRIPE_SECRET_KEY"]
+STRIPE_PUBLISHABLE_KEY = st.secrets["stripe"]["STRIPE_PUBLISHABLE_KEY"]
+
+# Initialize Stripe
+stripe.api_key = STRIPE_SECRET_KEY
 
 # SQLAlchemy setup
 Base = sqlalchemy.orm.declarative_base()
@@ -69,6 +74,7 @@ class Order(Base):
     address = Column(String, nullable=False)
     status = Column(String, nullable=False)
     payment_status = Column(String, default="Pending")
+    payment_method = Column(String, default="Online")  # Online or In-Person
     total_amount = Column(Float, default=0.0)
     user = relationship("User")
     merchant = relationship("Merchant")
@@ -164,45 +170,29 @@ def update_map(address):
         return m, location
     return None, None
 
-# PayPal payment
-def process_paypal_payment(order_id, amount):
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {get_paypal_access_token()}"
-    }
-    payload = {
-        "intent": "CAPTURE",
-        "purchase_units": [{
-            "amount": {
-                "currency_code": "USD",
-                "value": f"{amount:.2f}"
-            },
-            "description": f"Local Butler Order {order_id}"
-        }],
-        "application_context": {
-            "return_url": "https://localbutler.streamlit.app/success",
-            "cancel_url": "https://localbutler.streamlit.app/cancel"
-        }
-    }
-    response = requests.post(
-        "https://api-m.sandbox.paypal.com/v2/checkout/orders",
-        headers=headers,
-        json=payload
-    )
-    if response.status_code == 201:
-        return response.json()
-    return None
-
-def get_paypal_access_token():
-    client_id = PAYPAL_CLIENT_ID
-    client_secret = st.secrets["paypal"]["PAYPAL_CLIENT_SECRET"]
-    response = requests.post(
-        "https://api-m.sandbox.paypal.com/v1/oauth2/token",
-        headers={"Accept": "application/json", "Accept-Language": "en_US"},
-        auth=(client_id, client_secret),
-        data={"grant_type": "client_credentials"}
-    )
-    return response.json().get("access_token")
+# Stripe online payment
+def create_stripe_checkout_session(order_id, amount, service_type):
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': f"Local Butler {service_type} - Order {order_id}"
+                    },
+                    'unit_amount': int(amount * 100),  # Convert to cents
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url="https://localbutler.streamlit.app/success",
+            cancel_url="https://localbutler.streamlit.app/cancel"
+        )
+        return checkout_session
+    except Exception as e:
+        st.error(f"Stripe error: {str(e)}")
+        return None
 
 # Laundry pricing
 def calculate_laundry_total(weight):
@@ -250,27 +240,27 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# Service dictionaries
+# Service dictionary
 SERVICES = {
     "Groceries": {
-        "Weis Markets": {
-            "url": "https://www.weismarkets.com/",
+        "Local Butler Groceries": {
+            "url": "https://localbutler.streamlit.app",
             "instructions": [
-                "Order directly with Weis Markets using your account.",
-                "Select store pick-up and specify date/time.",
-                "Notify Local Butler to coordinate."
+                "Order groceries via our app.",
+                "Select pick-up time and address.",
+                "We coordinate with local stores."
             ],
             "address": "2288 Blue Water Boulevard, Odenton, MD 21113",
             "phone": "(410) 672-1877"
         }
     },
     "Restaurants": {
-        "The Hideaway": {
-            "url": "https://order.toasttab.com/online/hideawayodenton",
+        "Local Butler Restaurants": {
+            "url": "https://localbutler.streamlit.app",
             "instructions": [
-                "Order directly with The Hideaway.",
-                "Select pick-up and specify date/time.",
-                "Notify Local Butler to coordinate."
+                "Order food via our app.",
+                "Select pick-up time and address.",
+                "We coordinate with local restaurants."
             ],
             "address": "1439 Odenton Rd, Odenton, MD 21113",
             "phone": "(410) 874-7213"
@@ -282,7 +272,7 @@ SERVICES = {
             "instructions": [
                 "Select duration (30 or 60 minutes).",
                 "Specify time and address.",
-                "Our team will walk your dog with care."
+                "Our team walks your dog with care."
             ],
             "address": "Odenton, MD 21113",
             "phone": "(410) 555-1234",
@@ -400,8 +390,6 @@ def main():
 def home_page():
     st.markdown(f"Welcome, {st.session_state.user.name}! 🎉")
     st.write("Book local services or subscribe to premium partners.")
-    session = Session()
-    merchants = session.query(Merchant).all()
     st.write("**Available Services:**")
     for service_type in SERVICES:
         st.markdown(f"- {service_type}")
@@ -422,6 +410,8 @@ def place_order():
         st.session_state.review_clicked = False
     if 'total_amount' not in st.session_state:
         st.session_state.total_amount = 0.0
+    if 'payment_method' not in st.session_state:
+        st.session_state.payment_method = "Online"
 
     session = Session()
     service_type = st.selectbox("Select Service Type", list(SERVICES.keys()), key='selected_service_type')
@@ -443,6 +433,9 @@ def place_order():
     else:
         st.session_state.total_amount = st.number_input("Order Amount ($)", min_value=0.01, value=10.00, step=0.01)
 
+    payment_method = st.radio("Payment Method", ["Online", "In-Person (Tap to Pay)"], key='payment_method')
+    st.session_state.payment_method = payment_method
+
     if address:
         map_obj, location = update_map(address)
         if map_obj:
@@ -461,16 +454,52 @@ def place_order():
             st.write(f"**Time**: {order_time}")
             st.write(f"**Address**: {address}")
             st.write(f"**Total**: ${st.session_state.total_amount:.2f}")
+            st.write(f"**Payment Method**: {payment_method}")
             if 'delivery_notes' in locals():
                 st.write(f"**Notes**: {delivery_notes}")
 
-        if st.button("💳 Pay with PayPal", key='paypal_button'):
-            if not all([provider, date, order_time, address, st.session_state.total_amount]):
-                st.error("Please fill in all required fields.")
-            else:
-                order_id = generate_order_id()
-                paypal_response = process_paypal_payment(order_id, st.session_state.total_amount)
-                if paypal_response:
+        if payment_method == "Online":
+            if st.button("💳 Pay with Card", key='stripe_button'):
+                if not all([provider, date, order_time, address, st.session_state.total_amount]):
+                    st.error("Please fill in all required fields.")
+                else:
+                    order_id = generate_order_id()
+                    checkout_session = create_stripe_checkout_session(order_id, st.session_state.total_amount, service_type)
+                    if checkout_session:
+                        new_order = Order(
+                            id=order_id,
+                            user_id=st.session_state.user.id,
+                            service=service_type,
+                            date=date,
+                            time=order_time,
+                            address=address,
+                            status='Pending',
+                            payment_status='Pending',
+                            payment_method='Online',
+                            total_amount=st.session_state.total_amount
+                        )
+                        session.add(new_order)
+                        session.commit()
+                        st.markdown(
+                            f"""
+                            <script src="https://js.stripe.com/v3/"></script>
+                            <script>
+                                var stripe = Stripe('{STRIPE_PUBLISHABLE_KEY}');
+                                stripe.redirectToCheckout({{ sessionId: '{checkout_session.id}' }});
+                            </script>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        st.session_state.review_clicked = False
+                    else:
+                        st.error("Payment failed. Try again.")
+                    session.close()
+        else:  # In-Person
+            if st.button("✅ Confirm In-Person Payment", key='inperson_button'):
+                if not all([provider, date, order_time, address, st.session_state.total_amount]):
+                    st.error("Please fill in all required fields.")
+                else:
+                    order_id = generate_order_id()
                     new_order = Order(
                         id=order_id,
                         user_id=st.session_state.user.id,
@@ -479,20 +508,15 @@ def place_order():
                         time=order_time,
                         address=address,
                         status='Pending',
-                        payment_status='Paid',
+                        payment_status='Pending',
+                        payment_method='In-Person',
                         total_amount=st.session_state.total_amount
                     )
                     session.add(new_order)
                     session.commit()
-                    st.markdown(
-                        f"<a href='{paypal_response['links'][1]['href']}' target='_blank'>Complete Payment</a>",
-                        unsafe_allow_html=True
-                    )
-                    st.success(f"Order {order_id} created! Complete payment via PayPal.")
+                    st.success(f"Order {order_id} created! Payment will be collected in-person via Tap to Pay.")
                     st.session_state.review_clicked = False
-                else:
-                    st.error("Payment failed. Try again.")
-                session.close()
+                    session.close()
 
 def display_user_orders():
     st.subheader("📦 My Orders")
@@ -510,6 +534,7 @@ def display_user_orders():
                 st.write(f"**Service**: {order.service}")
                 st.write(f"**Total**: ${order.total_amount:.2f}")
                 st.write(f"**Payment Status**: {order.payment_status}")
+                st.write(f"**Payment Method**: {order.payment_method}")
                 statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
                 status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
                 current_status_index = statuses.index(order.status)
@@ -587,8 +612,11 @@ def driver_dashboard():
                         st.write(f"**Service**: {order.service}")
                         st.write(f"**Address**: {order.address}")
                         st.write(f"**Total**: ${order.total_amount:.2f}")
+                        st.write(f"**Payment Method**: {order.payment_method}")
                         if order.service == "Laundry":
                             st.info("Verify laundry weight with portable scale at pick-up.")
+                        if order.payment_method == "In-Person":
+                            st.warning("Collect payment via Tap to Pay on your Android device.")
                         if st.button(f"✅ Accept Order {order.id}", key=f"accept_{order.id}"):
                             order.status = 'Preparing'
                             session.commit()
