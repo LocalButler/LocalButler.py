@@ -24,7 +24,7 @@ import json
 # Page configuration
 st.set_page_config(
     page_title="Local Butler",
-    page_icon="https://raw.githubusercontent.com/LocalButler/streamlit_app.py/main/LOGO.png",
+    page_icon="[invalid url, do not cite]
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -98,24 +98,25 @@ geocoding_cache = {}
 def generate_order_id():
     return f"ORD-{random.randint(10000, 99999)}"
 
-def create_map(businesses_to_show):
+@st.cache_data
+def create_map():
+    session = Session()
+    merchants = session.query(Merchant).all()
+    session.close()
+    if not merchants:
+        st.warning("No services found.")
+        return None
     m = folium.Map(location=[39.1054, -76.7285], zoom_start=12)
-    for name, info in businesses_to_show.items():
-        location = geocode_with_retry(info['address'])
-        if location:
-            popup_html = f"""
-            <b>{name}</b><br>
-            Address: {info['address']}<br>
-            Phone: {info['phone']}<br>
-            """
-            if 'url' in info and info['url']:
-                popup_html += f"<a href='{info['url']}' target='_blank'>Visit Website</a>"
-            folium.Marker(
-                [location.latitude, location.longitude],
-                popup=folium.Popup(popup_html, max_width=300)
-            ).add_to(m)
-        else:
-            st.warning(f"Could not locate {name}")
+    for merchant in merchants:
+        popup_html = f"""
+        <b>{merchant.name}</b><br>
+        Type: {merchant.type}<br>
+        Website: <a href='{merchant.website}' target='_blank'>{merchant.website}</a>
+        """
+        folium.Marker(
+            [merchant.latitude, merchant.longitude],
+            popup=folium.Popup(popup_html, max_width=300)
+        ).add_to(m)
     return m
 
 @lru_cache(maxsize=100)
@@ -162,7 +163,8 @@ def display_service(service: Service):
         st.write(f"**Hours**: {service.hours}")
 
 def update_map(address):
-    location = geocode_with_retry(address)
+    with st.spinner('Geocoding address...'):
+        location = geocode_with_retry(address)
     if location:
         m = folium.Map(location=[location.latitude, location.longitude], zoom_start=15)
         folium.Marker(
@@ -188,8 +190,8 @@ def create_stripe_checkout_session(order_id, amount, service_type):
                 'quantity': 1,
             }],
             mode='payment',
-            success_url="https://localbutler.streamlit.app/success",
-            cancel_url="https://localbutler.streamlit.app/cancel"
+            success_url="[invalid url, do not cite]
+            cancel_url="[invalid url, do not cite]
         )
         return checkout_session
     except Exception as e:
@@ -246,7 +248,7 @@ st.markdown(f"""
 SERVICES = {
     "Groceries": {
         "Weis Markets": {
-            "url": "https://www.weismarkets.com/",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Place your order directly with Weis Markets using your own account.",
                 "Select store pick-up and specify the date and time.",
@@ -256,7 +258,7 @@ SERVICES = {
             "phone": "(410) 672-1877"
         },
         "SafeWay": {
-            "url": "https://www.safeway.com/",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Place your order directly with Safeway using your own account.",
                 "Select store pick-up and specify the date and time.",
@@ -266,7 +268,7 @@ SERVICES = {
             "phone": "(410) 904-7222"
         },
         "Commissary": {
-            "url": "https://shop.commissaries.com/",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Place your order directly with the Commissary using your own account.",
                 "Select store pick-up and specify the date and time.",
@@ -289,7 +291,7 @@ SERVICES = {
     },
     "Restaurants": {
         "The Hideaway": {
-            "url": "https://order.toasttab.com/online/hideawayodenton",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Place your order directly with The Hideaway using their website.",
                 "Select pick-up and specify the date and time.",
@@ -299,7 +301,7 @@ SERVICES = {
             "phone": "(410) 874-7213"
         },
         "Ruth's Chris Steak House": {
-            "url": "https://order.ruthschris.com/",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Place your order directly with Ruth's Chris Steak House using their website.",
                 "Select pick-up and specify the date and time.",
@@ -309,7 +311,7 @@ SERVICES = {
             "phone": "(410) 451-9600"
         },
         "Baltimore Coffee & Tea Company": {
-            "url": "https://www.baltcoffee.com/sites/default/files/pdf/2023WebMenu_1.pdf",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Review the menu and decide on your order.",
                 "Call Baltimore Coffee & Tea Company to place your order.",
@@ -320,7 +322,7 @@ SERVICES = {
             "phone": "(410) 439-8669"
         },
         "The All American Steakhouse": {
-            "url": "https://order.theallamericansteakhouse.com/menu/odenton",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Place your order directly with The All American Steakhouse using their website.",
                 "Specify pick-up date and time.",
@@ -330,7 +332,7 @@ SERVICES = {
             "phone": "(410) 305-0505"
         },
         "Jersey Mike's Subs": {
-            "url": "https://www.jerseymikes.com/menu",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Place your order directly with Jersey Mike's Subs using their website.",
                 "Specify pick-up date and time.",
@@ -350,7 +352,7 @@ SERVICES = {
             "phone": "(410) 874-7135"
         },
         "Luigino's": {
-            "url": "https://order.yourmenu.com/luiginos",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Place your order directly with Luigino's using their website.",
                 "Specify pick-up date and time.",
@@ -360,7 +362,7 @@ SERVICES = {
             "phone": "(410) 674-6000"
         },
         "PHO 5UP ODENTON": {
-            "url": "https://www.clover.com/online-ordering/pho-5up-odenton",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Place your order directly with PHO 5UP ODENTON using their website.",
                 "Specify pick-up date and time.",
@@ -370,7 +372,7 @@ SERVICES = {
             "phone": "(410) 874-7385"
         },
         "Dunkin": {
-            "url": "https://www.dunkindonuts.com/en/mobile-app",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Place your order directly with Dunkin using their app.",
                 "Specify pick-up date and time.",
@@ -392,7 +394,7 @@ SERVICES = {
     },
     "Laundry": {
         "Local Butler Laundry": {
-            "url": "https://localbutler.streamlit.app",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Enter estimated laundry weight below.",
                 "Schedule pick-up time and address.",
@@ -406,7 +408,7 @@ SERVICES = {
     },
     "Dog Walking": {
         "Local Butler Dog Walking": {
-            "url": "https://localbutler.streamlit.app",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Select duration (30 or 60 minutes).",
                 "Specify time and address.",
@@ -419,7 +421,7 @@ SERVICES = {
     },
     "Home Cleaning": {
         "Local Butler Cleaning": {
-            "url": "https://localbutler.streamlit.app",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Select number of rooms and cleaning type.",
                 "Schedule a time and address.",
@@ -432,7 +434,7 @@ SERVICES = {
     },
     "Carwash/Detailing": {
         "Local Butler Carwash": {
-            "url": "https://localbutler.streamlit.app",
+            "url": "[invalid url, do not cite]
             "instructions": [
                 "Choose wash or detailing package.",
                 "Schedule time and location.",
@@ -447,34 +449,38 @@ SERVICES = {
 
 PARTNERSHIPS = {
     "Factor": {
-        "url": "https://www.factor75.com",
+        "url": "[invalid url, do not cite]
         "description": "Healthy, chef-prepared meals delivered to your door.",
-        "subscription_url": "https://www.factor75.com/plans",
+        "subscription_url": "[invalid url, do not cite]
         "commission_rate": 0.10,
-        "image_url": "https://example.com/factor_logo.jpg"
+        "image_url": "[invalid url, do not cite]
     }
 }
 
 def populate_merchants():
-    session = Session()
-    for service_type, providers in SERVICES.items():
-        for provider_name, provider_info in providers.items():
-            location = geocode_with_retry(provider_info['address'])
-            if location:
-                merchant = session.query(Merchant).filter_by(name=provider_name).first()
-                if not merchant:
-                    merchant = Merchant(
-                        name=provider_name,
-                        type=service_type,
-                        latitude=location.latitude,
-                        longitude=location.longitude,
-                        website=provider_info['url']
-                    )
-                    session.add(merchant)
-            else:
-                st.warning(f"Failed to geocode address for {provider_name}: {provider_info['address']}")
-    session.commit()
-    session.close()
+    if 'merchants_populated' not in st.session_state:
+        st.session_state.merchants_populated = False
+    if not st.session_state.merchants_populated:
+        session = Session()
+        for service_type, providers in SERVICES.items():
+            for provider_name, provider_info in providers.items():
+                location = geocode_with_retry(provider_info['address'])
+                if location:
+                    merchant = session.query(Merchant).filter_by(name=provider_name).first()
+                    if not merchant:
+                        merchant = Merchant(
+                            name=provider_name,
+                            type=service_type,
+                            latitude=location.latitude,
+                            longitude=location.longitude,
+                            website=provider_info['url']
+                        )
+                        session.add(merchant)
+                else:
+                    st.warning(f"Failed to geocode address for {provider_name}: {provider_info['address']}")
+        session.commit()
+        session.close()
+        st.session_state.merchants_populated = True
 
 def auth0_authentication():
     if 'user' not in st.session_state:
@@ -503,7 +509,7 @@ def auth0_authentication():
 
 def main():
     st.markdown("<h1 style='text-align: center;'>🚚 Local Butler</h1>", unsafe_allow_html=True)
-    populate_merchants()  # Ensure merchants are populated
+    populate_merchants()  # Ensure merchants are populated only once per session
 
     user = auth0_authentication()
 
@@ -641,7 +647,7 @@ def place_order():
                         session.commit()
                         st.markdown(
                             f"""
-                            <script src="https://js.stripe.com/v3/"></script>
+                            <script src="[invalid url, do not cite]
                             <script>
                                 var stripe = Stripe('{STRIPE_PUBLISHABLE_KEY}');
                                 stripe.redirectToCheckout({{ sessionId: '{checkout_session.id}' }});
@@ -673,8 +679,7 @@ def place_order():
                         total_amount=st.session_state.total_amount
                     )
                     session.add(new_order)
-                    session.commit()
-                    st.success(f"Order {order_id} created! Payment will be collected in-person via Tap to Pay.")
+                    session.commit()                    st.success(f"Order {order_id} created! Payment will be collected in-person via Tap to Pay.")
                     st.session_state.review_clicked = False
                     session.close()
 
@@ -713,14 +718,9 @@ def display_user_orders():
 
 def display_map():
     st.subheader("🗺️ Service Map")
-    businesses_to_show = {}
-    for service_type, providers in SERVICES.items():
-        businesses_to_show.update(providers)
-    if not businesses_to_show:
-        st.warning("No services found.")
-        return
-    map_obj = create_map(businesses_to_show)
-    folium_static(map_obj)
+    map_obj = create_map()
+    if map_obj:
+        folium_static(map_obj)
 
 def display_services():
     st.subheader("🛍️ Available Services")
@@ -765,34 +765,31 @@ def display_subscriptions():
 def driver_dashboard():
     st.subheader("🚗 Driver Dashboard")
     session = Session()
-    orders_container = st.empty()
-    while True:
-        available_orders = session.query(Order).filter_by(status='Pending').all()
-        with orders_container.container():
-            if not available_orders:
-                st.info("No pending orders.")
-            else:
-                for order in available_orders:
-                    with st.expander(f"📦 Order ID: {order.id}"):
-                        st.write(f"**Service**: {order.service}")
-                        st.write(f"**Address**: {order.address}")
-                        st.write(f"**Total**: ${order.total_amount:.2f}")
-                        st.write(f"**Payment Method**: {order.payment_method}")
-                        merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
-                        if merchant:
-                            st.write(f"**Pickup**: {merchant.name}")
-                        if order.service == "Laundry":
-                            st.info("Verify laundry weight with portable scale at pick-up.")
-                        if order.payment_method == "In-Person":
-                            st.warning("Collect payment via Tap to Pay on your Android device.")
-                        if st.button(f"✅ Accept Order {order.id}", key=f"accept_{order.id}"):
-                            order.status = 'Preparing'
-                            session.commit()
-                            st.success(f"Accepted order {order.id}!")
-                            time.sleep(2)
-                            st.experimental_rerun()
-        time.sleep(10)
-        session.commit()
+    available_orders = session.query(Order).filter_by(status='Pending').all()
+    if not available_orders:
+        st.info("No pending orders.")
+    else:
+        for order in available_orders:
+            with st.expander(f"📦 Order ID: {order.id}"):
+                st.write(f"**Service**: {order.service}")
+                st.write(f"**Address**: {order.address}")
+                st.write(f"**Total**: ${order.total_amount:.2f}")
+                st.write(f"**Payment Method**: {order.payment_method}")
+                merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
+                if merchant:
+                    st.write(f"**Pickup**: {merchant.name}")
+                if order.service == "Laundry":
+                    st.info("Verify laundry weight with portable scale at pick-up.")
+                if order.payment_method == "In-Person":
+                    st.warning("Collect payment via Tap to Pay on your Android device.")
+                if st.button(f"✅ Accept Order {order.id}", key=f"accept_{order.id}"):
+                    order.status = 'Preparing'
+                    session.commit()
+                    st.success(f"Accepted order {order.id}!")
+                    time.sleep(2)
+                    st.experimental_rerun()
+    if st.button("Refresh"):
+        st.experimental_rerun()
     session.close()
 
 def live_shop():
