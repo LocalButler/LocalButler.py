@@ -4,7 +4,7 @@ import av
 import cv2
 import folium
 from streamlit_folium import folium_static
-from datetime import datetime
+from datetime import datetime, date
 import random
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
@@ -15,7 +15,6 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 import os
 from dotenv import load_dotenv
-from auth0_component import login_button
 from functools import lru_cache
 import stripe
 import threading
@@ -36,14 +35,15 @@ st.set_page_config(
 # Load environment variables
 load_dotenv()
 
-# Secrets (replace with your actual secrets in deployment)
+# Secrets (use .env locally, Streamlit Cloud secrets for deployment)
 try:
-    AUTH0_CLIENT_ID = st.secrets["auth0"]["AUTH0_CLIENT_ID"]
-    AUTH0_DOMAIN = st.secrets["auth0"]["AUTH0_DOMAIN"]
-    STRIPE_SECRET_KEY = st.secrets["stripe"]["STRIPE_SECRET_KEY"]
-    STRIPE_PUBLISHABLE_KEY = st.secrets["stripe"]["STRIPE_PUBLISHABLE_KEY"]
+    AUTH0_CLIENT_ID = os.getenv("AUTH0_CLIENT_ID") or st.secrets["auth0"]["AUTH0_CLIENT_ID"]
+    AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN") or st.secrets["auth0"]["AUTH0_DOMAIN"]
+    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY") or st.secrets["stripe"]["STRIPE_SECRET_KEY"]
+    STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY") or st.secrets["stripe"]["STRIPE_PUBLISHABLE_KEY"]
+    DATABASE_URL = os.getenv("DATABASE_URL") or st.secrets["database"]["url"]
 except KeyError as e:
-    st.error(f"Missing secret: {e}")
+    st.error(f"Missing secret: {e}. Please set it in .env or Streamlit Cloud secrets.")
     st.stop()
 
 # Initialize Stripe
@@ -52,13 +52,18 @@ stripe.api_key = STRIPE_SECRET_KEY
 # SQLAlchemy setup with connection pooling
 Base = sqlalchemy.orm.declarative_base()
 engine = create_engine(
-    st.secrets["database"]["url"],
+    DATABASE_URL,
     echo=False,
     pool_size=5,
     max_overflow=10,
     pool_timeout=30
 )
 Session = sessionmaker(bind=engine)
+
+# Reuse session for speed
+@st.cache_resource
+def get_db_session():
+    return Session()
 
 # SQLAlchemy models
 class User(Base):
@@ -103,20 +108,27 @@ class Subscription(Base):
     status = Column(String, default="Active")
     user = relationship("User")
 
-Base.metadata.create_all(engine, checkfirst=True)
+class GeocodeCache(Base):
+    __tablename__ = 'geocode_cache'
+    address = Column(String, primary_key=True)
+    latitude = Column(Float)
+    longitude = Column(Float)
+    updated_at = Column(DateTime, default=datetime.now)
 
-# Geocoding cache
-geocoding_cache = {}
+Base.metadata.create_all(engine, checkfirst=True)
 
 # Helper functions
 def generate_order_id():
     return f"ORD-{random.randint(10000, 99999)}"
 
 @st.cache_data
-def create_map(_hash):
+def create_map(_hash, service_type=None):
     try:
-        session = Session()
-        merchants = session.query(Merchant).all()
+        session = get_db_session()
+        query = session.query(Merchant)
+        if service_type:
+            query = query.filter_by(type=service_type)
+        merchants = query.limit(20).all()  # Limit for speed
         if not merchants:
             st.warning("No services found.")
             return None
@@ -136,24 +148,39 @@ def create_map(_hash):
         logger.error(f"Map creation error: {e}")
         st.error("Failed to load map.")
         return None
-    finally:
-        session.close()
 
 @lru_cache(maxsize=100)
 def geocode_with_retry(address, max_retries=3, initial_delay=1):
-    geolocator = Nominatim(user_agent="local_butler_app")
-    for attempt in range(max_retries):
-        try:
-            time.sleep(initial_delay * (2 ** attempt))
-            location = geolocator.geocode(address)
-            if location:
-                geocoding_cache[address] = location
-                return location
-        except (GeocoderTimedOut, GeocoderServiceError) as e:
-            if attempt == max_retries - 1:
-                logger.warning(f"Geocoding failed for {address}: {e}")
-                return None
-    return None
+    session = get_db_session()
+    try:
+        # Check database cache
+        cached = session.query(GeocodeCache).filter_by(address=address).first()
+        if cached:
+            return type('Location', (), {'latitude': cached.latitude, 'longitude': cached.longitude})()
+        
+        geolocator = Nominatim(user_agent="local_butler_app")
+        for attempt in range(max_retries):
+            try:
+                time.sleep(initial_delay * (2 ** attempt))
+                location = geolocator.geocode(address)
+                if location:
+                    # Save to database
+                    session.merge(GeocodeCache(
+                        address=address,
+                        latitude=location.latitude,
+                        longitude=location.longitude,
+                        updated_at=datetime.now()
+                    ))
+                    session.commit()
+                    return location
+            except (GeocoderTimedOut, GeocoderServiceError) as e:
+                if attempt == max_retries - 1:
+                    logger.warning(f"Geocoding failed for {address}: {e}")
+                    return None
+        return None
+    except Exception as e:
+        logger.error(f"Geocoding error: {e}")
+        return None
 
 def async_geocode(address, callback):
     def geocode_task():
@@ -204,7 +231,6 @@ def update_map(address):
         return m, st.session_state.map_location
     return None, None
 
-# Stripe online payment
 def create_stripe_checkout_session(order_id, amount, service_type):
     try:
         checkout_session = stripe.checkout.Session.create(
@@ -220,8 +246,8 @@ def create_stripe_checkout_session(order_id, amount, service_type):
                 'quantity': 1,
             }],
             mode='payment',
-            success_url="http://localhost:8501/success",
-            cancel_url="http://localhost:8501/cancel"
+            success_url="https://your-app.streamlit.app/success",  # Update after deployment
+            cancel_url="https://your-app.streamlit.app/cancel"
         )
         return checkout_session
     except Exception as e:
@@ -229,7 +255,6 @@ def create_stripe_checkout_session(order_id, amount, service_type):
         st.error("Payment processing failed.")
         return None
 
-# Laundry pricing
 def calculate_laundry_total(weight):
     RATE_PER_POUND = 2.00
     MINIMUM_WEIGHT = 5.0
@@ -273,7 +298,7 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# Updated SERVICES dictionary (simplified for brevity, replace with your full data)
+# SERVICES dictionary (unchanged)
 SERVICES = {
     "Groceries": {
         "Weis Markets": {
@@ -318,7 +343,7 @@ def populate_merchants():
     if st.session_state.merchants_populated:
         return
     try:
-        session = Session()
+        session = get_db_session()
         for service_type, providers in SERVICES.items():
             for provider_name, provider_info in providers.items():
                 merchant = session.query(Merchant).filter_by(name=provider_name).first()
@@ -333,44 +358,24 @@ def populate_merchants():
                             website=provider_info['url']
                         )
                         session.add(merchant)
-                    else:
-                        logger.warning(f"Failed to geocode {provider_name}")
         session.commit()
         st.session_state.merchants_populated = True
     except Exception as e:
         logger.error(f"Populate merchants error: {e}")
         st.error("Failed to initialize merchants.")
-    finally:
-        session.close()
 
 def auth0_authentication():
     if 'user' not in st.session_state:
         st.session_state.user = None
     if st.session_state.user is None:
-        auth_choice = st.sidebar.radio("Choose action", ["🔑 Login"])
-        if auth_choice == "🔑 Login":
-            try:
-                user_info = login_button(AUTH0_CLIENT_ID, domain=AUTH0_DOMAIN)
-                if user_info:
-                    session = Session()
-                    user = session.query(User).filter_by(email=user_info['email']).first()
-                    if not user:
-                        user = User(
-                            id=user_info['sub'],
-                            name=user_info['name'],
-                            email=user_info['email'],
-                            type='customer',
-                            address=''
-                        )
-                        session.add(user)
-                        session.commit()
-                    st.session_state.user = user
-                    st.success(f"Welcome, {user.name}!")
-                    session.close()
-            except Exception as e:
-                logger.error(f"Auth0 error: {e}")
-                st.error("Login failed.")
-    return st.session_state.user
+        st.write("Please log in to continue.")
+        st.markdown(f"""
+            <a href="https://{AUTH0_DOMAIN}/authorize?client_id={AUTH0_CLIENT_ID}&response_type=code&redirect_uri=https://your-app.streamlit.app">
+                <button style='background-color: {PRIMARY_COLOR}; color: white; padding: 10px 20px; border-radius: 8px;'>Log In</button>
+            </a>
+        """, unsafe_allow_html=True)
+        st.stop()
+    return st.session_state.user  # Simplified; replace with proper Auth0 later
 
 def main():
     st.markdown("<h1 style='text-align: center;'>🚚 Local Butler</h1>", unsafe_allow_html=True)
@@ -381,6 +386,8 @@ def main():
     if user:
         if 'current_page' not in st.session_state:
             st.session_state.current_page = "🏠 Home"
+        if 'selected_service' not in st.session_state:
+            st.session_state.selected_service = None
 
         menu_items = {
             "🏠 Home": home_page,
@@ -404,15 +411,54 @@ def main():
             st.session_state.user = None
             st.session_state.current_page = "🏠 Home"
             st.success("Logged out successfully.")
-    else:
-        st.write("Please log in to access Local Butler’s features.")
 
 def home_page():
-    st.markdown(f"Welcome, {st.session_state.user.name}! 🎉")
-    st.write("Book local services or subscribe to premium partners.")
-    st.write("**Available Services:**")
-    for service_type in SERVICES:
-        st.markdown(f"- {service_type}")
+    st.markdown("<h1 style='text-align: center;'>Welcome to Local Butler!</h1>", unsafe_allow_html=True)
+    st.write(f"Hello, {st.session_state.user.name}! 🎉")
+    
+    st.markdown("""
+        <style>
+        .service-card {
+            border: 2px solid #FF6B6B;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px;
+            text-align: center;
+            background-color: #FFFFFF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .service-card:hover {
+            background-color: #4ECDC4;
+            color: white;
+            transform: scale(1.05);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.subheader("Explore Services")
+    cols = st.columns(3)
+    services = [
+        {"name": "Groceries", "emoji": "🛒", "description": "Order fresh groceries"},
+        {"name": "Restaurants", "emoji": "🍽️", "description": "Get food delivered"},
+        {"name": "Laundry", "emoji": "🧼", "description": "Clean clothes, easy"}
+    ]
+    
+    for i, service in enumerate(services):
+        with cols[i % 3]:
+            st.markdown(
+                f"""
+                <div class='service-card'>
+                    <h3>{service['emoji']} {service['name']}</h3>
+                    <p>{service['description']}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            if st.button(f"Go to {service['name']}", key=f"home_{service['name']}"):
+                st.session_state.current_page = "🛍️ Services"
+                st.session_state.selected_service = service['name']
+                st.experimental_rerun()
 
 def place_order():
     st.subheader("🛒 Place a New Order")
@@ -427,77 +473,93 @@ def place_order():
             'total_amount': 0.0,
             'payment_method': "Online"
         }
-
+    
     state = st.session_state.order_state
-    session = Session()
-    try:
+    
+    with st.form("order_form"):
         service_type = st.selectbox("Select Service Type", list(SERVICES.keys()), key='selected_service_type')
-        if service_type not in SERVICES:
-            st.error("Invalid service type.")
-            return
         state['selected_service_type'] = service_type
-
         provider = st.selectbox("Select Provider", list(SERVICES[service_type].keys()), key='selected_provider')
-        if provider not in SERVICES[service_type]:
-            st.error("Invalid provider.")
-            return
         state['selected_provider'] = provider
-
-        merchant = session.query(Merchant).filter_by(name=provider).first()
-        if not merchant:
-            st.error(f"Provider {provider} not found.")
-            return
-
         state['date'] = st.date_input("Select Date", min_value=datetime.now().date(), value=state['date'])
         state['time'] = st.selectbox(
             "Select Time",
-            [f"{h:02d}:{m:02d} {'AM' if h < 12 else 'PM'} EST" for h in range(7, 22) for m in [0, 15, 30, 45]],
-            index=0
+            [f"{h:02d}:{m:02d} {'AM' if h < 12 else 'PM'} EST" for h in range(7, 22) for m in [0, 15, 30, 45]]
         )
         state['address'] = st.text_input("Service Address", value=state['address'])
-
+        
         if service_type == "Laundry":
             weight = st.number_input("Estimated Laundry Weight (lbs)", min_value=0.0, value=5.0, step=0.1)
             state['total_amount'] = calculate_laundry_total(weight)
             st.markdown(f"**Estimated Total**: ${state['total_amount']:.2f}")
-            st.info("Weight will be verified at pick-up.")
         else:
             state['total_amount'] = st.number_input("Order Amount ($)", min_value=0.01, value=10.00, step=0.01)
-
-        state['payment_method'] = st.radio("Payment Method", ["Online", "In-Person (Tap to Pay)"])
-
-        if state['address']:
-            with st.spinner("Loading map..."):
-                map_obj, location = update_map(state['address'])
-            if map_obj:
-                folium_static(map_obj)
-                if location:
-                    st.write(f"**Coordinates**: {location.latitude}, {location.longitude}")
-            delivery_notes = st.text_area("Service Notes (optional)")
-
-        if st.button("Review Order"):
-            state['review_clicked'] = True
-
-        if state['review_clicked']:
-            with st.expander("Order Details", expanded=True):
-                st.write(f"**Service Type**: {state['selected_service_type']}")
-                st.write(f"**Provider**: {state['selected_provider']}")
-                st.write(f"**Date**: {state['date']}")
-                st.write(f"**Time**: {state['time']}")
-                st.write(f"**Address**: {state['address']}")
-                st.write(f"**Total**: ${state['total_amount']:.2f}")
-                st.write(f"**Payment Method**: {state['payment_method']}")
-                if 'delivery_notes' in locals():
-                    st.write(f"**Notes**: {delivery_notes}")
-
-            if state['payment_method'] == "Online":
-                if st.button("💳 Pay with Card"):
-                    if not all([state['selected_provider'], state['date'], state['time'], state['address'], state['total_amount']]):
-                        st.error("Please fill in all fields.")
-                    else:
-                        order_id = generate_order_id()
-                        checkout_session = create_stripe_checkout_session(order_id, state['total_amount'], state['selected_service_type'])
-                        if checkout_session:
+        
+        state['payment_method'] = st.radio("Payment Method", ["Online", "In-Person"])
+        submit_button = st.form_submit_button("Review Order")
+    
+    if submit_button:
+        state['review_clicked'] = True
+    
+    if state['review_clicked']:
+        with st.expander("Order Details", expanded=True):
+            st.write(f"**Service Type**: {state['selected_service_type']}")
+            st.write(f"**Provider**: {state['selected_provider']}")
+            st.write(f"**Date**: {state['date']}")
+            st.write(f"**Time**: {state['time']}")
+            st.write(f"**Address**: {state['address']}")
+            st.write(f"**Total**: ${state['total_amount']:.2f}")
+            st.write(f"**Payment Method**: {state['payment_method']}")
+            
+            session = get_db_session()
+            try:
+                merchant = session.query(Merchant).filter_by(name=state['selected_provider']).first()
+                if not merchant:
+                    st.error(f"Provider {state['selected_provider']} not found.")
+                    return
+                
+                if state['payment_method'] == "Online":
+                    if st.button("💳 Pay with Card"):
+                        if not all([state['selected_provider'], state['date'], state['time'], state['address'], state['total_amount']]):
+                            st.error("Please fill in all fields.")
+                        else:
+                            order_id = generate_order_id()
+                            checkout_session = create_stripe_checkout_session(order_id, state['total_amount'], state['selected_service_type'])
+                            if checkout_session:
+                                new_order = Order(
+                                    id=order_id,
+                                    user_id=st.session_state.user.id,
+                                    merchant_id=merchant.id,
+                                    service=state['selected_service_type'],
+                                    date=state['date'],
+                                    time=state['time'],
+                                    address=state['address'],
+                                    status='Pending',
+                                    payment_status='Pending',
+                                    payment_method='Online',
+                                    total_amount=state['total_amount']
+                                )
+                                session.add(new_order)
+                                session.commit()
+                                st.markdown(
+                                    f"""
+                                    <script src="https://js.stripe.com/v3/"></script>
+                                    <script>
+                                        var stripe = Stripe('{STRIPE_PUBLISHABLE_KEY}');
+                                        stripe.redirectToCheckout({{ sessionId: '{checkout_session.id}' }});
+                                    </script>
+                                    """,
+                                    unsafe_allow_html=True
+                                )
+                                state['review_clicked'] = False
+                            else:
+                                st.error("Payment failed.")
+                else:
+                    if st.button("✅ Confirm In-Person Payment"):
+                        if not all([state['selected_provider'], state['date'], state['time'], state['address'], state['total_amount']]):
+                            st.error("Please fill in all fields.")
+                        else:
+                            order_id = generate_order_id()
                             new_order = Order(
                                 id=order_id,
                                 user_id=st.session_state.user.id,
@@ -508,64 +570,26 @@ def place_order():
                                 address=state['address'],
                                 status='Pending',
                                 payment_status='Pending',
-                                payment_method='Online',
+                                payment_method='In-Person',
                                 total_amount=state['total_amount']
                             )
                             session.add(new_order)
                             session.commit()
-                            st.markdown(
-                                f"""
-                                <script src="https://js.stripe.com/v3/"></script>
-                                <script>
-                                    var stripe = Stripe('{STRIPE_PUBLISHABLE_KEY}');
-                                    stripe.redirectToCheckout({{ sessionId: '{checkout_session.id}' }});
-                                </script>
-                                """,
-                                unsafe_allow_html=True
-                            )
+                            st.success(f"Order {order_id} created! Payment will be collected in-person.")
                             state['review_clicked'] = False
-                        else:
-                            st.error("Payment failed.")
-            else:
-                if st.button("✅ Confirm In-Person Payment"):
-                    if not all([state['selected_provider'], state['date'], state['time'], state['address'], state['total_amount']]):
-                        st.error("Please fill in all fields.")
-                    else:
-                        order_id = generate_order_id()
-                        new_order = Order(
-                            id=order_id,
-                            user_id=st.session_state.user.id,
-                            merchant_id=merchant.id,
-                            service=state['selected_service_type'],
-                            date=state['date'],
-                            time=state['time'],
-                            address=state['address'],
-                            status='Pending',
-                            payment_status='Pending',
-                            payment_method='In-Person',
-                            total_amount=state['total_amount']
-                        )
-                        session.add(new_order)
-                        session.commit()
-                        st.success(f"Order {order_id} created! Payment will be collected in-person.")
-                        state['review_clicked'] = False
-    except Exception as e:
-        logger.error(f"Place order error: {e}")
-        st.error("An error occurred while placing the order.")
-    finally:
-        session.close()
+            except Exception as e:
+                logger.error(f"Place order error: {e}")
+                st.error("An error occurred while placing the order.")
 
 @st.cache_data
 def get_user_orders(user_id):
-    session = Session()
+    session = get_db_session()
     try:
-        orders = session.query(Order).filter_by(user_id=user_id).all()
+        orders = session.query(Order).filter_by(user_id=user_id).limit(50).all()
         return orders
     except Exception as e:
         logger.error(f"Get user orders error: {e}")
         return []
-    finally:
-        session.close()
 
 def display_user_orders():
     st.subheader("📦 My Orders")
@@ -582,13 +606,13 @@ def display_user_orders():
                 st.write(f"**Total**: ${order.total_amount:.2f}")
                 st.write(f"**Payment Status**: {order.payment_status}")
                 st.write(f"**Payment Method**: {order.payment_method}")
-                session = Session()
+                session = get_db_session()
                 try:
                     merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
                     if merchant:
                         st.write(f"**Merchant**: {merchant.name}")
-                finally:
-                    session.close()
+                except Exception as e:
+                    logger.error(f"Merchant query error: {e}")
                 statuses = ['Pending', 'Preparing', 'On the way', 'Delivered']
                 status_emojis = ['⏳', '👨‍🍳', '🚚', '✅']
                 try:
@@ -606,16 +630,20 @@ def display_user_orders():
 
 def display_map():
     st.subheader("🗺️ Service Map")
+    service_type = st.session_state.get('selected_service', None)
     map_hash = str(random.randint(0, 1000000))  # Force cache refresh if needed
-    map_obj = create_map(map_hash)
+    map_obj = create_map(map_hash, service_type=service_type)
     if map_obj:
         folium_static(map_obj)
 
 def display_services():
     st.subheader("🛍️ Available Services")
-    for service_name, providers in SERVICES.items():
+    selected_service = st.session_state.get('selected_service', None)
+    services_to_show = [selected_service] if selected_service else SERVICES.keys()
+    
+    for service_name in services_to_show:
         st.markdown(f"### {service_name}")
-        for provider_name, provider_info in providers.items():
+        for provider_name, provider_info in SERVICES[service_name].items():
             with st.expander(provider_name):
                 display_service(Service(
                     name=provider_name,
@@ -629,7 +657,7 @@ def display_services():
 def display_subscriptions():
     st.subheader("🤝 Partner Subscriptions")
     st.write("Subscribe to premium services for exclusive benefits!")
-    session = Session()
+    session = get_db_session()
     try:
         for partner_name, partner_info in PARTNERSHIPS.items():
             with st.expander(partner_name):
@@ -651,20 +679,16 @@ def display_subscriptions():
     except Exception as e:
         logger.error(f"Subscriptions error: {e}")
         st.error("Failed to process subscription.")
-    finally:
-        session.close()
 
 @st.cache_data
 def get_pending_orders():
-    session = Session()
+    session = get_db_session()
     try:
-        orders = session.query(Order).filter_by(status='Pending').all()
+        orders = session.query(Order).filter_by(status='Pending').limit(50).all()
         return orders
     except Exception as e:
         logger.error(f"Get pending orders error: {e}")
         return []
-    finally:
-        session.close()
 
 def driver_dashboard():
     st.subheader("🚗 Driver Dashboard")
@@ -680,19 +704,19 @@ def driver_dashboard():
                     st.write(f"**Address**: {order.address}")
                     st.write(f"**Total**: ${order.total_amount:.2f}")
                     st.write(f"**Payment Method**: {order.payment_method}")
-                    session = Session()
+                    session = get_db_session()
                     try:
                         merchant = session.query(Merchant).filter_by(id=order.merchant_id).first()
                         if merchant:
                             st.write(f"**Pickup**: {merchant.name}")
-                    finally:
-                        session.close()
+                    except Exception as e:
+                        logger.error(f"Merchant query error: {e}")
                     if order.service == "Laundry":
                         st.info("Verify laundry weight at pick-up.")
                     if order.payment_method == "In-Person":
                         st.warning("Collect payment via Tap to Pay.")
                     if st.button(f"✅ Accept Order {order.id}", key=f"accept_{order.id}"):
-                        session = Session()
+                        session = get_db_session()
                         try:
                             order_to_update = session.query(Order).filter_by(id=order.id).first()
                             if order_to_update:
@@ -702,8 +726,6 @@ def driver_dashboard():
                         except Exception as e:
                             logger.error(f"Accept order error: {e}")
                             st.error("Failed to accept order.")
-                        finally:
-                            session.close()
     if st.button("Refresh Orders"):
         st.experimental_rerun()
 
@@ -716,29 +738,29 @@ def live_shop():
             'live_session_active': False,
             'chat_messages': []
         }
-
+    
     state = st.session_state.live_shop_state
     selected_store = st.selectbox("Select a Store", list(all_stores.keys()), index=0 if state['selected_store'] is None else list(all_stores.keys()).index(state['selected_store']))
-
+    
     if selected_store != state['selected_store']:
         state['selected_store'] = selected_store
         state['live_session_active'] = False
         state['chat_messages'] = []
-
+    
     if not state['selected_store']:
         st.warning("Please select a store.")
         return
-
+    
     store_info = all_stores[state['selected_store']]
     st.write(f"**Address**: {store_info['address']}")
     st.write(f"**Phone**: {store_info['phone']}")
-
+    
     if st.button("START LIVE SESSION" if not state['live_session_active'] else "END LIVE SESSION"):
         state['live_session_active'] = not state['live_session_active']
         if state['live_session_active']:
             st.info("Starting live session...")
             time.sleep(1)
-
+    
     if state['live_session_active']:
         col1, col2 = st.columns(2)
         with col1:
@@ -750,7 +772,8 @@ def live_shop():
             webrtc_streamer(
                 key=f"user_live_shop_{state['selected_store']}",
                 video_frame_callback=user_video_frame_callback,
-                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+                media_stream_constraints={"video": {"width": 320, "height": 240, "frameRate": 15}, "audio": True}
             )
         with col2:
             st.markdown(f"**{state['selected_store']} Associate**")
@@ -761,9 +784,10 @@ def live_shop():
             webrtc_streamer(
                 key=f"merchant_live_shop_{state['selected_store']}",
                 video_frame_callback=merchant_video_frame_callback,
-                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+                media_stream_constraints={"video": {"width": 320, "height": 240, "frameRate": 15}, "audio": True}
             )
-
+        
         st.markdown(f"**Chat with {state['selected_store']}**")
         for message in state['chat_messages']:
             st.text(message)
